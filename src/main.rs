@@ -60,6 +60,8 @@ pub struct GenTest<Input:Generate+Edit,Output,
 pub struct LabExpParams {
   pub sample_params: SampleParams,
   // TODO: Pretty-print input and output structures; graphmovie dump of experiment
+  /// Number of change-batches to perform in a loop; each is interposed with computing the new output.
+  pub change_batch_loop: usize,
 }
 
 #[derive(Clone,Debug)]
@@ -72,8 +74,6 @@ pub struct SampleParams {
   pub validate_output:   bool,
   /// Size of each batch of changes.
   pub change_batch_size: usize,
-  /// Number of change-batches to perform in a loop; each is interposed with computing the new output.
-  pub change_batch_loop: usize,
 }
 
 #[derive(Clone,Debug)]
