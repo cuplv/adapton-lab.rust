@@ -1,73 +1,80 @@
+<h1 id="adapton-lab-generic-testing-and-evaluation">Adapton Lab: Generic Testing and Evaluation</h1>
 <p>This document describes <em>Adapton Laboratory</em>, or <strong>Adapton Lab</strong> for short. The Adapton Lab provides a generic (reusable) harness for testing and evaluating Adapton application layers:</p>
 <ul class="incremental">
-<li>the Adapton engines:
+<li><strong>the Adapton engines</strong>:
 <ul class="incremental">
 <li>Demanded-Computation Graph (DCG) and</li>
 <li>Naive (No caching).</li>
 </ul></li>
-<li>the Adapton collections library:
+<li><strong>the Adapton collections library</strong>:
 <ul class="incremental">
 <li>Sequences,</li>
 <li>Finite maps, Sets,</li>
 <li>Graphs</li>
 </ul></li>
-<li>intresting algorithms and computations over the collections library, including:
+<li><strong>interesting algorithms over the collections library</strong>, including:
 <ul class="incremental">
 <li>standard graph algorithms</li>
 <li>computational geometry algorithms</li>
 <li>static analyses of programs</li>
 </ul></li>
 </ul>
-<p>The test and evaluation harness introduces several data structures and computations that can be instantiated generically:</p>
+<p>Adapton provides both a data structures collection and a runtime library to write generic incremental computations. At the highest level, this approach consists of the programmer writing functional programs over inductive, persistant structures, specifically:</p>
 <ul class="incremental">
-<li><code>Inputi</code> -- The ith input (a data structure). Generically, this consists of abstract notions of <strong>input generation</strong> and <strong>editing</strong>:
+<li><strong>lists</strong>,</li>
+<li>balanced trees representing <strong>sequences</strong>,</li>
+<li>hash-tries representing <strong>finite maps</strong>, <strong>finite sets</strong> and <strong>graphs</strong>.</li>
+<li>coinductive (demand-driven) versions of the structures listed above.</li>
+</ul>
+<p>To a first approximation, the Adapton methodology for writing incremental algorithms consists of writing a functional (eager or lazy) program over an unchanging input, producing an unchanging output. Refining that approximation, the programmer additionally uses explicit abstractions for (explicit) <em>nominal memoization</em>, which associates a first-class, dynamically-scoped name with each dynamic allocation. In the future, we hope to make nominal memoization implicit; currently, only explicit techniques exist. (Aside: Past work on <em>implicit</em> self-adjusting computation focused only on making the use of so-called modifiable references implicit; this is a complementary and orthogonal problem to implicitly choosing a naming strategy for nominal memoization).</p>
+<p><strong>Nominal Adapton</strong> gave the first operational semantics for nominal memoziation and it included preliminary techniques for encoding lists, sequences, maps and sets (OOPSLA 2015). These collections were heavily inspired by work on incremental computation via function caching by Pugh and Teitelbaum (POPL 1989). Nominal Adapton replaces structural naming strategies (aka hash-consing) with an explicit approach, permitting imperative cache effects. It suggests several naming straties for computations that use these collections. A central concern is authoring algorithms that do not unintentionally overwrite their cache, causing either unintended <em>churn</em> or <em>feedback</em>; each such effect deviates from purely-functional behavior, which affects the programmer's reasoning about dynamic incremental behavior.</p>
+<p><strong>Typed (Nominal) Adapton</strong> gives a useful static approximation of the store-naming effects of nominal memoization, making it possible to program generic library code, while avoiding unintended churn and feedback. Unlike other type systems for enforcing nominal structure, Typed Adapton uses a type and effect system to enforce that the <em>dynamic scoping</em> of nominal memoization is <em>write-once</em>, aka, functional, not imperative or relational. Other nominal type systems focus on enforcing <em>lexical scoping</em> of first-class binders; this problem and its soltuions are orthogal to enforcing the nominal structure of a nominal memoization.</p>
+<p><em>Rust does not (yet) implement Typed Adapton, only Nominal Adapton</em>. In other words, <em>it is possible to misuse the Rust interface and deviate from what would be permitted by Typed Adapton</em>. One purpose of this test harness is to test that algorithms adhere to <strong>from-scratch consistency</strong> when the programmer expects them to do so.</p>
+<h2 id="commutative-diagram-from-scratch-consistency-of-incremental-computation">Commutative Diagram: From-Scratch Consistency of Incremental Computation</h2>
+<p>With testing and performance evalaution both in mind, the test and evaluation harness introduces several data structures and computations that can be instantiated generically. These elements can be related diagrammatically, shown further below.</p>
 <ul class="incremental">
-<li>Deterministic psuedo-random instance <strong>generation</strong>, based on
+<li><code>Inputi</code> -- The ith input (a data structure). Generically, this consists of abstract notions of <strong>input generation</strong> and <strong>editing</strong>.</li>
+<li><code>Outputi</code> -- The ith output (a data structure). For validating output (see diagram below), we compare output types for <strong>equality</strong>.</li>
+<li><code>Compute</code> -- The computation relating the <code>i</code>th Input to the <code>i</code>th Output (a computation).</li>
+<li><code>DIni</code> -- The input change (aka &quot;input delta&quot;) relating the ith input to the <code>i+1</code>th input (a computation).</li>
+<li><code>DOuti</code> -- The output change (aka &quot;ouput delta&quot;) relating the ith output to the <code>i+1</code>th output (a computation).</li>
+</ul>
+<p>Note that while the input and outputs are data structures, their relationships are all computations: The input is modified by a computation <code>DIn1</code>, and to compute <code>Output2</code>, the system has two choices:</p>
+<ul class="incremental">
+<li><strong>Naive</strong>: Run <code>Compute</code> over <code>Input2</code>, (fully) computing <code>Output2</code> from <code>Input2</code>. This relationship is shown as horizontal edges in the diagram.</li>
+<li><strong>DCG</strong>: Reuse the traced computation of <code>Compute</code> over <code>Output1</code>, changing <code>Output1</code> into <code>Output2</code> in the process, via change-propagation over the DCG. This relationship is shown as vertical edges on the right of the diagram.</li>
+</ul>
+<p>From-scratch consistency is a key assumption of this methodology: This (side-effecting) computation is semantically equivalent to the full computation of <code>Compute</code> from Input2.</p>
+<p><strong>Diagram Example.</strong> Suppose we consider <code>i</code> from 1 to 3, to show these relationships diagrammatically:</p>
+<pre><code>      Input1 --&gt; Compute --&gt; Output1
+        |                       | 
+        |  DIn1 (mutation)      |   DOut1 (uses DCG + change propagation)
+       \|/                     \|/
+        `                       ` 
+      Input2 --&gt; Compute --&gt; Output2
+        |                       | 
+        |  DIn2 (mutation)      |   DOut2 (uses DCG + change propagation)
+       \|/                     \|/
+        `                       ` 
+      Input3 --&gt; Compute --&gt; Output3
+        |                       | 
+        |  DIn3 (mutation)      |   DOut3 (uses DCG + change propagation)
+       \|/                     \|/
+        `                       ` 
+      Input4 --&gt; Compute --&gt; Output4</code></pre>
+<h2 id="generation-parameters">Generation Parameters</h2>
+<p>Adapton Lab generates and edits inputs generically. These operations are tuned by the lab user through several <strong>generation parameters</strong>. An implementation chooses how to interpret these parameters, with the following guidelines:</p>
 <ul class="incremental">
 <li>a <strong>seed</strong> for deterministic psuedo-randomness (<code>--seed</code>)</li>
 <li>a natural number representing <strong>size</strong> (<code>--size</code>)</li>
 <li>q natural number representing <strong>expected nominal sparsity</strong>; ie, its <strong>gauge</strong> (<code>--gauge</code>). Bigger is more sparse; 1 is finest (e.g., names for each input element). 0 means no names at all.</li>
 <li>a bit indicating whether nominal sparisity is <em>regular</em> or <em>content-determined</em> (<code>--name-regular</code> or <code>--name-bycontent</code>).</li>
-</ul></li>
-<li>Deterministic psuedo-random <strong>edit</strong>, aka Compute-Input-Delta, aka the <code>DIn_i</code> in the figure.</li>
-</ul></li>
-<li><code>Outputi</code> -- The ith output (a data structure)</li>
-<li><code>Compute</code> -- The computation relating the <code>i</code>th Input to the <code>i</code>th Output (a computation)</li>
-<li><code>DIni</code> -- The input change (aka &quot;input delta&quot;) relating the ith input to the <code>i+1</code>th input (a computation)</li>
-<li><code>DOuti</code> -- The output change (aka &quot;ouput delta&quot;) relating the ith output to the <code>i+1</code>th output (a computation)</li>
 </ul>
-<p>Note that while the input and outputs are data structures, their relationships are all computations: The input is modified by a computation <code>DIn1</code>, and to compute <code>Output2</code>, the system has two choices:</p>
+<p>In turn, these parameters control the following processes on input:</p>
 <ul class="incremental">
-<li>Run <code>Compute</code> over <code>Input2</code>, (fully) computing <code>Output2</code> from <code>Input2</code>.</li>
-<li>Reuse the computation of <code>Compute</code> over <code>Output1</code>, changing <code>Output1</code> into <code>Output2</code> in the process.</li>
+<li>Deterministic psuedo-random instance <strong>generation</strong>.</li>
+<li>Deterministic psuedo-random <strong>edits</strong>, the <code>DIn_i</code> shown in the figure.</li>
 </ul>
-<p>From-scratch consistency is a key assumption of this methodology: This (side-effecting) computation is semantically equivalent to the full computation of <code>Compute</code> from Input2.</p>
-<p>Suppose we consider <code>i</code> from 1 to 3, to show these relationships diagrammatically:</p>
-<pre><code>      Input1 --&gt; Compute --&gt; Output1
-        |                       | 
-        |  DIn1                 |   DOut1
-       \|/                     \|/
-        `                       ` 
-      Input2 --&gt; Compute --&gt; Output2
-        |                       | 
-        |  DIn2                 |   DOut2
-       \|/                     \|/
-        `                       ` 
-      Input3 --&gt; Compute --&gt; Output3
-        |                       | 
-        |  DIn3                 |   DOut3
-       \|/                     \|/
-        `                       ` 
-      Input4 --&gt; Compute --&gt; Output4</code></pre>
-<p>Adapton provides both a data structures collection and a runtime library to write <code>Compute</code>, and to express the input changes <code>DIni</code>. At the highest level, this approach consists of the programmer writing functional programs over inductive, persistant structures, specifically:</p>
-<ul class="incremental">
-<li>lists,</li>
-<li>balanced trees representing sequences,</li>
-<li>hash-tries representing finite maps, finite sets and graphs.</li>
-</ul>
-<p>That is to say, to a first approximation, the Adapton methodology for writing <code>Compute</code> consists of writing a functional (eager or lazy) program. Currently, the programmer thinks about programming abstractions that we collectively refer to as (explicit) <em>nominal memoization</em>. In the future, perhaps <em>nominal memoization</em> can be made implicit; currently, only explicit techniques exist. (Aside: Past work on <em>implicit</em> self-adjusting computation focused only on making the use of so-called modifiable references implicit; this is a complementary and orthogonal problem to implicitly choosing a naming strategy for nominal memoization).</p>
-<p>Nominal Adapton gave the first operational semantics for nominal memoziation and it included preliminary techniques for encoding lists, sequences, maps and sets was given by Nominal Adapton. These collections were heavily inspired by work on incremental computation via function caching by Pugh and Teitelbaum (POPL 1989). Nominal Adapton replaced structural naming strategies (aka hash-consing) with an explicit approach, permitting imperative cache effects. It suggested several naming straties for computations that use these collections. A central concern is authoring algorithms that do not unintentionally overwrite their cache, causing either unintended churn or feedback.</p>
-<p>The type system we call Typed, Nominal Adapton gives a useful static approximation of the store-naming effects of nominal memoization, making it possible to program generic library code, while avoiding unintended churn and feedback. Unlike other type systems for enforcing nominal structure, Typed Adapton uses a type and effect system to enforce that the <em>dynamic scoping</em> of nominal memoization is <em>write-once</em>, aka, functional, not imperative or relational. Other nominal type systems focus on enforcing <em>lexical scoping</em> of first-class binders; this problem and its soltuions are orthogal to enforcing the nominal structure of a nominal memoization.</p>
 <h2 id="testing">Testing</h2>
 <p>Rust does not (yet) implement Typed Adapton, only Nominal Adapton. In other words, it is possible to misuse the Rust interface and deviate from what would be permitted by Typed Adapton. One purpose of this test harness is to test the program <code>Compute</code> commutes in the diagram above: That naive recomputation always matches the behavior of nominal memoization.</p>
 <p>TODO -- Explain how to test an instance of <code>Input</code>, <code>Di</code>, <code>Compute</code> and <code>Output</code>.</p>
