@@ -49,11 +49,19 @@ pub struct Computer<Input,Output,
   output:       PhantomData<Output>
 }
 
-pub struct GenTest<Input:Generate+Edit,Output,
-                   Computer:Compute<Input,Output>> {
+pub struct TestComputer<Input:Generate+Edit,Output,
+                        Computer:Compute<Input,Output>> {
   pub computer: Computer,
   input:        PhantomData<Input>,
   output:       PhantomData<Output>
+}
+
+pub struct TestState<Input:Generate+Edit,Output,
+                     Computer:Compute<Input,Output>> {
+  pub engine:   Engine,
+  pub computer: TestComputer<Input,Output,Computer>,
+  pub input:    Input,
+  output:       PhantomData<Output>,
 }
 
 #[derive(Clone,Debug)]
@@ -103,6 +111,10 @@ pub struct EngineMetrics {
   pub engine_cnt: Cnt,
 }
 
+pub trait SampleGen {
+  fn sample(self:&mut Self) -> Option<Sample>;
+}
+
 // Lab experiment; Hides the Input, Output and Compute types, abstracting over them:
 pub trait LabExp {
   fn run<R:Rng+Clone>(self:Self, params:&LabExpParams) -> LabExpResults;
@@ -110,7 +122,7 @@ pub trait LabExp {
 
 impl<Input:'static+Generate+Edit,Output,
      Computer:'static+Compute<Input,Output>>
-  LabExp for GenTest<Input,Output,Computer> {
+  LabExp for TestComputer<Input,Output,Computer> {
 
     fn run<R:Rng+Clone> (self:Self, params:&LabExpParams) -> LabExpResults 
     {
