@@ -63,6 +63,7 @@ pub struct SampleParams {
   pub input_size: usize,
   pub input_gauge: usize,
   pub input_nominal_strategy: NominalStrategy,
+  pub validate_output: bool,
 }
 
 #[derive(Clone,Debug)]
@@ -80,9 +81,9 @@ pub enum NominalStrategy {
 #[derive(Clone,Debug)]
 pub struct Sample {
   pub params: SampleParams,
-  pub dcg:    EngineSample,
-  pub naive:  EngineSample,
-  pub valid:  Option<bool>
+  pub dcg_sample:   EngineSample,
+  pub naive_sample: EngineSample,
+  pub output_valid: Option<bool>
 }
 
 #[derive(Clone,Debug)]
@@ -132,20 +133,20 @@ impl<Input:'static+Generate+Edit,Output,
         init_naive();
         assert!(engine_is_naive());
         let rng = panic!("XXX: Todo, generate from a seed.");
-        let (naive_output, naive) = get_enginesample::<rand::ThreadRng,Input,Output,Computer>(rng);
+        let (naive_output, naive_sample) = get_enginesample::<rand::ThreadRng,Input,Output,Computer>(rng);
 
         // We want this to be really, really *fast*:
         init_dcg();
         assert!(engine_is_dcg());
         let rng = panic!("XXX: Todo, generate from a seed.");
-        let (dcg_output, dcg) = get_enginesample::<rand::ThreadRng,Input,Output,Computer>(rng);
+        let (dcg_output, dcg_sample) = get_enginesample::<rand::ThreadRng,Input,Output,Computer>(rng);
         // TODO: Compare the equality of the outputs, when command-line arguments say so; XXX
-        let valid = None;
+        let output_valid = None;
         return Sample{
           params:params.clone(),
-          dcg,
-          naive,
-          valid,
+          dcg_sample,
+          naive_sample,
+          output_valid,
         }
       }
 
