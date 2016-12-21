@@ -113,17 +113,17 @@ Suppose we consider `i` from 1 to 3, to show these relationships diagrammaticall
 ```       
       Input1 --> Compute --> Output1
         |                       | 
-        |  DIn1 (mutation)      |   DOut1 (uses DCG + change propagation)
+        |  DIn1 (edit1)         |   DOut1 (Compute, using DCG1)
        \|/                     \|/
         `                       ` 
       Input2 --> Compute --> Output2
         |                       | 
-        |  DIn2 (mutation)      |   DOut2 (uses DCG + change propagation)
+        |  DIn2 (edit2)         |   DOut2 (Compute, using DCG2)
        \|/                     \|/
         `                       ` 
       Input3 --> Compute --> Output3
         |                       | 
-        |  DIn3 (mutation)      |   DOut3 (uses DCG + change propagation)
+        |  DIn3 (edit3)         |   DOut3 (Compute, using DCG3)
        \|/                     \|/
         `                       ` 
       Input4 --> Compute --> Output4
