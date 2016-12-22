@@ -86,9 +86,9 @@ diagrammatically, shown further below.
  - `Outputi` -- The ith output (a data structure). For validating output (see diagram below), we compare output types for **equality**.
  - `Compute` -- The computation relating the `i`th Input to the `i`th
                 Output (a computation).
- - `DIni` -- The input change (aka "input delta") relating the ith
+ - `DIni` -- The input change (aka input _edit_ or _delta_) relating the ith
               input to the `i+1`th input (a computation).
- - `DOuti` -- The output change (aka "ouput delta") relating the ith
+ - `DOuti` -- The output change (aka _edit_ or _delta_) relating the ith
               output to the `i+1`th output (a computation).
 
 Note that while the input and outputs are data structures, their
@@ -103,14 +103,19 @@ choices:
    change-propagation over the DCG.  This relationship is shown as
    vertical edges on the right of the diagram.
 
-From-scratch consistency is a key assumption of this methodology: This
-   (side-effecting) computation is semantically equivalent to the full
-   computation of `Compute` from Input2.
+**From-scratch consistency** is a meta-theoretical property that
+   implies that the DCG approach is semantically equivalent to the
+   naive approach.  That is, its the property of the diagram below
+   commuting.
 
 **Diagram Example.**
 Suppose we consider `i` from 1 to 3, to show these relationships diagrammatically:
 
-```       
+```
+        |
+        |  generate
+       \|/ 
+        `  
       Input1 --> Compute --> Output1
         |                       | 
         |  DIn1 (edit1)         |   DOut1 (Compute, using DCG1)
@@ -133,9 +138,12 @@ Suppose we consider `i` from 1 to 3, to show these relationships diagrammaticall
 Generation and Editing Parameters
 ---------------------------------
 
-Adapton Lab generates and edits inputs generically.  These operations
-are tuned by the lab user through several **generation parameters**.
-An implementation chooses how to interpret these parameters, with the
+Adapton Lab generates and edits inputs generically (the vertical edges
+on the left of the diagram above).
+
+These operations are tuned by the lab user through several
+**generation parameters** (which also control editing).  An
+implementation chooses how to interpret these parameters, with the
 following guidelines:
 
  - **seed** (`--seed`): a natural number to seed deterministic, psuedo-random choices

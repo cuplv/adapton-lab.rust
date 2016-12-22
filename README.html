@@ -36,17 +36,21 @@
 <li><code>Inputi</code> -- The ith input (a data structure). Generically, this consists of abstract notions of <strong>input generation</strong> and <strong>editing</strong>.</li>
 <li><code>Outputi</code> -- The ith output (a data structure). For validating output (see diagram below), we compare output types for <strong>equality</strong>.</li>
 <li><code>Compute</code> -- The computation relating the <code>i</code>th Input to the <code>i</code>th Output (a computation).</li>
-<li><code>DIni</code> -- The input change (aka &quot;input delta&quot;) relating the ith input to the <code>i+1</code>th input (a computation).</li>
-<li><code>DOuti</code> -- The output change (aka &quot;ouput delta&quot;) relating the ith output to the <code>i+1</code>th output (a computation).</li>
+<li><code>DIni</code> -- The input change (aka input <em>edit</em> or <em>delta</em>) relating the ith input to the <code>i+1</code>th input (a computation).</li>
+<li><code>DOuti</code> -- The output change (aka <em>edit</em> or <em>delta</em>) relating the ith output to the <code>i+1</code>th output (a computation).</li>
 </ul>
 <p>Note that while the input and outputs are data structures, their relationships are all computations: The input is modified by a computation <code>DIn1</code>, and to compute <code>Output2</code>, the system has two choices:</p>
 <ul class="incremental">
 <li><strong>Naive</strong>: Run <code>Compute</code> over <code>Input2</code>, (fully) computing <code>Output2</code> from <code>Input2</code>. This relationship is shown as horizontal edges in the diagram.</li>
 <li><strong>DCG</strong>: Reuse the traced computation of <code>Compute</code> over <code>Output1</code>, changing <code>Output1</code> into <code>Output2</code> in the process, via change-propagation over the DCG. This relationship is shown as vertical edges on the right of the diagram.</li>
 </ul>
-<p>From-scratch consistency is a key assumption of this methodology: This (side-effecting) computation is semantically equivalent to the full computation of <code>Compute</code> from Input2.</p>
+<p><strong>From-scratch consistency</strong> is a meta-theoretical property that implies that the DCG approach is semantically equivalent to the naive approach. That is, its the property of the diagram below commuting.</p>
 <p><strong>Diagram Example.</strong> Suppose we consider <code>i</code> from 1 to 3, to show these relationships diagrammatically:</p>
-<pre><code>      Input1 --&gt; Compute --&gt; Output1
+<pre><code>        |
+        |  generate
+       \|/ 
+        `  
+      Input1 --&gt; Compute --&gt; Output1
         |                       | 
         |  DIn1 (edit1)         |   DOut1 (Compute, using DCG1)
        \|/                     \|/
@@ -62,13 +66,14 @@
        \|/                     \|/
         `                       ` 
       Input4 --&gt; Compute --&gt; Output4</code></pre>
-<h2 id="generation-parameters">Generation Parameters</h2>
-<p>Adapton Lab generates and edits inputs generically. These operations are tuned by the lab user through several <strong>generation parameters</strong>. An implementation chooses how to interpret these parameters, with the following guidelines:</p>
+<h2 id="generation-and-editing-parameters">Generation and Editing Parameters</h2>
+<p>Adapton Lab generates and edits inputs generically (the vertical edges on the left of the diagram above).</p>
+<p>These operations are tuned by the lab user through several <strong>generation parameters</strong> (which also control editing). An implementation chooses how to interpret these parameters, with the following guidelines:</p>
 <ul class="incremental">
-<li>a <strong>seed</strong> for deterministic psuedo-randomness (<code>--seed</code>)</li>
-<li>a natural number representing <strong>size</strong> (<code>--size</code>)</li>
-<li>q natural number representing <strong>expected nominal sparsity</strong>; ie, its <strong>gauge</strong> (<code>--gauge</code>). Bigger is more sparse; 1 is finest (e.g., names for each input element). 0 means no names at all.</li>
-<li>a bit indicating whether nominal sparisity is <em>regular</em> or <em>content-determined</em> (<code>--name-regular</code> or <code>--name-bycontent</code>).</li>
+<li><strong>seed</strong> (<code>--seed</code>): a natural number to seed deterministic, psuedo-random choices</li>
+<li><strong>size</strong> (<code>--size</code>): a natural number; the number of elements of input</li>
+<li><strong>gauge</strong> (<code>--gauge</code>): a natural number representing the <em>expected number of non-nominal constructors to each nominal constructor</em>. Bigger is more non-nominal constructors, and 1 is finest nominal structure (e.g., a name for each input element). We use to 0 mean <em>no names at all</em>, or equivalently, an <em>infinite number of constructors before a name</em>.</li>
+<li><strong>naming strategy</strong> (<code>--name-regular</code> or <code>--name-bycontent</code>): a bit indicating whether nominal boundaries are <em>regular</em> or <em>content-determined</em>. The former is not psuedo-random, and the latter is when the content is psuedo-random.</li>
 </ul>
 <p>In turn, these parameters control the following processes on input:</p>
 <ul class="incremental">
