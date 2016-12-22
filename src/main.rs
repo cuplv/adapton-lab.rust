@@ -24,11 +24,14 @@ use std::marker::PhantomData;
 
 // --- Todo: Move to labdef:
 
+/// A bit that controls how names are placed in the input; See `README.md` for more.
 #[derive(Clone,Debug,RustcEncodeable)]
 pub enum NominalStrategy {
   Regular,
   ByContent,
 }
+
+/// Parameters for generating and editing input; See `README.md` for more.
 #[derive(Clone,Debug,RustcEncodeable)]
 pub struct GenerateParams {
   pub size: usize, 
@@ -36,26 +39,39 @@ pub struct GenerateParams {
   pub nominal_strategy:NominalStrategy
 }
 
+/// Generic method for generating a random input.
+/// See `README.md` for more.
 pub trait Generate<T> {
   fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> T;
 } 
 
+/// Generic process for editing an input randomly, in a stateful sequence of edits.
+/// See `README.md` for more.
 pub trait Edit<T,S> : Clone {
   fn edit_init<R:Rng>(rng:&mut R, params:&GenerateParams) -> S;
   fn edit<R:Rng>(pre_edit:T, edit_state:S, rng:&mut R, params:&GenerateParams) -> (T, S);
 }
 
+/// Generic notion of a computation to run naively and incrementally.
+/// It has specific `Input` and `Output` types, and a way to `compute`
+/// the `Output` from the `Input`.
+/// See `README.md` for more.
 pub trait Compute<Input,Output> {
   fn compute(Input) -> Output;
 }
 
-pub struct Computer<Input,Output,
-                    Computer:Compute<Input,Output>> {
-  pub computer: Computer,
-  input:        PhantomData<Input>,
-  output:       PhantomData<Output>
-}
+// ** Unneeded:
+// /// Structure for instantiating
+// pub struct Computer<Input,Output,
+//                     Computer:Compute<Input,Output>> {
+//   pub computer: Computer,
+//   input:        PhantomData<Input>,
+//   output:       PhantomData<Output>
+// }
 
+/// Generic notion of an Incremental Computation to Evaluate and Test.
+/// We instantiate this structure once for each test in our test suite.
+/// We implement the `LabExp` trait generically for this structure.
 pub struct TestComputer<Input,EditSt,Output,
                         InputDist:Generate<Input>+Edit<Input,EditSt>,
                         Computer:Compute<Input,Output>> {
@@ -67,6 +83,7 @@ pub struct TestComputer<Input,EditSt,Output,
   output:    PhantomData<Output>
 }
 
+/// Parameters to running a single lab experiment.
 #[derive(Clone,Debug,RustcEncodeable)]
 pub struct LabExpParams {
   pub sample_params: SampleParams,
@@ -75,6 +92,13 @@ pub struct LabExpParams {
   pub change_batch_loopc: usize,
 }
 
+/// Parameters for collecting a single sample.  In addition to these
+/// parameters, the experiment maintains a Rng based on the
+/// input_seeds, below; this Rng is given to Edit::edit to generate
+/// psuedo-random edits, in batches.  For each engine, this Rng is
+/// sequenced across successive samples.  Given an input_seeds vector,
+/// there is one unique Rng sequence for each engine's sequence of
+/// samples.
 #[derive(Clone,Debug,RustcEncodeable)]
 pub struct SampleParams {
   /// We convert this seed into a random-number-generator before generating and editing.
@@ -87,6 +111,7 @@ pub struct SampleParams {
   pub change_batch_size: usize,
 }
 
+/// The result of a lab is a sequence of samples.
 #[derive(Clone,Debug,RustcEncodeable)]
 pub struct LabExpResults {
   pub samples: Vec<Sample>
@@ -106,18 +131,21 @@ pub struct Sample {
   pub output_valid: Option<bool>
 }
 
+/// To sample a single engine, we record metrics for processing the
+/// input (left vertical edge in `README.md` diagram).
 #[derive(Clone,Debug,RustcEncodeable)]
 pub struct EngineSample {
   pub process_input:    EngineMetrics,
   pub compute_output:   EngineMetrics,
 }
 
+/// For each engine, for each sampled subcomputation, we record the
+/// real time (in nanoseconds) and engine-based counters for DCG costs.
 #[derive(Clone,Debug,RustcEncodeable)]
 pub struct EngineMetrics {
   pub time_ns:    u64,
   pub engine_cnt: Cnt,
 }
-
 
 // --- Todo: Move to labrun:
 
