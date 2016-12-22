@@ -138,14 +138,13 @@ are tuned by the lab user through several **generation parameters**.
 An implementation chooses how to interpret these parameters, with the
 following guidelines:
 
- - **seed** (`--seed`): deterministic psuedo-random structure and elements
- - **size** (`--size`): a natural number 
- - **gauge** (`--gauge`): a natural number representing the **expected number of non-nominal
-    to nominal constructors**. Bigger is more non-nominal constructors; 1
-    is finest nominal structure (e.g., names for each input
-    element). 0 means no names at all; here, 0 represents the
-    "largest" number, an infinite number of constructors before a
-    name.
+ - **seed** (`--seed`): a natural number to seed deterministic, psuedo-random choices
+ - **size** (`--size`): a natural number; the number of elements of input
+ - **gauge** (`--gauge`): a natural number representing the _expected
+    number of non-nominal constructors to each nominal
+    constructor_. Bigger is more non-nominal constructors, and 1 is
+    finest nominal structure (e.g., a name for each input element). We use to 0
+    mean _no names at all_, or equivalently, an _infinite number of constructors before a name_.
  - **naming strategy** (`--name-regular` or `--name-bycontent`): a bit
      indicating whether nominal boundaries are _regular_ or
      _content-determined_.  The former is not psuedo-random, and the
