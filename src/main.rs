@@ -212,6 +212,7 @@ impl<Input:Clone,Output:Eq,
           naive_sample,
           output_valid,
         };
+        self.change_batch_num += 1;
         Some(sample)
       }
     }

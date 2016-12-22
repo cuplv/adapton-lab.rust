@@ -138,14 +138,18 @@ are tuned by the lab user through several **generation parameters**.
 An implementation chooses how to interpret these parameters, with the
 following guidelines:
 
- - a **seed** for deterministic psuedo-randomness (`--seed`)
- - a natural number representing **size** (`--size`)
- - q natural number representing **expected nominal sparsity**; ie,
-    its **gauge** (`--gauge`). Bigger is more sparse; 1 is finest
-    (e.g., names for each input element). 0 means no names at all.
- - a bit indicating whether nominal sparisity is _regular_ or
-     _content-determined_ (`--name-regular` or `--name-bycontent`).
-
+ - **seed** (`--seed`): deterministic psuedo-random structure and elements
+ - **size** (`--size`): a natural number 
+ - **gauge** (`--gauge`): a natural number representing the **expected number of non-nominal
+    to nominal constructors**. Bigger is more non-nominal constructors; 1
+    is finest nominal structure (e.g., names for each input
+    element). 0 means no names at all; here, 0 represents the
+    "largest" number, an infinite number of constructors before a
+    name.
+ - **naming strategy** (`--name-regular` or `--name-bycontent`): a bit
+     indicating whether nominal boundaries are _regular_ or
+     _content-determined_.  The former is not psuedo-random, and the
+     latter is when the content is psuedo-random.
 
 In turn, these parameters control the following processes on input:
 
