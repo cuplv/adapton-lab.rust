@@ -225,27 +225,27 @@ impl<Input:Clone+Debug,EditSt,Output:Eq,
      Computer:Compute<Input,Output>>
   SampleGen for TestState<rand::StdRng,Input,EditSt,Output,InputDist,Computer> {
     fn sample (self:&mut Self) -> Option<Sample> {
-      if ( self.change_batch_num == self.params.change_batch_loopc ) { None } else { 
-
+      if ( self.change_batch_num == self.params.change_batch_loopc ) {
+        None 
+      } else { // Collect the next sample, for each engine, using get_engine_sample.
+        
         // Run Naive Version
-        let _ = use_engine(Engine::Naive);
-        assert!(engine_is_naive());
-        let mut rng = self.rng.clone();
+        let _ = use_engine(Engine::Naive); assert!(engine_is_naive());
+        let mut rng = self.rng.clone(); // Restore Rng
         let (naive_output, naive_input, naive_editst, naive_sample) = 
           get_engine_sample::<rand::StdRng,Input,EditSt,Output,InputDist,Computer>
           (&mut rng, &self.params.sample_params, None);
-        self.naive_state.input = Some((naive_input, naive_editst));
+        self.naive_state.input = Some((naive_input, naive_editst)); // Save the input and input-editing state
 
         // Run DCG Version
         let dcg = self.dcg_state.engine.clone(); // Not sure about whether this Clone will do what we want; XXX
-        let _ = use_engine(dcg);
-        assert!(engine_is_dcg());
-        let mut rng = self.rng.clone();
+        let _ = use_engine(dcg); assert!(engine_is_dcg());
+        let mut rng = self.rng.clone(); // Restore Rng
         let (dcg_output, dcg_input, dcg_editst, dcg_sample) = 
           get_engine_sample::<rand::StdRng,Input,EditSt,Output,InputDist,Computer>
           (&mut rng, &self.params.sample_params, None);
         self.dcg_state.engine = use_engine(Engine::Naive); // Swap out the DCG
-        self.dcg_state.input = Some((dcg_input, dcg_editst));
+        self.dcg_state.input = Some((dcg_input, dcg_editst)); // Save the input and input-editing state
         
         // Save the Rng for the next sample.
         self.rng = Box::new(*rng.clone());
@@ -332,29 +332,10 @@ fn labexp_params_defaults() -> LabExpParams {
 }
 
 
-
+// TODO -- Put these implementations into a 'catalog' module.
 
 #[derive(Clone,Debug)]
 pub struct ListInt_Uniform_Prepend<T,S> { T:PhantomData<T>, S:PhantomData<S> }
-#[derive(Clone,Debug)]
-pub struct ListPt2D_Uniform_Prepend<T,S> { T:PhantomData<T>, S:PhantomData<S> }
-
-#[derive(Clone,Debug)]
-pub struct ListInt_LazyMap { }
-#[derive(Clone,Debug)]
-pub struct ListInt_EagerMap { }
-#[derive(Clone,Debug)]
-pub struct ListInt_LazyFilter { }
-#[derive(Clone,Debug)]
-pub struct ListInt_EagerFilter { }
-#[derive(Clone,Debug)]
-pub struct ListInt_Reverse { }
-#[derive(Clone,Debug)]
-pub struct ListInt_LazyMergesort { }
-#[derive(Clone,Debug)]
-pub struct ListInt_EagerMergesort { }
-#[derive(Clone,Debug)]
-pub struct ListPt2D_Quickhull { }
 
 impl<S> Generate<List<usize>> for ListInt_Uniform_Prepend<List<usize>,S> {
   fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<usize> {
@@ -387,6 +368,43 @@ impl Edit<List<usize>, usize> for ListInt_Uniform_Prepend<List<usize>,usize> {
     (list_cons(i, l), i + 1)
   }
 }
+
+
+#[derive(Clone,Debug)]
+pub struct ListPt2D_Uniform_Prepend<T,S> { T:PhantomData<T>, S:PhantomData<S> }
+
+type Pt2D = (usize,usize); // TODO Fix this
+
+impl<S> Generate<List<Pt2D>> for ListPt2D_Uniform_Prepend<List<Pt2D>,S> { // TODO
+  fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<Pt2D> {
+    panic!("TODO")
+  }
+}
+
+impl Edit<List<Pt2D>,usize> for ListPt2D_Uniform_Prepend<List<Pt2D>,usize> { // TODO
+  fn edit_init<R:Rng>(rng:&mut R, params:&GenerateParams) -> usize { 0 }
+  fn edit<R:Rng>(state:List<Pt2D>, st:usize, rng:&mut R, params:&GenerateParams) -> (List<Pt2D>, usize) {
+    panic!("TODO")
+  }
+}
+
+
+#[derive(Clone,Debug)]
+pub struct ListInt_LazyMap { }
+#[derive(Clone,Debug)]
+pub struct ListInt_EagerMap { }
+#[derive(Clone,Debug)]
+pub struct ListInt_LazyFilter { }
+#[derive(Clone,Debug)]
+pub struct ListInt_EagerFilter { }
+#[derive(Clone,Debug)]
+pub struct ListInt_Reverse { }
+#[derive(Clone,Debug)]
+pub struct ListInt_LazyMergesort { }
+#[derive(Clone,Debug)]
+pub struct ListInt_EagerMergesort { }
+#[derive(Clone,Debug)]
+pub struct ListPt2D_Quickhull { }
 
 impl Compute<List<usize>,List<usize>> for ListInt_EagerMap {
   fn compute(inp:List<usize>) -> List<usize> {
@@ -426,21 +444,6 @@ impl Compute<List<usize>,List<usize>> for ListInt_LazyMergesort {
 
 impl Compute<List<usize>,List<usize>> for ListInt_EagerMergesort {
   fn compute(inp:List<usize>) -> List<usize> {
-    panic!("TODO")
-  }
-}
-
-type Pt2D = (usize,usize); // TODO Fix this
-
-impl<S> Generate<List<Pt2D>> for ListPt2D_Uniform_Prepend<List<Pt2D>,S> { // TODO
-  fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<Pt2D> {
-    panic!("TODO")
-  }
-}
-
-impl Edit<List<Pt2D>,usize> for ListPt2D_Uniform_Prepend<List<Pt2D>,usize> { // TODO
-  fn edit_init<R:Rng>(rng:&mut R, params:&GenerateParams) -> usize { 0 }
-  fn edit<R:Rng>(state:List<Pt2D>, st:usize, rng:&mut R, params:&GenerateParams) -> (List<Pt2D>, usize) {
     panic!("TODO")
   }
 }
