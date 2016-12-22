@@ -2,7 +2,7 @@
 #![feature(rustc_private)]
 #![feature(custom_derive)]
 
-//use std::fmt::Debug;
+use std::fmt::Debug;
 //use std::hash::Hash;
 use std::rc::Rc;
 use std::path::Path;
@@ -55,12 +55,12 @@ pub struct Computer<Input,Output,
 pub struct TestComputer<Input,Output,
                         InputDist:Generate<Input>+Edit<Input>,
                         Computer:Compute<Input,Output>> {
+  identity:  Name,
   computer:  PhantomData<Computer>,
   input:     PhantomData<Input>,
   inputdist: PhantomData<InputDist>,
   output:    PhantomData<Output>
 }
-
 
 #[derive(Clone,Debug,RustcEncodeable)]
 pub struct LabExpParams {
@@ -209,20 +209,23 @@ impl<Input:Clone,Output:Eq,
 
 // Lab experiment; Hides the Input, Output and Compute types, abstracting over them:
 pub trait LabExp {
-  fn run(self:Self, params:&LabExpParams) -> LabExpResults;
+  fn name(self:&Self) -> Name;
+  fn run(self:&Self, params:&LabExpParams) -> LabExpResults;
 }
 
 impl<Input:Clone,Output:Eq,
      InputDist:'static+Generate<Input>+Edit<Input>,
      Computer:'static+Compute<Input,Output>>
   LabExp for TestComputer<Input,Output,InputDist,Computer> {
-    
-    fn run(self:Self, params:&LabExpParams) -> LabExpResults 
+    fn name(self:&Self) -> Name { self.identity.clone() }
+    fn run(self:&Self, params:&LabExpParams) -> LabExpResults 
     {
-      // TODO: Want a loop here, where we switch back and forth between using the Naive engine, and using the DCG engine.
-      // We want to interleave this way in order to compare outputs and metrics (counts and timings) on a fine-grained scale.
+      // TODO: Want a loop here, where we switch back and forth
+      // between using the Naive engine, and using the DCG engine.  We
+      // want to interleave this way in order to compare outputs and
+      // metrics (counts and timings) on a fine-grained scale.
       fn get_sample_gen<Input:Clone,
-                        Output,
+                        Output:Eq,
                         InputDist:Generate<Input>+Edit<Input>,
                         Computer:Compute<Input,Output>> 
         (params:&LabExpParams) -> TestState<Input,Output,InputDist,Computer> 
@@ -231,15 +234,19 @@ impl<Input:Clone,Output:Eq,
         init_naive();
         assert!(engine_is_naive());
         let rng = panic!("XXX: Todo, generate from a seed.");
-        let (naive_output, naive_input, naive_sample) = get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>(rng, &params.sample_params, None);
-        
+        let (naive_output, naive_input, naive_sample) = 
+          get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>
+          (rng, &params.sample_params, None);        
         // We want this to be really, really *fast*:
         let mut naive = init_dcg();
         assert!(engine_is_dcg());
         let rng = panic!("XXX: Todo, generate from a seed.");
-        let (dcg_output, dcg_input, dcg_sample) = get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>(rng, &params.sample_params, None);
-        // TODO: Compare the equality of the outputs, when command-line arguments say so; XXX
-        let output_valid = None;
+        let (dcg_output, dcg_input, dcg_sample) = 
+          get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>
+          (rng, &params.sample_params, None);
+        let output_valid = { if params.sample_params.validate_output 
+                             { Some( naive_output == dcg_output ) }
+                             else { None }};
         let sample = Sample{
           params:params.sample_params.clone(),
           batch_name:0, // Index/name the change batches; one sample per compute + change batch
@@ -270,18 +277,20 @@ impl<Input:Clone,Output:Eq,
           samples:vec![sample],
         }
       }
-      
+            
       let mut st = get_sample_gen::<Input,Output,InputDist,Computer>(params);
       loop {
-      let _ = (&mut st).sample();
-      let _ = (&mut st).sample();
-      
+        let sample = (&mut st).sample();
+        match sample {
+          Some(_) => continue,
+          None => break,
+        }
+      };
       return LabExpResults {
         samples: st.samples,
       }
     }
   }
-}
 
 
 fn forkboilerplate () {
@@ -306,7 +315,24 @@ fn csv_of_runtimes(path:&str, samples: Vec<Sample>) {
 #[derive(Clone,Debug)]
 pub struct ListInt_Uniform_Prepend<T> { T:PhantomData<T> }
 #[derive(Clone,Debug)]
-pub struct ListInt_Map { }
+pub struct ListPt2D_Uniform_Prepend<T> { T:PhantomData<T> }
+
+#[derive(Clone,Debug)]
+pub struct ListInt_LazyMap { }
+#[derive(Clone,Debug)]
+pub struct ListInt_EagerMap { }
+#[derive(Clone,Debug)]
+pub struct ListInt_LazyFilter { }
+#[derive(Clone,Debug)]
+pub struct ListInt_EagerFilter { }
+#[derive(Clone,Debug)]
+pub struct ListInt_Reverse { }
+#[derive(Clone,Debug)]
+pub struct ListInt_LazyMergesort { }
+#[derive(Clone,Debug)]
+pub struct ListInt_EagerMergesort { }
+#[derive(Clone,Debug)]
+pub struct ListPt2D_Quickhull { }
 
 impl Generate<List<usize>> for ListInt_Uniform_Prepend<List<usize>> {
   fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<usize> {
@@ -320,25 +346,144 @@ impl Edit<List<usize>> for ListInt_Uniform_Prepend<List<usize>> {
   }
 }
 
-impl Compute<List<usize>,List<usize>> for ListInt_Map {
+impl Compute<List<usize>,List<usize>> for ListInt_EagerMap {
   fn compute(inp:List<usize>) -> List<usize> {
     panic!("TODO")
   }
 }
 
+impl Compute<List<usize>,List<usize>> for ListInt_EagerFilter {
+  fn compute(inp:List<usize>) -> List<usize> {
+    panic!("TODO")
+  }
+}
+
+impl Compute<List<usize>,List<usize>> for ListInt_LazyMap {
+  fn compute(inp:List<usize>) -> List<usize> {
+    panic!("TODO")
+  }
+}
+
+impl Compute<List<usize>,List<usize>> for ListInt_LazyFilter {
+  fn compute(inp:List<usize>) -> List<usize> {
+    panic!("TODO")
+  }
+}
+
+impl Compute<List<usize>,List<usize>> for ListInt_Reverse {
+  fn compute(inp:List<usize>) -> List<usize> {
+    panic!("TODO")
+  }
+}
+
+impl Compute<List<usize>,List<usize>> for ListInt_LazyMergesort {
+  fn compute(inp:List<usize>) -> List<usize> {
+    panic!("TODO")
+  }
+}
+
+impl Compute<List<usize>,List<usize>> for ListInt_EagerMergesort {
+  fn compute(inp:List<usize>) -> List<usize> {
+    panic!("TODO")
+  }
+}
+
+type Pt2D = (usize,usize); // TODO Fix this
+
+impl Generate<List<Pt2D>> for ListPt2D_Uniform_Prepend<List<Pt2D>> { // TODO
+  fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<Pt2D> {
+    panic!("TODO")
+  }
+}
+
+impl Edit<List<Pt2D>> for ListPt2D_Uniform_Prepend<List<Pt2D>> { // TODO
+  fn edit<R:Rng>(state:List<Pt2D>, rng:&mut R, params:&GenerateParams) -> List<Pt2D> {
+    panic!("TODO")
+  }
+}
+
+impl Compute<List<Pt2D>,List<Pt2D>> for ListPt2D_Quickhull {
+  fn compute(inp:List<Pt2D>) -> List<Pt2D> {
+    panic!("TODO")
+  }
+}
+
+#[macro_export]
+macro_rules! testcomputer {
+  ( $name:expr, $inp:ty, $out:ty, $dist:ty, $comp:ty ) => {{ Box::new( TestComputer::<$inp,$out,$dist,$comp>{ 
+    identity:$name,
+    input:PhantomData, output:PhantomData, inputdist:PhantomData, computer:PhantomData
+    }) }}
+}
+
+
 /// This is the master list of all tests in the current Adapton Lab
 pub fn all_tests() -> Vec<Box<LabExp>> {
   return vec![
-    Box::new( TestComputer::<
-              List<usize>,
-              List<usize>,
-              ListInt_Uniform_Prepend<List<usize>>,
-              ListInt_Map>
-              { input:PhantomData, output:PhantomData, inputdist:PhantomData, computer:PhantomData } ),
-    
+    testcomputer!(name_of_str("eager-map"),
+                  List<usize>,
+                  List<usize>,
+                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_EagerMap)
+      ,
+    testcomputer!(name_of_str("eager-filter"),
+                  List<usize>,
+                  List<usize>,
+                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_EagerFilter)
+      ,
+    testcomputer!(name_of_str("lazy-map"),
+                  List<usize>,
+                  List<usize>,
+                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_LazyMap)
+      ,
+    testcomputer!(name_of_str("lazy-filter"),
+                  List<usize>,
+                  List<usize>,
+                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_LazyFilter)
+      ,
+    testcomputer!(name_of_str("reverse"),
+                  List<usize>,
+                  List<usize>,
+                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_Reverse)
+      ,
+    testcomputer!(name_of_str("eager-mergesort"),
+                  List<usize>,
+                  List<usize>,
+                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_EagerMergesort)
+      ,
+    testcomputer!(name_of_str("lazy-mergesort"),
+                  List<usize>,
+                  List<usize>,
+                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_EagerMergesort)
+      ,
+    testcomputer!(name_of_str("quickhull"),
+                  List<Pt2D>,
+                  List<Pt2D>,
+                  ListPt2D_Uniform_Prepend<List<Pt2D>>,
+                  ListPt2D_Quickhull)
+      ,
   ]
 }
 
-fn main() {
-    println!("Hello, world!");
+fn labexp_params_from_clap() -> LabExpParams {
+  panic!("")
 }
+
+fn run_all_tests() {
+  //let params = labexp_params_from_clap();
+  let tests = all_tests();
+  for test in tests.iter() {
+    println!("Test: {:?}", test.name());
+    //let results = test.run(&params);
+  }
+}
+
+#[test]
+fn test_all() { run_all_tests() }
+fn main() { run_all_tests() }
