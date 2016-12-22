@@ -187,7 +187,8 @@ fn get_engine_sample
    > 
   (rng:&mut R, params:&SampleParams, input:Option<(Input,EditSt)>) -> (Output,Input,EditSt,EngineSample) 
 {
-  let mut rng2 = rng.clone();
+  let mut rng2 = rng;
+  
   let ((edited_input, editst), process_input) : ((Input,EditSt),EngineMetrics) = 
     match input {
       None => 
@@ -198,20 +199,23 @@ fn get_engine_sample
         get_engine_metrics(
           move || InputDist::edit(input, editst, &mut rng2, &params.generate_params))
     };
-  println!("Input: {:?} -- {:?}", edited_input, process_input); // XXX Temp  
-  
+  println!("EngineSample::process_input: {:?}", process_input); // XXX Temp  
+
   let input2 = edited_input.clone();
   let (output, compute_output): (Output,EngineMetrics) 
     = ns(name_of_str("compute"),
          move || get_engine_metrics(move || Computer::compute(input2) ));
 
-  println!("Output: {:?} -- {:?}", output, compute_output); // XXX Temp  
+  println!("EngineSample::compute_output: {:?}", compute_output); // XXX Temp  
+
+  println!(" Input: {:?}", edited_input); // XXX Temp
+  println!("Output: {:?}", output); // XXX Temp
   
   let engine_sample = EngineSample{
     process_input,
     compute_output,
   };
-  println!("{:?}", engine_sample); // XXX Temp
+  //println!("{:?}", engine_sample); // XXX Temp
   return (output, edited_input, editst, engine_sample)
 }
 
@@ -287,7 +291,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
         self.dcg_state.input = Some((dcg_input_edited, dcg_editst)); // Save the input and input-editing state
         
         // Save the Rng for the next sample.
-        self.rng = Box::new(*rng.clone());
+        self.rng = Box::new(*rng);
 
         // Compare the two outputs for equality
         let output_valid = if self.params.sample_params.validate_output { 
@@ -327,7 +331,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
       loop {
         println!("{:?}", self.name());
         let sample = (&mut st).sample();
-        println!("{:?}", sample);
+        //println!("{:?}", sample);
         match sample {
           Some(_) => continue,
           None => break,
@@ -377,14 +381,14 @@ pub struct ListInt_Uniform_Prepend<T,S> { T:PhantomData<T>, S:PhantomData<S> }
 
 impl<S> Generate<List<usize>> for ListInt_Uniform_Prepend<List<usize>,S> {
   fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<usize> {
-    let elm : usize = rng.gen() ;
-    let elm = elm % 1000 ;
     let mut l : List<usize> = list_nil();
     for i in 0..params.size {
       if i % params.gauge == 0 {
         l = list_art(cell(name_of_usize(i), l));
         l = list_name(name_of_usize(i), l);
       } else { } ;
+      let elm : usize = rng.gen() ;
+      let elm = elm % 1000 ;
       l = list_cons(elm,  l);
     } ;
     l
@@ -457,8 +461,7 @@ impl Compute<List<usize>,List<usize>> for ListInt_EagerMap {
 
 impl Compute<List<usize>,List<usize>> for ListInt_EagerFilter {
   fn compute(inp:List<usize>) -> List<usize> {
-    //panic!("TODO")
-    inp
+    list_filter_eager(inp,Rc::new(|x:&usize| (*x) % 3 == 0))
   }
 }
 
@@ -470,15 +473,13 @@ impl Compute<List<usize>,List<usize>> for ListInt_LazyMap {
 
 impl Compute<List<usize>,List<usize>> for ListInt_LazyFilter {
   fn compute(inp:List<usize>) -> List<usize> {
-    //panic!("TODO")
-    inp
+    list_filter_lazy(inp,Rc::new(|x:&usize| (*x) % 3 == 0))
   }
 }
 
 impl Compute<List<usize>,List<usize>> for ListInt_Reverse {
   fn compute(inp:List<usize>) -> List<usize> {
-    //panic!("TODO")
-    inp
+    list_reverse(inp, list_nil())
   }
 }
 
