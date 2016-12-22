@@ -410,10 +410,15 @@ impl Compute<List<Pt2D>,List<Pt2D>> for ListPt2D_Quickhull {
 
 #[macro_export]
 macro_rules! testcomputer {
-  ( $name:expr, $inp:ty, $out:ty, $dist:ty, $comp:ty ) => {{ Box::new( TestComputer::<$inp,$out,$dist,$comp>{ 
-    identity:$name,
-    input:PhantomData, output:PhantomData, inputdist:PhantomData, computer:PhantomData
-    }) }}
+  ( $name:expr, $inp:ty, $out:ty, $dist:ty, $comp:ty ) => {{ 
+    Box::new( 
+      TestComputer
+        ::<$inp,$out,$dist,$comp>
+      { 
+        identity:$name,
+        input:PhantomData, output:PhantomData, inputdist:PhantomData, computer:PhantomData
+      }) 
+  }}
 }
 
 
