@@ -21,6 +21,9 @@ use adapton::engine::*;
 use rand::{Rng, SeedableRng, StdRng};
 use std::marker::PhantomData;
 
+
+// --- Todo: Move to labdef:
+
 #[derive(Clone,Debug,RustcEncodeable)]
 pub enum NominalStrategy {
   Regular,
@@ -115,6 +118,8 @@ pub struct EngineMetrics {
   pub engine_cnt: Cnt,
 }
 
+
+// --- Todo: Move to labrun:
 
 pub trait SampleGen {
   fn sample(self:&mut Self) -> Option<Sample>;
@@ -220,6 +225,10 @@ fn get_sample_gen
   }
 }
 
+/// Advances the TestState forward by one sample of each engine.  For
+/// each engine, we process the current input (either generating it,
+/// or editing it) and we compute a new output over this processed input.
+/// Optionally, we compare the outputs of the engines for equality.
 impl<Input:Clone+Debug,EditSt,Output:Eq,
      InputDist:Generate<Input>+Edit<Input,EditSt>,
      Computer:Compute<Input,Output>>
@@ -268,12 +277,15 @@ impl<Input:Clone+Debug,EditSt,Output:Eq,
     }
   }
 
-// Lab experiment; Hides the Input, Output and Compute types, abstracting over them:
+/// Lab experiment: Hides the Input, Output and Compute types of a
+/// TestComputer, abstracting over them.
 pub trait LabExp {
   fn name(self:&Self) -> Name;
   fn run(self:&Self, params:&LabExpParams) -> LabExpResults;
 }
 
+/// Lab experiment implementation: Implements the LabExp trait for any
+/// TestComputer instantiation.
 impl<Input:Clone+Debug,EditSt,Output:Eq,
      InputDist:'static+Generate<Input>+Edit<Input,EditSt>,
      Computer:'static+Compute<Input,Output>>
@@ -294,6 +306,9 @@ impl<Input:Clone+Debug,EditSt,Output:Eq,
       }
     }
   }
+
+
+// -- Todo: Keep in main.rs:
 
 
 fn forkboilerplate () {
@@ -354,7 +369,7 @@ impl<S> Generate<List<usize>> for ListInt_Uniform_Prepend<List<usize>,S> {
 
 impl Edit<List<usize>, usize> for ListInt_Uniform_Prepend<List<usize>,usize> {
   fn edit_init<R:Rng>(rng:&mut R, params:&GenerateParams) -> usize { 
-    return params.size
+    return params.size // Initial editing state = The size of the generated input
   }
   fn edit<R:Rng>(l_preedit:List<usize>, 
                  next_name:usize,
@@ -453,6 +468,18 @@ impl Compute<List<Pt2D>,List<Pt2D>> for ListPt2D_Quickhull {
     panic!("TODO")
   }
 }
+
+// TODO: Move the start of this file (above this marker) to separate modules/files: 
+//
+// -- The labdef module abstractly defines lab experiments:
+// parameters, samples and generic traits.
+//
+// -- The labrun module implements the LabExp trait for any
+// TestComputer instantiation.
+//
+// -- The catalog module allows us to instantiate TestComputer in
+// standard ways, exercising the Adapton collections library.
+//
 
 #[macro_export]
 macro_rules! testcomputer {
