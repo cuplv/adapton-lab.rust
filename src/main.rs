@@ -327,6 +327,25 @@ fn csv_of_runtimes(path:&str, samples: Vec<Sample>) {
   }
 }
 
+fn labexp_params_defaults() -> LabExpParams {
+  return LabExpParams {
+    sample_params: SampleParams{
+      input_seeds: vec![0],
+      generate_params: GenerateParams{
+        size:10,
+        gauge:1,
+        nominal_strategy:NominalStrategy::Regular,
+      },
+      validate_output: true,
+      change_batch_size: 1,
+    },
+    change_batch_loopc:10,
+  }
+}
+
+
+
+
 #[derive(Clone,Debug)]
 pub struct ListInt_Uniform_Prepend<T> { T:PhantomData<T> }
 #[derive(Clone,Debug)]
@@ -491,21 +510,6 @@ pub fn all_tests() -> Vec<Box<LabExp>> {
   ]
 }
 
-fn labexp_params_defaults() -> LabExpParams {
-  return LabExpParams {
-    sample_params: SampleParams{
-      input_seeds: vec![0],
-      generate_params: GenerateParams{
-        size:10,
-        gauge:1,
-        nominal_strategy:NominalStrategy::Regular,
-      },
-      validate_output: true,
-      change_batch_size: 1,
-    },
-    change_batch_loopc:10,
-  }
-}
 
 fn run_all_tests() {
   let params = labexp_params_defaults();

@@ -33,12 +33,17 @@ lazy) program over an unchanging input, producing an unchanging
 output.  Refining that approximation, the programmer additionally uses
 explicit abstractions for (explicit) _nominal memoization_, which
 associates a first-class, dynamically-scoped name with each dynamic
-allocation.  In the future, we hope to make nominal memoization
-implicit; currently, only explicit techniques exist.  (Aside: Past
-work on _implicit_ self-adjusting computation focused only on making
-the use of so-called modifiable references implicit; this is a
-complementary and orthogonal problem to implicitly choosing a naming
-strategy for nominal memoization).
+allocation.
+
+Background: Nominal memoization
+-------------------------------
+
+In the future, we hope to make nominal memoization implicit;
+currently, only explicit techniques exist.  (Aside: Past work on
+_implicit_ self-adjusting computation focused only on making the use
+of so-called modifiable references implicit; this is a complementary
+and orthogonal problem to implicitly choosing a naming strategy for
+nominal memoization).
 
 **Nominal Adapton** gave the first operational semantics for nominal
 memoziation and it included preliminary techniques for encoding lists,
