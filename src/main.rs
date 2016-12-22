@@ -234,27 +234,32 @@ impl<Input:Clone+Debug,EditSt,Output:Eq,
      Computer:Compute<Input,Output>>
   SampleGen for TestState<rand::StdRng,Input,EditSt,Output,InputDist,Computer> {
     fn sample (self:&mut Self) -> Option<Sample> {
-      if ( self.change_batch_num == self.params.change_batch_loopc ) {
+      if ( self.change_batch_num > self.params.change_batch_loopc ) {
         None 
       } else { // Collect the next sample, for each engine, using get_engine_sample.
-        
+        let mut dcg_state = TestEngineState{ input: None, engine: Engine::Naive, 
+                                             output: PhantomData, inputdist: PhantomData, computer: PhantomData };
+        std::mem::swap(&mut dcg_state, &mut self.dcg_state );
+        let mut naive_state = TestEngineState{ input: None, engine: Engine::Naive, 
+                                               output: PhantomData, inputdist: PhantomData, computer: PhantomData };
+        std::mem::swap(&mut naive_state, &mut self.naive_state );
+
         // Run Naive Version
         let _ = use_engine(Engine::Naive); assert!(engine_is_naive());
         let mut rng = self.rng.clone(); // Restore Rng
-        let (naive_output, naive_input, naive_editst, naive_sample) = 
+        let (naive_output, naive_input_edited, naive_editst, naive_sample) = 
           get_engine_sample::<rand::StdRng,Input,EditSt,Output,InputDist,Computer>
-          (&mut rng, &self.params.sample_params, None);
-        self.naive_state.input = Some((naive_input, naive_editst)); // Save the input and input-editing state
+          (&mut rng, &self.params.sample_params, naive_state.input);
+        self.naive_state.input = Some((naive_input_edited, naive_editst)); // Save the input and input-editing state
 
         // Run DCG Version
-        let dcg = self.dcg_state.engine.clone(); // Not sure about whether this Clone will do what we want; XXX
-        let _ = use_engine(dcg); assert!(engine_is_dcg());
+        let dcg = Engine::Naive; // TODO/XXX -- Take the DCG from Self.
         let mut rng = self.rng.clone(); // Restore Rng
-        let (dcg_output, dcg_input, dcg_editst, dcg_sample) = 
+        let (dcg_output, dcg_input_edited, dcg_editst, dcg_sample) = 
           get_engine_sample::<rand::StdRng,Input,EditSt,Output,InputDist,Computer>
-          (&mut rng, &self.params.sample_params, None);
+          (&mut rng, &self.params.sample_params, dcg_state.input);
         self.dcg_state.engine = use_engine(Engine::Naive); // Swap out the DCG
-        self.dcg_state.input = Some((dcg_input, dcg_editst)); // Save the input and input-editing state
+        self.dcg_state.input = Some((dcg_input_edited, dcg_editst)); // Save the input and input-editing state
         
         // Save the Rng for the next sample.
         self.rng = Box::new(*rng.clone());
@@ -266,7 +271,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq,
 
         let sample = Sample{
           params:self.params.sample_params.clone(),
-          batch_name:self.change_batch_num + 1,
+          batch_name:self.change_batch_num,
           dcg_sample,
           naive_sample,
           output_valid,
@@ -295,6 +300,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq,
     {            
       let mut st = get_sample_gen::<Input,EditSt,Output,InputDist,Computer>(params);
       loop {
+        println!("{:?}", self.name());
         let sample = (&mut st).sample();
         match sample {
           Some(_) => continue,
@@ -392,14 +398,16 @@ type Pt2D = (usize,usize); // TODO Fix this
 
 impl<S> Generate<List<Pt2D>> for ListPt2D_Uniform_Prepend<List<Pt2D>,S> { // TODO
   fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<Pt2D> {
-    panic!("TODO")
+    //panic!("TODO")
+    list_nil()
   }
 }
 
 impl Edit<List<Pt2D>,usize> for ListPt2D_Uniform_Prepend<List<Pt2D>,usize> { // TODO
   fn edit_init<R:Rng>(rng:&mut R, params:&GenerateParams) -> usize { 0 }
   fn edit<R:Rng>(state:List<Pt2D>, st:usize, rng:&mut R, params:&GenerateParams) -> (List<Pt2D>, usize) {
-    panic!("TODO")
+    //TODO
+    (state, st)
   }
 }
 
@@ -423,49 +431,57 @@ pub struct ListPt2D_Quickhull { }
 
 impl Compute<List<usize>,List<usize>> for ListInt_EagerMap {
   fn compute(inp:List<usize>) -> List<usize> {
-    panic!("TODO")
+    //panic!("TODO")
+    inp
   }
 }
 
 impl Compute<List<usize>,List<usize>> for ListInt_EagerFilter {
   fn compute(inp:List<usize>) -> List<usize> {
-    panic!("TODO")
+    //panic!("TODO")
+    inp
   }
 }
 
 impl Compute<List<usize>,List<usize>> for ListInt_LazyMap {
   fn compute(inp:List<usize>) -> List<usize> {
-    panic!("TODO")
+    //panic!("TODO")
+    inp
   }
 }
 
 impl Compute<List<usize>,List<usize>> for ListInt_LazyFilter {
   fn compute(inp:List<usize>) -> List<usize> {
-    panic!("TODO")
+    //panic!("TODO")
+    inp
   }
 }
 
 impl Compute<List<usize>,List<usize>> for ListInt_Reverse {
   fn compute(inp:List<usize>) -> List<usize> {
-    panic!("TODO")
+    //panic!("TODO")
+    inp
   }
 }
 
 impl Compute<List<usize>,List<usize>> for ListInt_LazyMergesort {
   fn compute(inp:List<usize>) -> List<usize> {
-    panic!("TODO")
+    //panic!("TODO")
+    inp
   }
 }
 
 impl Compute<List<usize>,List<usize>> for ListInt_EagerMergesort {
   fn compute(inp:List<usize>) -> List<usize> {
-    panic!("TODO")
+    //panic!("TODO")
+    inp
   }
 }
 
 impl Compute<List<Pt2D>,List<Pt2D>> for ListPt2D_Quickhull {
   fn compute(inp:List<Pt2D>) -> List<Pt2D> {
-    panic!("TODO")
+    //panic!("TODO")
+    inp
   }
 }
 
