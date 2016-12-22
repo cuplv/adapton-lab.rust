@@ -18,7 +18,7 @@ extern crate adapton;
 use adapton::macros::*;
 use adapton::collections::*;
 use adapton::engine::*;
-use rand::Rng;
+use rand::{Rng, SeedableRng, StdRng};
 use std::marker::PhantomData;
 
 #[derive(Clone,Debug,RustcEncodeable)]
@@ -73,7 +73,7 @@ pub struct LabExpParams {
 #[derive(Clone,Debug,RustcEncodeable)]
 pub struct SampleParams {
   /// We convert this seed into a random-number-generator before generating and editing.
-  pub input_seed:        u64, 
+  pub input_seeds:       Vec<usize>, 
   /// Other parameters for generating the input.
   pub generate_params:   GenerateParams, 
   /// Whether to validate the output after each computation using the naive and DCG engines
@@ -181,27 +181,26 @@ fn get_sample_gen
    InputDist:Generate<Input>+Edit<Input>,
    Computer:Compute<Input,Output>> 
   (params:&LabExpParams) 
-   -> TestState<rand::ThreadRng,
+   -> TestState<rand::StdRng,
                 Input,Output,InputDist,Computer> 
 {
+  let mut rng1 = SeedableRng::from_seed(params.sample_params.input_seeds.as_slice());
+  let mut rng2 = SeedableRng::from_seed(params.sample_params.input_seeds.as_slice());
+
   // Run Naive version.
-  init_naive();
-  assert!(engine_is_naive());        
-  let mut rng = panic!("XXX: Todo, generate from a seed.");
+  init_naive(); assert!(engine_is_naive());    
   let (naive_output, naive_input, naive_sample) = 
-    get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>
-    (&mut rng, &params.sample_params, None);
-  
-  // Save Rng
-  let rng_box = Box::new(rng.clone());
-  
+    get_engine_sample::<rand::StdRng,Input,Output,InputDist,Computer>
+    (&mut rng1, &params.sample_params, None);
+
+  // Save Rng1 in TestState, to restore before next sample.
+  let rng_box = Box::new(rng1.clone());
+    
   // Run DCG version.
-  let mut naive = init_dcg();
-  assert!(engine_is_dcg());        
-  let mut rng = panic!("XXX: Todo, generate from a seed.");
+  let _ = init_dcg(); assert!(engine_is_dcg());
   let (dcg_output, dcg_input, dcg_sample) = 
-    get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>
-    (rng, &params.sample_params, None);
+    get_engine_sample::<rand::StdRng,Input,Output,InputDist,Computer>
+    (&mut rng2, &params.sample_params, None);
   
   // Compare outputs
   let output_valid = { if params.sample_params.validate_output 
@@ -236,7 +235,7 @@ fn get_sample_gen
 impl<Input:Clone,Output:Eq,
      InputDist:Generate<Input>+Edit<Input>,
      Computer:Compute<Input,Output>>
-  SampleGen for TestState<rand::ThreadRng,Input,Output,InputDist,Computer> {
+  SampleGen for TestState<rand::StdRng,Input,Output,InputDist,Computer> {
     fn sample (self:&mut Self) -> Option<Sample> {
       if ( self.change_batch_num == self.params.change_batch_loopc ) { None } else { 
 
@@ -245,7 +244,7 @@ impl<Input:Clone,Output:Eq,
         assert!(engine_is_naive());
         let mut rng = self.rng.clone();
         let (naive_output, naive_input, naive_sample) = 
-          get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>
+          get_engine_sample::<rand::StdRng,Input,Output,InputDist,Computer>
           (&mut rng, &self.params.sample_params, None);
         self.naive_state.input = naive_input;
 
@@ -255,11 +254,11 @@ impl<Input:Clone,Output:Eq,
         assert!(engine_is_dcg());
         let mut rng = self.rng.clone();
         let (dcg_output, dcg_input, dcg_sample) = 
-          get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>
+          get_engine_sample::<rand::StdRng,Input,Output,InputDist,Computer>
           (&mut rng, &self.params.sample_params, None);
         self.dcg_state.engine = use_engine(Engine::Naive); // Swap out the DCG
         self.dcg_state.input = dcg_input;
-
+        
         // Save the Rng for the next sample.
         self.rng = Box::new(*rng.clone());
 
@@ -492,16 +491,28 @@ pub fn all_tests() -> Vec<Box<LabExp>> {
   ]
 }
 
-fn labexp_params_from_clap() -> LabExpParams {
-  panic!("")
+fn labexp_params_defaults() -> LabExpParams {
+  return LabExpParams {
+    sample_params: SampleParams{
+      input_seeds: vec![0],
+      generate_params: GenerateParams{
+        size:10,
+        gauge:1,
+        nominal_strategy:NominalStrategy::Regular,
+      },
+      validate_output: true,
+      change_batch_size: 1,
+    },
+    change_batch_loopc:10,
+  }
 }
 
 fn run_all_tests() {
-  //let params = labexp_params_from_clap();
+  let params = labexp_params_defaults();
   let tests = all_tests();
   for test in tests.iter() {
     println!("Test: {:?}", test.name());
-    //let results = test.run(&params);
+    let results = test.run(&params);
   }
 }
 
