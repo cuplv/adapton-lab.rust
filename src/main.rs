@@ -60,15 +60,6 @@ pub trait Compute<Input,Output> {
   fn compute(Input) -> Output;
 }
 
-// ** Unneeded:
-// /// Structure for instantiating
-// pub struct Computer<Input,Output,
-//                     Computer:Compute<Input,Output>> {
-//   pub computer: Computer,
-//   input:        PhantomData<Input>,
-//   output:       PhantomData<Output>
-// }
-
 /// Generic notion of an Incremental Computation to Evaluate and Test.
 /// We instantiate this structure once for each test in our test suite.
 /// We implement the `LabExp` trait generically for this structure.
@@ -190,7 +181,7 @@ fn get_engine_metrics<X,F:FnOnce() -> X> (thunk:F) -> (X,EngineMetrics)
 fn get_engine_sample
   <R:Rng+Clone,
    Input:Clone+Debug,
-   EditSt,Output,   
+   EditSt,Output:Debug,   
    InputDist:Generate<Input>+Edit<Input,EditSt>,
    Computer:Compute<Input,Output>
    > 
@@ -207,11 +198,14 @@ fn get_engine_sample
         get_engine_metrics(
           move || InputDist::edit(input, editst, &mut rng2, &params.generate_params))
     };
-  println!("{:?} -- {:?}", edited_input, process_input); // XXX Temp  
+  println!("Input: {:?} -- {:?}", edited_input, process_input); // XXX Temp  
   
   let input2 = edited_input.clone();
   let (output, compute_output): (Output,EngineMetrics) 
-    = get_engine_metrics(move || Computer::compute(input2) );
+    = ns(name_of_str("compute"),
+         move || get_engine_metrics(move || Computer::compute(input2) ));
+
+  println!("Output: {:?} -- {:?}", output, compute_output); // XXX Temp  
   
   let engine_sample = EngineSample{
     process_input,
@@ -224,7 +218,7 @@ fn get_engine_sample
 fn get_sample_gen
   <Input:Clone+Debug,
    EditSt,
-   Output:Eq,
+   Output:Eq+Debug,
    InputDist:Generate<Input>+Edit<Input,EditSt>,
    Computer:Compute<Input,Output>> 
   (params:&LabExpParams) 
@@ -257,7 +251,7 @@ fn get_sample_gen
 /// each engine, we process the current input (either generating it,
 /// or editing it) and we compute a new output over this processed input.
 /// Optionally, we compare the outputs of the engines for equality.
-impl<Input:Clone+Debug,EditSt,Output:Eq,
+impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
      InputDist:Generate<Input>+Edit<Input,EditSt>,
      Computer:Compute<Input,Output>>
   SampleGen for TestState<rand::StdRng,Input,EditSt,Output,InputDist,Computer> {
@@ -273,6 +267,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq,
         std::mem::swap(&mut naive_state, &mut self.naive_state );
 
         // Run Naive Version
+        println!("Naive - - - - - ");
         let _ = use_engine(Engine::Naive); assert!(engine_is_naive());
         let mut rng = self.rng.clone(); // Restore Rng
         let (naive_output, naive_input_edited, naive_editst, naive_sample) = 
@@ -281,7 +276,9 @@ impl<Input:Clone+Debug,EditSt,Output:Eq,
         self.naive_state.input = Some((naive_input_edited, naive_editst)); // Save the input and input-editing state
 
         // Run DCG Version
-        let dcg = Engine::Naive; // TODO/XXX -- Take the DCG from Self.
+        println!("DCG - - - - - ");
+        let _ = use_engine(dcg_state.engine); // Restore saved DCG
+        assert!(engine_is_dcg()); // This really is the DCG version
         let mut rng = self.rng.clone(); // Restore Rng
         let (dcg_output, dcg_input_edited, dcg_editst, dcg_sample) = 
           get_engine_sample::<rand::StdRng,Input,EditSt,Output,InputDist,Computer>
@@ -319,7 +316,7 @@ pub trait LabExp {
 
 /// Lab experiment implementation: Implements the LabExp trait for any
 /// TestComputer instantiation.
-impl<Input:Clone+Debug,EditSt,Output:Eq,
+impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
      InputDist:'static+Generate<Input>+Edit<Input,EditSt>,
      Computer:'static+Compute<Input,Output>>
   LabExp for TestComputer<Input,EditSt,Output,InputDist,Computer> {
@@ -330,6 +327,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq,
       loop {
         println!("{:?}", self.name());
         let sample = (&mut st).sample();
+        println!("{:?}", sample);
         match sample {
           Some(_) => continue,
           None => break,
@@ -344,15 +342,6 @@ impl<Input:Clone+Debug,EditSt,Output:Eq,
 
 // -- Todo: Keep in main.rs:
 
-
-fn forkboilerplate () {
-  use std::thread;
-  let child =
-    thread::Builder::new().stack_size(64 * 1024 * 1024).spawn(move || { 
-      panic!("TODO");
-    });
-  let _ = child.unwrap().join();
-}
   
 
 fn csv_of_runtimes(path:&str, samples: Vec<Sample>) {
@@ -388,7 +377,8 @@ pub struct ListInt_Uniform_Prepend<T,S> { T:PhantomData<T>, S:PhantomData<S> }
 
 impl<S> Generate<List<usize>> for ListInt_Uniform_Prepend<List<usize>,S> {
   fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<usize> {
-    let elm : usize = rng.gen() ;    
+    let elm : usize = rng.gen() ;
+    let elm = elm % 1000 ;
     let mut l : List<usize> = list_nil();
     for i in 0..params.size {
       if i % params.gauge == 0 {
@@ -414,7 +404,9 @@ impl Edit<List<usize>, usize> for ListInt_Uniform_Prepend<List<usize>,usize> {
       l = list_art(cell(name_of_usize(i), l));
       l = list_name(name_of_usize(i), l);      
     } else { } ;
-    (list_cons(i, l), i + 1)
+    let elm : usize = rng.gen() ;
+    let elm = elm % 1000 ;
+    (list_cons(elm, l), i + 1)
   }
 }
 
@@ -459,8 +451,7 @@ pub struct ListPt2D_Quickhull { }
 
 impl Compute<List<usize>,List<usize>> for ListInt_EagerMap {
   fn compute(inp:List<usize>) -> List<usize> {
-    //panic!("TODO")
-    inp
+    list_map_eager(inp,Rc::new(|x| x * x))
   }
 }
 
@@ -473,8 +464,7 @@ impl Compute<List<usize>,List<usize>> for ListInt_EagerFilter {
 
 impl Compute<List<usize>,List<usize>> for ListInt_LazyMap {
   fn compute(inp:List<usize>) -> List<usize> {
-    //panic!("TODO")
-    inp
+    list_map_lazy(inp,Rc::new(|x| x * x))
   }
 }
 
@@ -609,4 +599,13 @@ fn run_all_tests() {
 
 #[test]
 fn test_all() { run_all_tests() }
-fn main() { run_all_tests() }
+fn main2() { run_all_tests() }
+
+fn main () {
+  use std::thread;
+  let child =
+    thread::Builder::new().stack_size(64 * 1024 * 1024).spawn(move || { 
+      main2()
+    });
+  let _ = child.unwrap().join();
+}
