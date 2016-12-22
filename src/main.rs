@@ -37,8 +37,9 @@ pub trait Generate<T> {
   fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> T;
 } 
 
-pub trait Edit<T> : Clone {
-  fn edit<R:Rng>(state:T, rng:&mut R, params:&GenerateParams) -> T;
+pub trait Edit<T,S> : Clone {
+  fn edit_init<R:Rng>(rng:&mut R, params:&GenerateParams) -> S;
+  fn edit<R:Rng>(pre_edit:T, edit_state:S, rng:&mut R, params:&GenerateParams) -> (T, S);
 }
 
 pub trait Compute<Input,Output> {
@@ -52,12 +53,13 @@ pub struct Computer<Input,Output,
   output:       PhantomData<Output>
 }
 
-pub struct TestComputer<Input,Output,
-                        InputDist:Generate<Input>+Edit<Input>,
+pub struct TestComputer<Input,EditSt,Output,
+                        InputDist:Generate<Input>+Edit<Input,EditSt>,
                         Computer:Compute<Input,Output>> {
   identity:  Name,
   computer:  PhantomData<Computer>,
   input:     PhantomData<Input>,
+  editst:    PhantomData<EditSt>,
   inputdist: PhantomData<InputDist>,
   output:    PhantomData<Output>
 }
@@ -103,9 +105,8 @@ pub struct Sample {
 
 #[derive(Clone,Debug,RustcEncodeable)]
 pub struct EngineSample {
-  pub generate_input:   EngineMetrics,
+  pub process_input:    EngineMetrics,
   pub compute_output:   EngineMetrics,
-  pub batch_edit_input: EngineMetrics,
 }
 
 #[derive(Clone,Debug,RustcEncodeable)]
@@ -119,25 +120,25 @@ pub trait SampleGen {
   fn sample(self:&mut Self) -> Option<Sample>;
 }
 
-pub struct TestEngineState<Input,Output,
-                           InputDist:Generate<Input>+Edit<Input>,
+pub struct TestEngineState<Input,EditSt,Output,
+                           InputDist:Generate<Input>+Edit<Input,EditSt>,
                            Computer:Compute<Input,Output>> {
   pub engine:   Engine,
-  pub input:    Input,
+  pub input:    Option<(Input,EditSt)>,
   inputdist:    PhantomData<InputDist>,
   computer:     PhantomData<Computer>,
   output:       PhantomData<Output>,
 }
 
 pub struct TestState<R:Rng+Clone,
-                     Input,Output,
-                     InputDist:Generate<Input>+Edit<Input>,
+                     Input,EditSt,Output,
+                     InputDist:Generate<Input>+Edit<Input,EditSt>,
                      Computer:Compute<Input,Output>> {
   pub params:           LabExpParams,
   pub rng:              Box<R>,
   pub change_batch_num: usize,
-  pub dcg_state:   TestEngineState<Input,Output,InputDist,Computer>,
-  pub naive_state: TestEngineState<Input,Output,InputDist,Computer>,
+  pub dcg_state:   TestEngineState<Input,EditSt,Output,InputDist,Computer>,
+  pub naive_state: TestEngineState<Input,EditSt,Output,InputDist,Computer>,
   pub samples:     Vec<Sample>,
 }
 
@@ -153,89 +154,76 @@ fn get_engine_metrics<X,F:FnOnce() -> X> (thunk:F) -> (X,EngineMetrics)
   })
 }
 
-fn get_engine_sample<R:Rng+Clone,Input:Clone,Output,InputDist:Generate<Input>+Edit<Input>,Computer:Compute<Input,Output>> 
-  (rng:&mut R, params:&SampleParams, input:Option<Input>) -> (Output,Input,EngineSample) 
+fn get_engine_sample
+  <R:Rng+Clone,
+   Input:Clone+Debug,
+   EditSt,Output,   
+   InputDist:Generate<Input>+Edit<Input,EditSt>,
+   Computer:Compute<Input,Output>
+   > 
+  (rng:&mut R, params:&SampleParams, input:Option<(Input,EditSt)>) -> (Output,Input,EditSt,EngineSample) 
 {
   let mut rng2 = rng.clone();
-  let (input, generate_input) : (Input,EngineMetrics) = match input {
-    None        => get_engine_metrics(move || InputDist::generate(&mut rng2, &params.generate_params) ),
-    Some(input) => get_engine_metrics(move || { input } )
-  };
-  let input2 = input.clone();
+  let ((edited_input, editst), process_input) : ((Input,EditSt),EngineMetrics) = 
+    match input {
+      None => 
+        get_engine_metrics(
+          move || ( InputDist::generate(&mut rng2, &params.generate_params), 
+                    InputDist::edit_init(&mut rng2, &params.generate_params ))),
+      Some((input, editst)) => 
+        get_engine_metrics(
+          move || InputDist::edit(input, editst, &mut rng2, &params.generate_params))
+    };
+  println!("{:?} -- {:?}", edited_input, process_input); // XXX Temp  
+  
+  let input2 = edited_input.clone();
   let (output, compute_output): (Output,EngineMetrics) 
-    = get_engine_metrics(move || Computer::compute(input2) );        
-  let (input3, batch_edit_input): (_, EngineMetrics)   
-    = get_engine_metrics(move || InputDist::edit(input, rng, &params.generate_params) );
+    = get_engine_metrics(move || Computer::compute(input2) );
+  
   let engine_sample = EngineSample{
-    generate_input,
+    process_input,
     compute_output,
-    batch_edit_input,
   };
   println!("{:?}", engine_sample); // XXX Temp
-  return (output, input3, engine_sample)
+  return (output, edited_input, editst, engine_sample)
 }
 
 fn get_sample_gen
-  <Input:Clone,
+  <Input:Clone+Debug,
+   EditSt,
    Output:Eq,
-   InputDist:Generate<Input>+Edit<Input>,
+   InputDist:Generate<Input>+Edit<Input,EditSt>,
    Computer:Compute<Input,Output>> 
   (params:&LabExpParams) 
-   -> TestState<rand::StdRng,
-                Input,Output,InputDist,Computer> 
+   -> TestState<rand::StdRng,Input,EditSt,Output,InputDist,Computer> 
 {
-  let mut rng1 = SeedableRng::from_seed(params.sample_params.input_seeds.as_slice());
-  let mut rng2 = SeedableRng::from_seed(params.sample_params.input_seeds.as_slice());
-
-  // Run Naive version.
-  init_naive(); assert!(engine_is_naive());    
-  let (naive_output, naive_input, naive_sample) = 
-    get_engine_sample::<rand::StdRng,Input,Output,InputDist,Computer>
-    (&mut rng1, &params.sample_params, None);
-
-  // Save Rng1 in TestState, to restore before next sample.
-  let rng_box = Box::new(rng1.clone());
-    
-  // Run DCG version.
+  // Create empty DCG; TODO-Minor-- Make the API for this better.
   let _ = init_dcg(); assert!(engine_is_dcg());
-  let (dcg_output, dcg_input, dcg_sample) = 
-    get_engine_sample::<rand::StdRng,Input,Output,InputDist,Computer>
-    (&mut rng2, &params.sample_params, None);
-  
-  // Compare outputs
-  let output_valid = { if params.sample_params.validate_output 
-                       { Some( naive_output == dcg_output ) }
-                       else { None }};
-  let sample = Sample{
-    params:params.sample_params.clone(),
-    batch_name:0, // Index/name the change batches; one sample per compute + change batch
-    dcg_sample,
-    naive_sample,
-    output_valid,
-  };
-  let dcg = use_engine(Engine::Naive); // TODO-Minor: Rename this operation: "engine_swap" or something 
-  TestState{      
+  let empty_dcg = use_engine(Engine::Naive); // TODO-Minor: Rename this operation: "engine_swap" or something 
+  let mut rng = SeedableRng::from_seed(params.sample_params.input_seeds.as_slice());
+  //let editst_init = InputDist::edit_init(&mut rng, & params.sample_params.generate_params);
+  TestState{
     params:params.clone(),
-    rng:rng_box, // save updated Rng for next sample
+    rng:Box::new(rng),
     dcg_state:TestEngineState{
-      input: dcg_input, // save edited input
-      engine: dcg, // save latest DCG
+      input:  None,
+      engine: empty_dcg, // empty DCG      
       output: PhantomData, inputdist: PhantomData, computer: PhantomData,      
     },
     naive_state:TestEngineState{
-      input: naive_input, // save edited input
+      input:  None,
       engine: Engine::Naive, // A constant
       output: PhantomData, inputdist: PhantomData, computer: PhantomData,
     },
-    change_batch_num: 1,
-    samples:vec![sample],
+    change_batch_num: 0,
+    samples:vec![],
   }
 }
 
-impl<Input:Clone,Output:Eq,
-     InputDist:Generate<Input>+Edit<Input>,
+impl<Input:Clone+Debug,EditSt,Output:Eq,
+     InputDist:Generate<Input>+Edit<Input,EditSt>,
      Computer:Compute<Input,Output>>
-  SampleGen for TestState<rand::StdRng,Input,Output,InputDist,Computer> {
+  SampleGen for TestState<rand::StdRng,Input,EditSt,Output,InputDist,Computer> {
     fn sample (self:&mut Self) -> Option<Sample> {
       if ( self.change_batch_num == self.params.change_batch_loopc ) { None } else { 
 
@@ -243,21 +231,21 @@ impl<Input:Clone,Output:Eq,
         let _ = use_engine(Engine::Naive);
         assert!(engine_is_naive());
         let mut rng = self.rng.clone();
-        let (naive_output, naive_input, naive_sample) = 
-          get_engine_sample::<rand::StdRng,Input,Output,InputDist,Computer>
+        let (naive_output, naive_input, naive_editst, naive_sample) = 
+          get_engine_sample::<rand::StdRng,Input,EditSt,Output,InputDist,Computer>
           (&mut rng, &self.params.sample_params, None);
-        self.naive_state.input = naive_input;
+        self.naive_state.input = Some((naive_input, naive_editst));
 
         // Run DCG Version
         let dcg = self.dcg_state.engine.clone(); // Not sure about whether this Clone will do what we want; XXX
         let _ = use_engine(dcg);
         assert!(engine_is_dcg());
         let mut rng = self.rng.clone();
-        let (dcg_output, dcg_input, dcg_sample) = 
-          get_engine_sample::<rand::StdRng,Input,Output,InputDist,Computer>
+        let (dcg_output, dcg_input, dcg_editst, dcg_sample) = 
+          get_engine_sample::<rand::StdRng,Input,EditSt,Output,InputDist,Computer>
           (&mut rng, &self.params.sample_params, None);
         self.dcg_state.engine = use_engine(Engine::Naive); // Swap out the DCG
-        self.dcg_state.input = dcg_input;
+        self.dcg_state.input = Some((dcg_input, dcg_editst));
         
         // Save the Rng for the next sample.
         self.rng = Box::new(*rng.clone());
@@ -286,14 +274,14 @@ pub trait LabExp {
   fn run(self:&Self, params:&LabExpParams) -> LabExpResults;
 }
 
-impl<Input:Clone,Output:Eq,
-     InputDist:'static+Generate<Input>+Edit<Input>,
+impl<Input:Clone+Debug,EditSt,Output:Eq,
+     InputDist:'static+Generate<Input>+Edit<Input,EditSt>,
      Computer:'static+Compute<Input,Output>>
-  LabExp for TestComputer<Input,Output,InputDist,Computer> {
+  LabExp for TestComputer<Input,EditSt,Output,InputDist,Computer> {
     fn name(self:&Self) -> Name { self.identity.clone() }
     fn run(self:&Self, params:&LabExpParams) -> LabExpResults 
     {            
-      let mut st = get_sample_gen::<Input,Output,InputDist,Computer>(params);
+      let mut st = get_sample_gen::<Input,EditSt,Output,InputDist,Computer>(params);
       loop {
         let sample = (&mut st).sample();
         match sample {
@@ -347,9 +335,9 @@ fn labexp_params_defaults() -> LabExpParams {
 
 
 #[derive(Clone,Debug)]
-pub struct ListInt_Uniform_Prepend<T> { T:PhantomData<T> }
+pub struct ListInt_Uniform_Prepend<T,S> { T:PhantomData<T>, S:PhantomData<S> }
 #[derive(Clone,Debug)]
-pub struct ListPt2D_Uniform_Prepend<T> { T:PhantomData<T> }
+pub struct ListPt2D_Uniform_Prepend<T,S> { T:PhantomData<T>, S:PhantomData<S> }
 
 #[derive(Clone,Debug)]
 pub struct ListInt_LazyMap { }
@@ -368,15 +356,35 @@ pub struct ListInt_EagerMergesort { }
 #[derive(Clone,Debug)]
 pub struct ListPt2D_Quickhull { }
 
-impl Generate<List<usize>> for ListInt_Uniform_Prepend<List<usize>> {
+impl<S> Generate<List<usize>> for ListInt_Uniform_Prepend<List<usize>,S> {
   fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<usize> {
-    panic!("TODO")
+    let elm : usize = rng.gen() ;    
+    let mut l : List<usize> = list_nil();
+    for i in 0..params.size {
+      if i % params.gauge == 0 {
+        l = list_art(cell(name_of_usize(i), l));
+        l = list_name(name_of_usize(i), l);
+      } else { } ;
+      l = list_cons(elm,  l);
+    } ;
+    l
   }
 }
 
-impl Edit<List<usize>> for ListInt_Uniform_Prepend<List<usize>> {
-  fn edit<R:Rng>(state:List<usize>, rng:&mut R, params:&GenerateParams) -> List<usize> {
-    panic!("TODO")
+impl Edit<List<usize>, usize> for ListInt_Uniform_Prepend<List<usize>,usize> {
+  fn edit_init<R:Rng>(rng:&mut R, params:&GenerateParams) -> usize { 
+    return params.size
+  }
+  fn edit<R:Rng>(l_preedit:List<usize>, 
+                 next_name:usize,
+                 rng:&mut R, params:&GenerateParams) -> (List<usize>, usize) {
+    let mut l = l_preedit ;
+    let mut i = next_name ;
+    if i % params.gauge == 0 {
+      l = list_art(cell(name_of_usize(i), l));
+      l = list_name(name_of_usize(i), l);      
+    } else { } ;
+    (list_cons(i, l), i + 1)
   }
 }
 
@@ -424,14 +432,15 @@ impl Compute<List<usize>,List<usize>> for ListInt_EagerMergesort {
 
 type Pt2D = (usize,usize); // TODO Fix this
 
-impl Generate<List<Pt2D>> for ListPt2D_Uniform_Prepend<List<Pt2D>> { // TODO
+impl<S> Generate<List<Pt2D>> for ListPt2D_Uniform_Prepend<List<Pt2D>,S> { // TODO
   fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<Pt2D> {
     panic!("TODO")
   }
 }
 
-impl Edit<List<Pt2D>> for ListPt2D_Uniform_Prepend<List<Pt2D>> { // TODO
-  fn edit<R:Rng>(state:List<Pt2D>, rng:&mut R, params:&GenerateParams) -> List<Pt2D> {
+impl Edit<List<Pt2D>,usize> for ListPt2D_Uniform_Prepend<List<Pt2D>,usize> { // TODO
+  fn edit_init<R:Rng>(rng:&mut R, params:&GenerateParams) -> usize { 0 }
+  fn edit<R:Rng>(state:List<Pt2D>, st:usize, rng:&mut R, params:&GenerateParams) -> (List<Pt2D>, usize) {
     panic!("TODO")
   }
 }
@@ -444,13 +453,17 @@ impl Compute<List<Pt2D>,List<Pt2D>> for ListPt2D_Quickhull {
 
 #[macro_export]
 macro_rules! testcomputer {
-  ( $name:expr, $inp:ty, $out:ty, $dist:ty, $comp:ty ) => {{ 
+  ( $name:expr, $inp:ty, $editst:ty, $out:ty, $dist:ty, $comp:ty ) => {{ 
     Box::new( 
       TestComputer
-        ::<$inp,$out,$dist,$comp>
+        ::<$inp,$editst,$out,$dist,$comp>
       { 
         identity:$name,
-        input:PhantomData, output:PhantomData, inputdist:PhantomData, computer:PhantomData
+        input:PhantomData,
+        editst:PhantomData,
+        output:PhantomData,
+        inputdist:PhantomData,
+        computer:PhantomData
       }) 
   }}
 }
@@ -460,51 +473,51 @@ macro_rules! testcomputer {
 pub fn all_tests() -> Vec<Box<LabExp>> {
   return vec![
     testcomputer!(name_of_str("eager-map"),
+                  List<usize>, usize,
                   List<usize>,
-                  List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_Uniform_Prepend<List<usize>,usize>,
                   ListInt_EagerMap)
       ,
     testcomputer!(name_of_str("eager-filter"),
+                  List<usize>, usize,
                   List<usize>,
-                  List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_Uniform_Prepend<List<usize>,usize>,
                   ListInt_EagerFilter)
       ,
     testcomputer!(name_of_str("lazy-map"),
+                  List<usize>, usize,
                   List<usize>,
-                  List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_Uniform_Prepend<List<usize>,usize>,
                   ListInt_LazyMap)
       ,
     testcomputer!(name_of_str("lazy-filter"),
+                  List<usize>, usize,
                   List<usize>,
-                  List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_Uniform_Prepend<List<usize>,usize>,
                   ListInt_LazyFilter)
       ,
     testcomputer!(name_of_str("reverse"),
+                  List<usize>, usize,
                   List<usize>,
-                  List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_Uniform_Prepend<List<usize>,usize>,
                   ListInt_Reverse)
       ,
     testcomputer!(name_of_str("eager-mergesort"),
+                  List<usize>, usize,
                   List<usize>,
-                  List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_Uniform_Prepend<List<usize>,usize>,
                   ListInt_EagerMergesort)
       ,
     testcomputer!(name_of_str("lazy-mergesort"),
+                  List<usize>, usize,
                   List<usize>,
-                  List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>>,
+                  ListInt_Uniform_Prepend<List<usize>,usize>,
                   ListInt_EagerMergesort)
       ,
     testcomputer!(name_of_str("quickhull"),
+                  List<Pt2D>, usize,
                   List<Pt2D>,
-                  List<Pt2D>,
-                  ListPt2D_Uniform_Prepend<List<Pt2D>>,
+                  ListPt2D_Uniform_Prepend<List<Pt2D>,usize>,
                   ListPt2D_Quickhull)
       ,
   ]
