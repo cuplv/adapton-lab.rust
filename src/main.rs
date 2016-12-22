@@ -124,12 +124,13 @@ pub struct TestEngineState<Input,Output,
   output:       PhantomData<Output>,
 }
 
-pub struct TestState<Input,Output,
+pub struct TestState<R:Rng+Clone,
+                     Input,Output,
                      InputDist:Generate<Input>+Edit<Input>,
                      Computer:Compute<Input,Output>> {
   pub params:           LabExpParams,
+  pub rng:              Box<R>,
   pub change_batch_num: usize,
-  pub change_batch_loopc: usize,
   pub dcg_state:   TestEngineState<Input,Output,InputDist,Computer>,
   pub naive_state: TestEngineState<Input,Output,InputDist,Computer>,
   pub samples:     Vec<Sample>,
@@ -156,8 +157,10 @@ fn get_engine_sample<R:Rng+Clone,Input:Clone,Output,InputDist:Generate<Input>+Ed
     Some(input) => get_engine_metrics(move || { input } )
   };
   let input2 = input.clone();
-  let (output, compute_output): (Output,EngineMetrics) = get_engine_metrics(move || Computer::compute(input2) );        
-  let (input3, batch_edit_input): (_, EngineMetrics)   = get_engine_metrics(move || InputDist::edit(input, rng, &params.generate_params) );
+  let (output, compute_output): (Output,EngineMetrics) 
+    = get_engine_metrics(move || Computer::compute(input2) );        
+  let (input3, batch_edit_input): (_, EngineMetrics)   
+    = get_engine_metrics(move || InputDist::edit(input, rng, &params.generate_params) );
   let engine_sample = EngineSample{
     generate_input,
     compute_output,
@@ -170,26 +173,33 @@ fn get_engine_sample<R:Rng+Clone,Input:Clone,Output,InputDist:Generate<Input>+Ed
 impl<Input:Clone,Output:Eq,
      InputDist:Generate<Input>+Edit<Input>,
      Computer:Compute<Input,Output>>
-  SampleGen for TestState<Input,Output,InputDist,Computer> {
+  SampleGen for TestState<rand::ThreadRng,Input,Output,InputDist,Computer> {
     fn sample (self:&mut Self) -> Option<Sample> {
       if ( self.change_batch_num == self.params.change_batch_loopc ) { None } else { 
-        
+
         // Run DCG Version (We want this to be really, really *fast*):
         let dcg = self.dcg_state.engine.clone(); // Not sure about whether this Clone will do what we want; XXX
         let _ = use_engine(dcg);
         assert!(engine_is_dcg());
-        let rng = panic!("XXX: Todo, generate from a seed.");
-        let (dcg_output, dcg_input, dcg_sample) = get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>(rng, &self.params.sample_params, None);
-        self.dcg_state.engine = use_engine(Engine::Naive); // Save the DCG state for later.
+        let mut rng = self.rng.clone();
+        let (dcg_output, dcg_input, dcg_sample) = 
+          get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>
+          (&mut rng, &self.params.sample_params, None);
+        self.dcg_state.engine = use_engine(Engine::Naive); // Swap out the DCG
         self.dcg_state.input = dcg_input;
 
         // Run Naive Version (We want this to be really, really *slow* compared to faster DCG version):
         let _ = use_engine(Engine::Naive);
         assert!(engine_is_naive());
-        let rng = panic!("XXX: Todo, generate from a seed.");
-        let (naive_output, naive_input, naive_sample) = get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>(rng, &self.params.sample_params, None);
+        let mut rng = self.rng.clone();
+        let (naive_output, naive_input, naive_sample) = 
+          get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>
+          (&mut rng, &self.params.sample_params, None);
         self.naive_state.input = naive_input;
-        
+
+        // Save the Rng for the next sample.
+        self.rng = Box::new(*rng.clone());
+
         // Compare the two outputs for equality
         let output_valid = if self.params.sample_params.validate_output { 
           Some ( dcg_output == naive_output )
@@ -197,12 +207,12 @@ impl<Input:Clone,Output:Eq,
 
         let sample = Sample{
           params:self.params.sample_params.clone(),
-          // TODO: Index/name the change batches; one sample per compute + change batch
           batch_name:self.change_batch_num + 1,
           dcg_sample,
           naive_sample,
           output_valid,
         };
+        Some(sample)
       }
     }
   }
@@ -220,30 +230,37 @@ impl<Input:Clone,Output:Eq,
     fn name(self:&Self) -> Name { self.identity.clone() }
     fn run(self:&Self, params:&LabExpParams) -> LabExpResults 
     {
-      // TODO: Want a loop here, where we switch back and forth
-      // between using the Naive engine, and using the DCG engine.  We
-      // want to interleave this way in order to compare outputs and
-      // metrics (counts and timings) on a fine-grained scale.
+      // The experiment consists of a loop over samples.  For each
+      // sample, we switch back and forth between using the Naive
+      // engine, and using the DCG engine.  We want to interleave this
+      // way for each sample in order to compare outputs and metrics
+      // (counts and timings) on a fine-grained scale.
       fn get_sample_gen<Input:Clone,
                         Output:Eq,
                         InputDist:Generate<Input>+Edit<Input>,
                         Computer:Compute<Input,Output>> 
-        (params:&LabExpParams) -> TestState<Input,Output,InputDist,Computer> 
+        (params:&LabExpParams) -> TestState<rand::ThreadRng,
+                                            Input,Output,InputDist,Computer> 
       {
         // We "want" this to be really, really *slow*:
         init_naive();
-        assert!(engine_is_naive());
-        let rng = panic!("XXX: Todo, generate from a seed.");
+        assert!(engine_is_naive());        
+        let mut rng = panic!("XXX: Todo, generate from a seed.");
         let (naive_output, naive_input, naive_sample) = 
           get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>
-          (rng, &params.sample_params, None);        
+          (&mut rng, &params.sample_params, None);
+        
+        // Save Rng
+        let rng_box = Box::new(rng.clone());
+
         // We want this to be really, really *fast*:
         let mut naive = init_dcg();
-        assert!(engine_is_dcg());
-        let rng = panic!("XXX: Todo, generate from a seed.");
+        assert!(engine_is_dcg());        
+        let mut rng = panic!("XXX: Todo, generate from a seed.");
         let (dcg_output, dcg_input, dcg_sample) = 
           get_engine_sample::<rand::ThreadRng,Input,Output,InputDist,Computer>
           (rng, &params.sample_params, None);
+
         let output_valid = { if params.sample_params.validate_output 
                              { Some( naive_output == dcg_output ) }
                              else { None }};
@@ -257,22 +274,18 @@ impl<Input:Clone,Output:Eq,
         let dcg = use_engine(Engine::Naive); // TODO-Minor: Rename this operation: "engine_swap" or something 
         TestState{      
           params:params.clone(),
+          rng:rng_box, // save updated Rng for next sample
           dcg_state:TestEngineState{
-            input: dcg_input,
-            engine: dcg,
-            output: PhantomData,
-            inputdist: PhantomData,
-            computer: PhantomData,
+            input: dcg_input, // save edited input
+            engine: dcg, // save latest DCG
+            output: PhantomData, inputdist: PhantomData, computer: PhantomData,
 
           },
           naive_state:TestEngineState{
-            input: naive_input,
-            engine: panic!("TODO: use a special constant for this"),
-            output: PhantomData,
-            inputdist: PhantomData,
-            computer: PhantomData,
+            input: naive_input, // save edited input
+            engine: Engine::Naive, // A constant
+            output: PhantomData, inputdist: PhantomData, computer: PhantomData,
           },
-          change_batch_loopc: params.change_batch_loopc,
           change_batch_num: 1,
           samples:vec![sample],
         }
