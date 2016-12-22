@@ -130,8 +130,8 @@ Suppose we consider `i` from 1 to 3, to show these relationships diagrammaticall
 ```
 
 
-Generation Parameters
----------------------
+Generation and Editing Parameters
+---------------------------------
 
 Adapton Lab generates and edits inputs generically.  These operations
 are tuned by the lab user through several **generation parameters**.
