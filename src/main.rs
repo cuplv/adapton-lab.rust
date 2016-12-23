@@ -1,11 +1,11 @@
 #![feature(field_init_shorthand)]
 #![feature(rustc_private)]
-#![feature(custom_derive)]
+//#![feature(custom_derive)]
 
 use std::fmt::Debug;
 //use std::hash::Hash;
 use std::rc::Rc;
-use std::path::Path;
+//use std::path::Path;
 
 extern crate serialize;
 extern crate time;
@@ -15,24 +15,23 @@ extern crate rand;
 #[macro_use]
 extern crate adapton;
 
-use adapton::macros::*;
+//use adapton::macros::*;
 use adapton::collections::*;
 use adapton::engine::*;
-use rand::{Rng, SeedableRng, StdRng};
+use rand::{Rng, SeedableRng};
 use std::marker::PhantomData;
-
 
 // --- Todo: Move to labdef:
 
 /// A bit that controls how names are placed in the input; See `README.md` for more.
-#[derive(Clone,Debug,RustcEncodeable)]
+#[derive(Clone,Debug)]
 pub enum NominalStrategy {
   Regular,
   ByContent,
 }
 
 /// Parameters for generating and editing input; See `README.md` for more.
-#[derive(Clone,Debug,RustcEncodeable)]
+#[derive(Clone,Debug)]
 pub struct GenerateParams {
   pub size: usize, 
   pub gauge: usize, 
@@ -75,7 +74,7 @@ pub struct TestComputer<Input,EditSt,Output,
 }
 
 /// Parameters to running a single lab experiment.
-#[derive(Clone,Debug,RustcEncodeable)]
+#[derive(Clone,Debug)]
 pub struct LabExpParams {
   pub sample_params: SampleParams,
   // TODO: Pretty-print input and output structures; graphmovie dump of experiment
@@ -90,7 +89,7 @@ pub struct LabExpParams {
 /// sequenced across successive samples.  Given an input_seeds vector,
 /// there is one unique Rng sequence for each engine's sequence of
 /// samples.
-#[derive(Clone,Debug,RustcEncodeable)]
+#[derive(Clone,Debug)]
 pub struct SampleParams {
   /// We convert this seed into a random-number-generator before generating and editing.
   pub input_seeds:       Vec<usize>, 
@@ -103,7 +102,7 @@ pub struct SampleParams {
 }
 
 /// The result of a lab is a sequence of samples.
-#[derive(Clone,Debug,RustcEncodeable)]
+#[derive(Clone,Debug)]
 pub struct LabExpResults {
   pub samples: Vec<Sample>
 }
@@ -113,7 +112,7 @@ pub struct LabExpResults {
 /// the DCG engine.  We want to interleave this way for each sample in
 /// order to compare outputs and metrics (counts and timings) on a
 /// fine-grained scale.
-#[derive(Clone,Debug,RustcEncodeable)]
+#[derive(Clone,Debug)]
 pub struct Sample {
   pub params:       SampleParams,
   pub batch_name:   usize,   // Index/name the change batches; one sample per compute + change batch
@@ -124,7 +123,7 @@ pub struct Sample {
 
 /// To sample a single engine, we record metrics for processing the
 /// input (left vertical edge in `README.md` diagram).
-#[derive(Clone,Debug,RustcEncodeable)]
+#[derive(Clone,Debug)]
 pub struct EngineSample {
   pub process_input:    EngineMetrics,
   pub compute_output:   EngineMetrics,
@@ -132,7 +131,7 @@ pub struct EngineSample {
 
 /// For each engine, for each sampled subcomputation, we record the
 /// real time (in nanoseconds) and engine-based counters for DCG costs.
-#[derive(Clone,Debug,RustcEncodeable)]
+#[derive(Clone,Debug)]
 pub struct EngineMetrics {
   pub time_ns:    u64,
   pub engine_cnt: Cnt,
@@ -231,7 +230,7 @@ fn get_sample_gen
   // Create empty DCG; TODO-Minor-- Make the API for this better.
   let _ = init_dcg(); assert!(engine_is_dcg());
   let empty_dcg = use_engine(Engine::Naive); // TODO-Minor: Rename this operation: "engine_swap" or something 
-  let mut rng = SeedableRng::from_seed(params.sample_params.input_seeds.as_slice());
+  let rng = SeedableRng::from_seed(params.sample_params.input_seeds.as_slice());
   //let editst_init = InputDist::edit_init(&mut rng, & params.sample_params.generate_params);
   TestState{
     params:params.clone(),
@@ -260,7 +259,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
      Computer:Compute<Input,Output>>
   SampleGen for TestState<rand::StdRng,Input,EditSt,Output,InputDist,Computer> {
     fn sample (self:&mut Self) -> Option<Sample> {
-      if ( self.change_batch_num > self.params.change_batch_loopc ) {
+      if self.change_batch_num > self.params.change_batch_loopc {
         None 
       } else { // Collect the next sample, for each engine, using get_engine_sample.
         let mut dcg_state = TestEngineState{ input: None, engine: Engine::Naive, 
@@ -348,14 +347,14 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
 
   
 
-fn csv_of_runtimes(path:&str, samples: Vec<Sample>) {
-  let path = Path::new(path);
-  let mut writer = csv::Writer::from_file(path).unwrap();
-  for r in samples.into_iter() {
-    //println!("{:?}",r);
-    //writer.encode(r).ok().expect("CSV writer error");
-  }
-}
+// fn csv_of_runtimes(path:&str, samples: Vec<Sample>) {
+//   let path = Path::new(path);
+//   let mut writer = csv::Writer::from_file(path).unwrap();
+//   for r in samples.into_iter() {
+//     //println!("{:?}",r);
+//     //writer.encode(r).ok().expect("CSV writer error");
+//   }
+// }
 
 fn labexp_params_defaults() -> LabExpParams {
   return LabExpParams {
@@ -377,9 +376,9 @@ fn labexp_params_defaults() -> LabExpParams {
 // TODO -- Put these implementations into a 'catalog' module.
 
 #[derive(Clone,Debug)]
-pub struct ListInt_Uniform_Prepend<T,S> { T:PhantomData<T>, S:PhantomData<S> }
+pub struct UniformPrepend<T,S> { t:PhantomData<T>, s:PhantomData<S> }
 
-impl<S> Generate<List<usize>> for ListInt_Uniform_Prepend<List<usize>,S> {
+impl<S> Generate<List<usize>> for UniformPrepend<List<usize>,S> {
   fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<usize> {
     let mut l : List<usize> = list_nil();
     for i in 0..params.size {
@@ -395,15 +394,15 @@ impl<S> Generate<List<usize>> for ListInt_Uniform_Prepend<List<usize>,S> {
   }
 }
 
-impl Edit<List<usize>, usize> for ListInt_Uniform_Prepend<List<usize>,usize> {
-  fn edit_init<R:Rng>(rng:&mut R, params:&GenerateParams) -> usize { 
+impl Edit<List<usize>, usize> for UniformPrepend<List<usize>,usize> {
+  fn edit_init<R:Rng>(_rng:&mut R, params:&GenerateParams) -> usize { 
     return params.size // Initial editing state = The size of the generated input
   }
   fn edit<R:Rng>(l_preedit:List<usize>, 
                  next_name:usize,
                  rng:&mut R, params:&GenerateParams) -> (List<usize>, usize) {
     let mut l = l_preedit ;
-    let mut i = next_name ;
+    let i = next_name ;
     if i % params.gauge == 0 {
       l = list_art(cell(name_of_usize(i), l));
       l = list_name(name_of_usize(i), l);      
@@ -415,21 +414,21 @@ impl Edit<List<usize>, usize> for ListInt_Uniform_Prepend<List<usize>,usize> {
 }
 
 
-#[derive(Clone,Debug)]
-pub struct ListPt2D_Uniform_Prepend<T,S> { T:PhantomData<T>, S:PhantomData<S> }
+//#[derive(Clone,Debug)]
+//pub struct UniformPrepend<T,S> { T:PhantomData<T>, S:PhantomData<S> }
 
 type Pt2D = (usize,usize); // TODO Fix this
 
-impl<S> Generate<List<Pt2D>> for ListPt2D_Uniform_Prepend<List<Pt2D>,S> { // TODO
-  fn generate<R:Rng>(rng:&mut R, params:&GenerateParams) -> List<Pt2D> {
+impl<S> Generate<List<Pt2D>> for UniformPrepend<List<Pt2D>,S> { // TODO
+  fn generate<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> List<Pt2D> {
     //panic!("TODO")
     list_nil()
   }
 }
 
-impl Edit<List<Pt2D>,usize> for ListPt2D_Uniform_Prepend<List<Pt2D>,usize> { // TODO
-  fn edit_init<R:Rng>(rng:&mut R, params:&GenerateParams) -> usize { 0 }
-  fn edit<R:Rng>(state:List<Pt2D>, st:usize, rng:&mut R, params:&GenerateParams) -> (List<Pt2D>, usize) {
+impl Edit<List<Pt2D>,usize> for UniformPrepend<List<Pt2D>,usize> { // TODO
+  fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 0 }
+  fn edit<R:Rng>(state:List<Pt2D>, st:usize, _rng:&mut R, _params:&GenerateParams) -> (List<Pt2D>, usize) {
     //TODO
     (state, st)
   }
@@ -437,67 +436,67 @@ impl Edit<List<Pt2D>,usize> for ListPt2D_Uniform_Prepend<List<Pt2D>,usize> { // 
 
 
 #[derive(Clone,Debug)]
-pub struct ListInt_LazyMap { }
+pub struct LazyMap { }
 #[derive(Clone,Debug)]
-pub struct ListInt_EagerMap { }
+pub struct EagerMap { }
 #[derive(Clone,Debug)]
-pub struct ListInt_LazyFilter { }
+pub struct LazyFilter { }
 #[derive(Clone,Debug)]
-pub struct ListInt_EagerFilter { }
+pub struct EagerFilter { }
 #[derive(Clone,Debug)]
-pub struct ListInt_Reverse { }
+pub struct Reverse { }
 #[derive(Clone,Debug)]
-pub struct ListInt_LazyMergesort { }
+pub struct LazyMergesort { }
 #[derive(Clone,Debug)]
-pub struct ListInt_EagerMergesort { }
+pub struct EagerMergesort { }
 #[derive(Clone,Debug)]
-pub struct ListPt2D_Quickhull { }
+pub struct Quickhull { }
 
-impl Compute<List<usize>,List<usize>> for ListInt_EagerMap {
+impl Compute<List<usize>,List<usize>> for EagerMap {
   fn compute(inp:List<usize>) -> List<usize> {
     list_map_eager(inp,Rc::new(|x| x * x))
   }
 }
 
-impl Compute<List<usize>,List<usize>> for ListInt_EagerFilter {
+impl Compute<List<usize>,List<usize>> for EagerFilter {
   fn compute(inp:List<usize>) -> List<usize> {
     list_filter_eager(inp,Rc::new(|x:&usize| (*x) % 3 == 0))
   }
 }
 
-impl Compute<List<usize>,List<usize>> for ListInt_LazyMap {
+impl Compute<List<usize>,List<usize>> for LazyMap {
   fn compute(inp:List<usize>) -> List<usize> {
     list_map_lazy(inp,Rc::new(|x| x * x))
   }
 }
 
-impl Compute<List<usize>,List<usize>> for ListInt_LazyFilter {
+impl Compute<List<usize>,List<usize>> for LazyFilter {
   fn compute(inp:List<usize>) -> List<usize> {
     list_filter_lazy(inp,Rc::new(|x:&usize| (*x) % 3 == 0))
   }
 }
 
-impl Compute<List<usize>,List<usize>> for ListInt_Reverse {
+impl Compute<List<usize>,List<usize>> for Reverse {
   fn compute(inp:List<usize>) -> List<usize> {
     list_reverse(inp, list_nil())
   }
 }
 
-impl Compute<List<usize>,List<usize>> for ListInt_LazyMergesort {
+impl Compute<List<usize>,List<usize>> for LazyMergesort {
   fn compute(inp:List<usize>) -> List<usize> {
     //panic!("TODO")
     inp
   }
 }
 
-impl Compute<List<usize>,List<usize>> for ListInt_EagerMergesort {
+impl Compute<List<usize>,List<usize>> for EagerMergesort {
   fn compute(inp:List<usize>) -> List<usize> {
     //panic!("TODO")
     inp
   }
 }
 
-impl Compute<List<Pt2D>,List<Pt2D>> for ListPt2D_Quickhull {
+impl Compute<List<Pt2D>,List<Pt2D>> for Quickhull {
   fn compute(inp:List<Pt2D>) -> List<Pt2D> {
     //panic!("TODO")
     inp
@@ -537,56 +536,57 @@ macro_rules! testcomputer {
 /// This is the master list of all tests in the current Adapton Lab
 pub fn all_tests() -> Vec<Box<LabExp>> {
   return vec![
-    testcomputer!(name_of_str("eager-map"),
+    testcomputer!(name_of_str("list-eager-map"),
                   List<usize>, usize,
                   List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>,usize>,
-                  ListInt_EagerMap)
+                  UniformPrepend<_,_>,
+                  EagerMap)
       ,
-    testcomputer!(name_of_str("eager-filter"),
+    testcomputer!(name_of_str("list-eager-filter"),
                   List<usize>, usize,
                   List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>,usize>,
-                  ListInt_EagerFilter)
+                  UniformPrepend<_,_>,
+                  EagerFilter)
       ,
-    testcomputer!(name_of_str("lazy-map"),
+    testcomputer!(name_of_str("list-lazy-map"),
                   List<usize>, usize,
                   List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>,usize>,
-                  ListInt_LazyMap)
+                  UniformPrepend<_,_>,
+                  LazyMap)
       ,
-    testcomputer!(name_of_str("lazy-filter"),
+    testcomputer!(name_of_str("list-lazy-filter"),
                   List<usize>, usize,
                   List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>,usize>,
-                  ListInt_LazyFilter)
+                  UniformPrepend<_,_>,
+                  LazyFilter)
       ,
-    testcomputer!(name_of_str("reverse"),
+    testcomputer!(name_of_str("list-reverse"),
                   List<usize>, usize,
                   List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>,usize>,
-                  ListInt_Reverse)
+                  UniformPrepend<_,_>,
+                  Reverse)
       ,
     testcomputer!(name_of_str("eager-mergesort"),
                   List<usize>, usize,
                   List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>,usize>,
-                  ListInt_EagerMergesort)
+                  UniformPrepend<_,_>,
+                  EagerMergesort)
       ,
     testcomputer!(name_of_str("lazy-mergesort"),
                   List<usize>, usize,
                   List<usize>,
-                  ListInt_Uniform_Prepend<List<usize>,usize>,
-                  ListInt_EagerMergesort)
+                  UniformPrepend<_,_>,
+                  LazyMergesort)
       ,
-    testcomputer!(name_of_str("quickhull"),
+    testcomputer!(name_of_str("list-quickhull"),
                   List<Pt2D>, usize,
                   List<Pt2D>,
-                  ListPt2D_Uniform_Prepend<List<Pt2D>,usize>,
-                  ListPt2D_Quickhull)
+                  UniformPrepend<_,_>,
+                  Quickhull)
       ,
   ]
 }
+
 
 
 fn run_all_tests() {
@@ -595,6 +595,7 @@ fn run_all_tests() {
   for test in tests.iter() {
     println!("Test: {:?}", test.name());
     let results = test.run(&params);
+    drop(results)
   }
 }
 
