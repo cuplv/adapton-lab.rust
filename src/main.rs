@@ -207,8 +207,10 @@ fn get_engine_sample
 
   println!("EngineSample::compute_output: {:?}", compute_output); // XXX Temp  
 
-  println!(" Input: {:?}", edited_input); // XXX Temp
-  println!("Output: {:?}", output); // XXX Temp
+  if false {
+    println!(" Input: {:?}", edited_input); // XXX Temp
+    println!("Output: {:?}", output); // XXX Temp
+  };
   
   let engine_sample = EngineSample{
     process_input,
@@ -483,16 +485,20 @@ impl Compute<List<usize>,List<usize>> for Reverse {
 }
 
 impl Compute<List<usize>,List<usize>> for LazyMergesort {
-  fn compute(inp:List<usize>) -> List<usize> {
-    //panic!("TODO")
-    inp
+  fn compute(inp:List<usize>) -> List<usize> {    
+    let tree = ns( name_of_str("tree_of_list"), 
+                   move ||tree_of_list::<usize,usize,Tree<_>,_>(Dir2::Right,inp) );
+    // TODO: Is this eager or lazy?
+    mergesort_list_of_tree2(tree,None)
   }
 }
 
 impl Compute<List<usize>,List<usize>> for EagerMergesort {
   fn compute(inp:List<usize>) -> List<usize> {
-    //panic!("TODO")
-    inp
+    let tree = ns( name_of_str("tree_of_list"), 
+                   move ||tree_of_list::<usize,usize,Tree<_>,_>(Dir2::Right,inp) );
+    // TODO: Is this eager or lazy?
+    mergesort_list_of_tree2(tree,None)
   }
 }
 
