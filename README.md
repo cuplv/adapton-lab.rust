@@ -190,3 +190,17 @@ and using nominal memoization.
 
 TODO -- Explain how to evaluate an instance of `Input`, `Di`, `Compute` and `Output`.
 
+
+Module Structure
+-----------------
+
+ - The `labdef` module abstractly defines lab experiments: parameters,
+ samples and generic traits, such as `TestComputer`, which defines a
+ diagram as above.
+
+ - The `catalog` module allows us to instantiate `TestComputer` in
+ standard ways, exercising the Adapton collections library.
+
+ - The `labrun` module implements the `LabExp` trait for any
+ `TestComputer` instantiation.  The `catalog` relies on this trait to
+ implement its `TestComputer` initiations.
