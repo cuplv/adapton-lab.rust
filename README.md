@@ -85,33 +85,46 @@ so.
 Defining a Commutative Diagram of From-Scratch Consistency 
 -----------------------------------------------------------
 
-With testing and performance evalaution both in mind, the test and
-evaluation harness introduces several data structures and computations
-that can be instantiated generically.  These elements can be related
+With testing and performance evalaution both in mind, Adapton Lab
+introduces several data structures and computations that can be
+instantiated generically.  These elements can be related
 diagrammatically, shown further below.
 
- - `Inputi` -- The ith input (a data structure). Generically, this
+ - `Input_i`: The `i`th input (a data structure). Generically, this
    consists of abstract notions of **input generation** and
-   **editing**.
- - `Outputi` -- The ith output (a data structure). For validating output (see diagram below), we compare output types for **equality**.
- - `Compute` -- The computation relating the `i`th Input to the `i`th
-                Output (a computation).
- - `DIni` -- The input change (aka input _edit_ or _delta_) relating the ith
-              input to the `i+1`th input (a computation).
- - `DOuti` -- The output change (aka _edit_ or _delta_) relating the ith
-              output to the `i+1`th output (a computation).
+   **editing**.  We capture these operations abstractly in Rust with
+   traits
+   [Edit](http://adapton.org/rustdoc/adapton_lab/labdef/trait.Edit.html)
+   and
+   [Generate](http://adapton.org/rustdoc/adapton_lab/labdef/trait.Generate.html).
+ - `Output_i`: The `i`th output (a data structure). For validating
+   incremental output against non-incremental output (see diagram
+   below), we compare output types for **equality**.
+ - `Compute`: The computation relating the `i`th Input to the `i`th
+    Output (a computation).  We capture this abstraction in Rust with
+    [The Compute trait](http://adapton.org/rustdoc/adapton_lab/labdef/trait.Compute.html).
+    We use the same computation to define both incremental and non-incremental algorithms.
+ - `Edit_i`: The input change (aka input _edit_ or _delta_) relating
+   the ith input to the `i+1`th input (a computation).  ith output to
+   the `i+1`th output (a computation).  We only require that values of
+   each output type can be compared for equality.
+ - `Update_i`: The output change relating the `i+1`th input to the
+   `i+1`th output, reusing the computation of the computation of
+   `Output_i` from `Input_i` in the process, using its DCG and change
+   propagation. 
 
 Note that while the input and outputs are data structures, their
 relationships are all computations: The input is modified by a
-computation `DIn1`, and to compute `Output2`, the system has two
+computation `Edit_1`, and to compute `Output_2`, the system has two
 choices:
 
- - **Naive**: Run `Compute` over `Input2`, (fully) computing `Output2` from
-   `Input2`.  This relationship is shown as horizontal edges in the diagram.
- - **DCG**: Reuse the traced computation of `Compute` over `Output1`,
-   changing `Output1` into `Output2` in the process, via
+ - **Naive**: Run `Compute` over `Input_2`, (fully) computing `Output_2` from
+   `Input2`.  _This relationship is shown as horizontal edges in the diagram_.
+
+ - **DCG**: Reuse the traced computation of `Compute` over `Output_1`,
+   changing `Output_1` into `Output_2` in the process, via
    change-propagation over the DCG.  This relationship is shown as
-   vertical edges on the right of the diagram.
+   _vertical edges on the right of the diagram_.
 
 **From-scratch consistency** is a meta-theoretical property that
    implies that the DCG approach is semantically equivalent to the
@@ -119,29 +132,29 @@ choices:
    commuting.
 
 **Diagram Example.**
-Suppose we consider `i` from 1 to 4, to show these relationships diagrammatically:
+Suppose we consider `i` from `1` to `4`, to show these relationships diagrammatically:
 
 ```
         |
-        |  generate
+        |  Generate
        \|/ 
         `  
-      Input1 --> Compute --> Output1
+      Input_1 --> Compute --> Output_1
         |                       | 
-        |  DIn1 (edit1)         |   DOut1 (Compute, using DCG1)
+        |  Edit_1               |   Update_1
        \|/                     \|/
         `                       ` 
-      Input2 --> Compute --> Output2
+      Input_2 --> Compute --> Output_2
         |                       | 
-        |  DIn2 (edit2)         |   DOut2 (Compute, using DCG2)
+        |  Edit_2               |   Update_2
        \|/                     \|/
         `                       ` 
-      Input3 --> Compute --> Output3
+      Input_3 --> Compute --> Output_3
         |                       | 
-        |  DIn3 (edit3)         |   DOut3 (Compute, using DCG3)
+        |  Edit_3               |   Update_3
        \|/                     \|/
         `                       ` 
-      Input4 --> Compute --> Output4
+      Input_4 --> Compute --> Output_4
 ```
 
 
