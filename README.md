@@ -10,7 +10,7 @@ Quick Start
 ------------
 
 To use Adapton Lab, be sure to checkout the `dev` branch of
-[Adapton](http://github/cuplv/adapton.rust/):
+[Adapton](http://github.com/cuplv/adapton.rust/):
 
 ```
 git clone https://github.com/cuplv/adapton.rust
