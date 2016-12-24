@@ -3,7 +3,7 @@ Adapton Lab: Generic Testing and Evaluation
 
 Quick Links
 ------------
- - (http://adapton.org/rustdoc/adapton_lab/index.html)[Adapton Lab: Rust API documentation]
+ - [Adapton Lab: Rust API documentation](http://adapton.org/rustdoc/adapton_lab/index.html)
  - (http://adapton.org)[Adapton Homepage]
 
 Introduction
