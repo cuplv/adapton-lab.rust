@@ -14,12 +14,9 @@ Lab** for short.  The Adapton Lab provides a generic (reusable) harness for test
 and evaluating Adapton application layers:
 
  - **the Adapton engines**:
-    - Demanded-Computation Graph (DCG) and
-    - Naive (No caching).
- - **the Adapton collections library**:
-    - Sequences,
-    - Finite maps, Sets,
-    - Graphs
+    - DCG: Demanded-Computation Graph-based caching, with generic change propagation.
+    - Naive: No caching.
+ - **the Adapton collections library**: sequences, finite maps, sets, graphs, etc.
  - **interesting algorithms over the collections library**, including:
     - standard graph algorithms
     - computational geometry algorithms
