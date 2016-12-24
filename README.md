@@ -1,6 +1,14 @@
 Adapton Lab: Generic Testing and Evaluation
 ==============================================
 
+Quick Links
+------------
+ - (http://adapton.org/rustdoc/adapton_lab/index.html)[Adapton Lab: Rust API documentation]
+ - (http://adapton.org)[Adapton Homepage]
+
+Introduction
+--------------
+
 This document describes _Adapton Laboratory_, or **Adapton
 Lab** for short.  The Adapton Lab provides a generic (reusable) harness for testing
 and evaluating Adapton application layers:
