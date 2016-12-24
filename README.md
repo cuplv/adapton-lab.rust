@@ -82,8 +82,8 @@ of this test harness is to test that algorithms adhere to
 **from-scratch consistency** when the programmer expects them to do
 so.
 
-Commutative Diagram: From-Scratch Consistency of Incremental Computation
--------------------------------------------------------------------------
+Defining a Commutative Diagram of From-Scratch Consistency 
+-----------------------------------------------------------
 
 With testing and performance evalaution both in mind, the test and
 evaluation harness introduces several data structures and computations
