@@ -6,6 +6,17 @@ Quick Links
  - [Rustdoc for Adapton Lab](http://adapton.org/rustdoc/adapton_lab/index.html)
  - [Adapton Homepage](http://adapton.org)
 
+Quick Start
+------------
+
+```
+git clone https://github.com/cuplv/adapton-lab.rust
+cd adapton-lab.rust
+git checkout dev
+cargo run
+```
+The default behavior for Adapton Lab is to run a full test suite.
+
 Introduction
 --------------
 
@@ -207,18 +218,3 @@ measure the performance differences between running `Compute` naively
 and using nominal memoization.
 
 TODO -- Explain how to evaluate an instance of `Input`, `Di`, `Compute` and `Output`.
-
-
-Module Structure
------------------
-
- - The `labdef` module abstractly defines lab experiments: parameters,
- samples and generic traits, such as `TestComputer`, which defines a
- diagram as above.
-
- - The `catalog` module allows us to instantiate `TestComputer` in
- standard ways, exercising the Adapton collections library.
-
- - The `labrun` module implements the `LabExp` trait for any
- `TestComputer` instantiation.  The `catalog` relies on this trait to
- implement its `TestComputer` initiations.

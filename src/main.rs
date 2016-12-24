@@ -2,21 +2,28 @@
 #![feature(rustc_private)]
 //#![feature(custom_derive)]
 
-extern crate serialize;
-extern crate csv;
+//extern crate serialize;
+//extern crate csv;
 extern crate rand;
 
 #[macro_use]
 extern crate adapton;
 
-// lab definitions:
+/// See also: Defines lab parameters `LabParams` and `LabDef`, the
+/// parameters for running the abstract commutative diagram. See
+/// [Adapton Lab README](https://github.com/cuplv/adapton-lab.rust).
 pub mod labdef;
+
+/// See also: **Generically implements** the abstract commutative
+/// diagram. See [Adapton Lab
+/// README](https://github.com/cuplv/adapton-lab.rust).
 pub mod labrun;
+
+/// See also: Provides **concrete instances** of the diagram from
+/// [Adapton Lab README](https://github.com/cuplv/adapton-lab.rust).
 pub mod catalog;
 
 use labdef::*;
-//use labrun::*;
-//use catalog::*;
 
 // fn csv_of_runtimes(path:&str, samples: Vec<Sample>) {
 //   let path = Path::new(path);
