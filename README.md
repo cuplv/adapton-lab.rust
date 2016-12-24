@@ -9,20 +9,30 @@ Quick Links
 Quick Start
 ------------
 
+To use Adapton Lab, be sure to checkout the `dev` branch of
+[Adapton](http://github/cuplv/adapton.rust/):
+
 ```
+git clone https://github.com/cuplv/adapton.rust
+cd adapton.rust
+git checkout dev
+cd ..
 git clone https://github.com/cuplv/adapton-lab.rust
 cd adapton-lab.rust
-git checkout dev
 cargo run
 ```
-The default behavior for Adapton Lab is to run a full test suite.
+
+This script will invoke the default behavior for Adapton Lab, which is
+to run a full test suite.  Below, we give more introduction,
+background, details about command-line parameters, and pointers to
+extend the test suite.
 
 Introduction
 --------------
 
 This document describes _Adapton Laboratory_, or **Adapton
 Lab** for short.  The Adapton Lab provides a generic (reusable) harness for testing
-and evaluating Adapton application layers:
+and evaluating a test suite that exercises various Adapton application layers:
 
  - **the Adapton engines**:
     - DCG: Demanded-Computation Graph-based caching, with generic change propagation.
@@ -33,10 +43,11 @@ and evaluating Adapton application layers:
     - computational geometry algorithms
     - static analyses of programs
 
-Adapton provides both a data structures collection and a runtime
-library to write generic incremental computations.  At the highest
-level, this approach consists of the programmer writing functional
-programs over inductive, persistant structures, specifically:
+As a Rust library, **Adapton** provides both a data structures
+collection and a runtime library to write generic incremental
+computations.  At the highest level, this approach consists of the
+programmer writing functional programs over inductive, persistant
+structures, specifically:
 
  - **lists**, 
  - balanced trees representing **sequences**, 
