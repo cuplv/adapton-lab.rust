@@ -114,7 +114,7 @@ choices:
    commuting.
 
 **Diagram Example.**
-Suppose we consider `i` from 1 to 3, to show these relationships diagrammatically:
+Suppose we consider `i` from 1 to 4, to show these relationships diagrammatically:
 
 ```
         |
