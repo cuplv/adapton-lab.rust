@@ -27,7 +27,7 @@ pub struct TestState<R:Rng+Clone,
                      Input,EditSt,Output,
                      InputDist:Generate<Input>+Edit<Input,EditSt>,
                      Computer:Compute<Input,Output>> {
-  pub params:           LabExpParams,
+  pub params:           LabParams,
   pub rng:              Box<R>,
   pub change_batch_num: usize,
   pub dcg_state:   TestEngineState<Input,EditSt,Output,InputDist,Computer>,
@@ -96,7 +96,7 @@ fn get_sample_gen
    Output:Eq+Debug,
    InputDist:Generate<Input>+Edit<Input,EditSt>,
    Computer:Compute<Input,Output>> 
-  (params:&LabExpParams) 
+  (params:&LabParams) 
    -> TestState<rand::StdRng,Input,EditSt,Output,InputDist,Computer> 
 {
   // Create empty DCG; TODO-Minor-- Make the API for this better.
@@ -170,7 +170,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
         } else { None } ;
 
         let sample = Sample{
-          params:self.params.sample_params.clone(),
+          //params:self.params.sample_params.clone(),
           batch_name:self.change_batch_num,
           dcg_sample,
           naive_sample,
@@ -182,21 +182,14 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
     }
   }
 
-/// Lab experiment: Hides the Input, Output and Compute types of a
-/// TestComputer, abstracting over them.
-pub trait LabExp {
-  fn name(self:&Self) -> Name;
-  fn run(self:&Self, params:&LabExpParams) -> LabExpResults;
-}
-
-/// Lab experiment implementation: Implements the LabExp trait for any
+/// Lab experiment implementation: Implements the LabDef trait for any
 /// TestComputer instantiation.
 impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
      InputDist:'static+Generate<Input>+Edit<Input,EditSt>,
      Computer:'static+Compute<Input,Output>>
-  LabExp for TestComputer<Input,EditSt,Output,InputDist,Computer> {
+  LabDef for TestComputer<Input,EditSt,Output,InputDist,Computer> {
     fn name(self:&Self) -> Name { self.identity.clone() }
-    fn run(self:&Self, params:&LabExpParams) -> LabExpResults 
+    fn run(self:&Self, params:&LabParams) -> LabResults 
     {            
       let mut st = get_sample_gen::<Input,EditSt,Output,InputDist,Computer>(params);
       loop {
@@ -208,7 +201,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
           None => break,
         }
       };
-      return LabExpResults {
+      return LabResults {
         samples: st.samples,
       }
     }

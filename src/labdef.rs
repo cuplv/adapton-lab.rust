@@ -41,7 +41,7 @@ pub trait Compute<Input,Output> {
 
 /// Generic notion of an Incremental Computation to Evaluate and Test.
 /// We instantiate this structure once for each test in our test suite.
-/// We implement the `LabExp` trait generically for this structure.
+/// We implement the `LabDef` trait generically for this structure.
 pub struct TestComputer<Input,EditSt,Output,
                         InputDist:Generate<Input>+Edit<Input,EditSt>,
                         Computer:Compute<Input,Output>> {
@@ -53,9 +53,17 @@ pub struct TestComputer<Input,EditSt,Output,
   pub output:    PhantomData<Output>
 }
 
+/// Lab experiment definition: Hides the Input, Output and Compute types of a
+/// TestComputer, abstracting over them.
+/// See catalog module for example instances.
+pub trait LabDef {
+  fn name(self:&Self) -> Name;
+  fn run(self:&Self, params:&LabParams) -> LabResults;
+}
+
 /// Parameters to running a single lab experiment.
 #[derive(Clone,Debug)]
-pub struct LabExpParams {
+pub struct LabParams {
   pub sample_params: SampleParams,
   // TODO: Pretty-print input and output structures; graphmovie dump of experiment
   /// Number of change-batches to perform in a loop; each is interposed with computing the new output.
@@ -83,7 +91,7 @@ pub struct SampleParams {
 
 /// The result of a lab is a sequence of samples.
 #[derive(Clone,Debug)]
-pub struct LabExpResults {
+pub struct LabResults {
   pub samples: Vec<Sample>
 }
 
@@ -94,7 +102,7 @@ pub struct LabExpResults {
 /// fine-grained scale.
 #[derive(Clone,Debug)]
 pub struct Sample {
-  pub params:       SampleParams,
+  //pub params:       SampleParams,
   pub batch_name:   usize,   // Index/name the change batches; one sample per compute + change batch
   pub dcg_sample:   EngineSample,
   pub naive_sample: EngineSample,

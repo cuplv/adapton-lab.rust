@@ -157,7 +157,7 @@ macro_rules! testcomputer {
 
 
 /// This is the master list of all tests in the current Adapton Lab
-pub fn all_tests() -> Vec<Box<super::labrun::LabExp>> {
+pub fn all_tests() -> Vec<Box<LabDef>> {
   return vec![
     testcomputer!(name_of_str("list-eager-map"),
                   List<usize>, usize,

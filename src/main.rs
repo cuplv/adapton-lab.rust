@@ -27,8 +27,8 @@ use labdef::*;
 //   }
 // }
 
-fn labexp_params_defaults() -> LabExpParams {
-  return LabExpParams {
+fn lab_params_defaults() -> LabParams {
+  return LabParams {
     sample_params: SampleParams{
       input_seeds: vec![0],
       generate_params: GenerateParams{
@@ -46,7 +46,7 @@ fn labexp_params_defaults() -> LabExpParams {
 // TODO -- Put these implementations into a 'catalog' module.
 
 fn run_all_tests() {
-  let params = labexp_params_defaults();
+  let params = lab_params_defaults();
   let tests = catalog::all_tests();
   for test in tests.iter() {
     println!("Test: {:?}", test.name());
