@@ -105,8 +105,8 @@ Bibliography
 *Adapton Papers*:
 
 - [_Typed Adapton: Refinement types for nominal memoization_, Working draft](https://arxiv.org/abs/1610.00097).
-- [_Incremental computation with names_, OOPSLA 2015](http://arxiv.org/abs/1503.07792).  
-- [_Adapton: Composable, demand-driven incremental computation_, PLDI 2014](http://www.cs.umd.edu/~hammer/adapton/).  
+- [_Incremental computation with names_, **OOPSLA 2015**](http://arxiv.org/abs/1503.07792).  
+- [_Adapton: Composable, demand-driven incremental computation_, **PLDI 2014**](http://www.cs.umd.edu/~hammer/adapton/).  
 
 *Other Papers*:
 
