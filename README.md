@@ -98,6 +98,24 @@ of this test harness is to test that algorithms adhere to
 **from-scratch consistency** when the programmer expects them to do
 so.
 
+
+Bibliography
+------------
+
+*Adapton Papers*:
+
+- [_Typed Adapton: Refinement types for nominal memoization_, Working draft.](https://arxiv.org/abs/1610.00097).  
+- [_Incremental computation with names_, OOPSLA 2015](http://arxiv.org/abs/1503.07792).  
+- [_Adapton: Composable, demand-driven incremental computation_, PLDI 2014](http://www.cs.umd.edu/~hammer/adapton/).  
+
+*Other Papers*:
+
+- [*Incremental computation via function caching*](http://dl.acm.org/citation.cfm?id=75305)  
+  *Bill Pugh and Tim Teitelbaum.* **POPL 1989.**  
+  - hash-cons'd, purely-functional data structures
+  - memoized function calls (to pure computations)
+
+
 Defining a Commutative Diagram of From-Scratch Consistency 
 -----------------------------------------------------------
 
