@@ -112,8 +112,8 @@ Bibliography
 
 - [*Incremental computation via function caching*](http://dl.acm.org/citation.cfm?id=75305)  
   *Bill Pugh and Tim Teitelbaum.* **POPL 1989.**  
-  - hash-cons'd, purely-functional data structures
-  - memoized function calls (to pure computations)
+  - structural memoization, of hash-cons'd, purely-functional data structures
+  - (structurally-) memoized function calls, to pure computations
 
 
 Defining a Commutative Diagram of From-Scratch Consistency 
