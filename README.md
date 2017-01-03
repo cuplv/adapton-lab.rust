@@ -9,23 +9,17 @@ Quick Links
 Quick Start
 ------------
 
-To use Adapton Lab, be sure to checkout the `dev` branch of
-[Adapton](http://github.com/cuplv/adapton.rust/):
-
 ```
-git clone https://github.com/cuplv/adapton.rust
-cd adapton.rust
-git checkout dev
-cd ..
 git clone https://github.com/cuplv/adapton-lab.rust
 cd adapton-lab.rust
 cargo run
 ```
 
 This script will invoke the default behavior for Adapton Lab, which is
-to run a full test suite.  Below, we give more introduction,
-background, details about command-line parameters, and pointers to
-extend the test suite.
+to run a full test suite for Adapton.  (Note: Adapton Lab depends on
+the `dev` branch of [Adapton](http://github.com/cuplv/adapton.rust/)).
+Below, we give more introduction, background, details about
+command-line parameters, and pointers to extend the test suite.
 
 Introduction
 --------------
