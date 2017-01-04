@@ -9,9 +9,9 @@ Quick Links
 Quick Start
 ------------
 
-Adapton use the latest version of the Rust language and runtime.  To
-use Install rust nightly (the latest version of the compiler and
-runtime).  Even better, install
+Adapton uses the latest version of the Rust language and runtime.  To
+use it, install **rust nightly** (the latest version of the compiler
+and runtime).  Even better, install
 [`rustup.rs`](https://github.com/rust-lang-nursery/rustup.rs) and
 follow [its instructions for switching to the nightly
 channel](https://github.com/rust-lang-nursery/rustup.rs#working-with-nightly-rust).
