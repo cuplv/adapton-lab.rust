@@ -24,9 +24,8 @@ cargo run
 ```
 
 This script will invoke the default behavior for Adapton Lab, which
-consists of running a full test suite for [Adapton's `dev`
+consists of running a test suite over [Adapton's `dev`
 branch](https://github.com/cuplv/adapton.rust/tree/dev).
-
 Below, we give more introduction, background, details about
 command-line parameters, and pointers to extend the test suite.
 
