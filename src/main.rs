@@ -1,5 +1,5 @@
 #![feature(field_init_shorthand)]
-#![feature(rustc_private)]
+//#![feature(rustc_private)]
 //#![feature(custom_derive)]
 
 //extern crate serialize;

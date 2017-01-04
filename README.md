@@ -9,6 +9,12 @@ Quick Links
 Quick Start
 ------------
 
+Install rust nightly (the latest version of the compiler and runtime).
+Even better, install [`rustup.rs`](curl https://sh.rustup.rs -sSf |
+sh) and follow [its instructions for switching to the nightly
+channel](https://github.com/rust-lang-nursery/rustup.rs#working-with-nightly-rust).
+
+
 ```
 git clone https://github.com/cuplv/adapton-lab.rust
 cd adapton-lab.rust
