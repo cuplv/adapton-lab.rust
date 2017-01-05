@@ -5,6 +5,7 @@ body{
   zoom:1;
   height:400px;
   width:100%;
+  border-width: 0px;
 }
 .vizheading {
 padding:5px;
@@ -19,14 +20,19 @@ border-left:1px  #445599;
 border-top:1px  #445599;
 border-bottom:1px  #445599;
 border-right:0px;
+background: #445599;
+color: white;
 }
 .archivist {
 border-style:solid;
-border-left:4px;
-border-top:4px;
-border-bottom:4px;
+border-left:1px black;
+border-top:1px black;
+border-bottom:1px black;
 border-right:0px;
+background: #eeccff;
+color: black;
 }
+
 </style>
 
 <html>
@@ -35,15 +41,55 @@ border-right:0px;
 <table>
   
   <tr>
-    <td style="background:#445599; color:white; font-size:10px; border-style:solid;border-width:2px; border-right:0px;" class="vizheading">
-      <strong>Editor</strong> -- <strong>Generates</strong> and <strong>edits / mutates</strong> input over time.</td>
-    <td style="background:#fefefe; font-color:white; font-size:10px; border-style:solid;border-width:2px; border-right:0px;" class="vizheading">
+    <td style="font-size:10px;" class="vizheading editor">
+      &#x262f;
+      <strong>Editor</strong> -- <strong>Generates</strong> and <strong>edits</strong> (mutates and/or changes) input over time.</td>
+    <td style="background:#fefefe; font-color:white; font-size:10px; border-style:solid;border-width:2px; border-right:0px;" class="vizheading archivist">
+      &#x262f;      
       <strong>Archivist</strong> -- Computes <strong>changing output</strong> from <strong>changing input</strong>.</td>
   </tr>
   
  <tr>
-   <td class="vizheading">0. Generate initial input</td>
-   <td class="vizheading">0. Compute initial output</td>
+   <td class="vizheading editor">0. Generate initial input</td>
+   <td class="vizheading archivist">0. Compute initial output</td>
+ </tr>
+
+ <tr>
+   <td>
+     <table class="editor">
+       <tr>
+	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+       </tr>
+       <tr>
+	 <td><iframe class="vizviewport editor" src="fakealloc.html"></iframe></td>
+	 <td><iframe class="vizviewport editor" src="fakeobserve.html"></iframe></td>
+	 <td><iframe class="vizviewport editor" src="fakevalue.html"></iframe></td>
+       </tr>
+     </table>
+   </td>
+   <td>
+     <table class="archivist">
+       <tr>
+	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+       </tr>
+       <tr>
+	 <td><iframe class="vizviewport archivist" src="fakealloc.html"></iframe></td>
+	 <td><iframe class="vizviewport archivist" src="fakeobserve.html"></iframe></td>
+	 <td><iframe class="vizviewport archivist" src="fakevalue.html"></iframe></td>
+       </tr>
+     </table>
+   </td>
+ </tr>
+
+
+
+ <tr>
+   <td class="vizheading editor">1. First input edit</td>
+   <td class="vizheading archivist">1. First output update</td>
  </tr>
 
  <tr>
@@ -63,152 +109,6 @@ border-right:0px;
    </td>
    <td>
      <table class="archivist" style="border-style:solid;border-width:2px; border-right:0px;">
-       <tr>
-	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-       </tr>
-       <tr>
-	 <td><iframe class="vizviewport" src="fakealloc.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakeobserve.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakevalue.html"></iframe></td>
-       </tr>
-     </table>
-   </td>
- </tr>
-
-
-
- <tr>
-   <td class="vizheading">1. First input edit</td>
-   <td class="vizheading">1. First output update</td>
- </tr>
-
- <tr>
-   <td>
-     <table class="editor" style="border-style:solid;border-width:2px; border-right:0px;">
-       <tr>
-	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-       </tr>
-       <tr>
-	 <td><iframe class="vizviewport" src="fakealloc.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakeobserve.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakevalue.html"></iframe></td>
-       </tr>
-     </table>
-   </td>
-   <td>
-     <table class="archivist" style="border-style:solid;border-width:2px; border-right:0px;">
-       <tr>
-	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-       </tr>
-       <tr>
-	 <td><iframe class="vizviewport" src="fakealloc.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakeobserve.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakevalue.html"></iframe></td>
-       </tr>
-     </table>
-   </td>
- </tr>
-
- <tr>
-   <td class="vizheading">2. Second input edit</td>
-   <td class="vizheading">2. Second output update</td>
- </tr>
-
- <tr>
-   <td>
-     <table class="enginesample" style="border-style:solid;border-width:2px; border-right:0px;">
-       <tr>
-	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-       </tr>
-       <tr>
-	 <td><iframe class="vizviewport" src="fakealloc.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakeobserve.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakevalue.html"></iframe></td>
-       </tr>
-     </table>
-   </td>
-   <td>
-     <table class="enginesample" style="border-style:solid;border-width:2px; border-right:0px;">
-       <tr>
-	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-       </tr>
-       <tr>
-	 <td><iframe class="vizviewport" src="fakealloc.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakeobserve.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakevalue.html"></iframe></td>
-       </tr>
-     </table>
-   </td>
- </tr>
-
- <tr>
-   <td class="vizheading">3. Third input edit</td>
-   <td class="vizheading">3. Third output update</td>
- </tr>
-
- <tr>
-   <td>
-     <table class="enginesample" style="border-style:solid;border-width:2px; border-right:0px;">
-       <tr>
-	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-       </tr>
-       <tr>
-	 <td><iframe class="vizviewport" src="fakealloc.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakeobserve.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakevalue.html"></iframe></td>
-       </tr>
-     </table>
-   </td>
-   <td>
-     <table class="enginesample" style="border-style:solid;border-width:2px; border-right:0px;">
-       <tr>
-	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-       </tr>
-       <tr>
-	 <td><iframe class="vizviewport" src="fakealloc.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakeobserve.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakevalue.html"></iframe></td>
-       </tr>
-     </table>
-   </td>
- </tr>
-
- <tr>
-   <td class="vizheading">4. Fourth input edit</td>
-   <td class="vizheading">4. Fourth output update</td>
- </tr>
-
- <tr>
-   <td>
-     <table class="enginesample" style="border-style:solid;border-width:2px; border-right:0px;">
-       <tr>
-	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-       </tr>
-       <tr>
-	 <td><iframe class="vizviewport" src="fakealloc.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakeobserve.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakevalue.html"></iframe></td>
-       </tr>
-     </table>
-   </td>
-   <td>
-     <table class="enginesample" style="border-style:solid;border-width:2px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
