@@ -2,13 +2,29 @@
 body{
 }
 .vizviewport {
-  height:600px;
-  width:450px;
+  height:500px;
+  width:100%;
 }
 .vizheading {
+padding:20px;
 font-style:bold;
 font-size:36px;
 font-family: helvetica;
+}
+
+.editor {
+border-style:solid;
+border-left:40px  #445599;
+border-top:40px  #445599;
+border-bottom:40px  #445599;
+border-right:0px;
+}
+.archivist {
+border-style:solid;
+border-left:40px;
+border-top:40px;
+border-bottom:40px;
+border-right:0px;
 }
 </style>
 
@@ -16,15 +32,14 @@ font-family: helvetica;
   <body>  
 
 <table>
- <tr>
-   <td style="background:black; color:white; font-size:48px; border-style:solid;border-width:20px; border-right:0px;" class="vizheading">
-     <strong>Editor</strong> -- <strong>Generates</strong> and <strong>edits / mutates</strong> input over time.</td>
-   <td style="background:#fefefe; font-color:white; font-size:48px; border-style:solid;border-width:20px; border-right:0px;" class="vizheading">
-     <strong>Archivist</strong> -- Computes <strong>changing output</strong> from <strong>changing input</strong>.</td>
- </tr>
- 
-
-
+  
+  <tr>
+    <td style="background:#445599; color:white; font-size:48px; border-style:solid;border-width:20px; border-right:0px;" class="vizheading">
+      <strong>Editor</strong> -- <strong>Generates</strong> and <strong>edits / mutates</strong> input over time.</td>
+    <td style="background:#fefefe; font-color:white; font-size:48px; border-style:solid;border-width:20px; border-right:0px;" class="vizheading">
+      <strong>Archivist</strong> -- Computes <strong>changing output</strong> from <strong>changing input</strong>.</td>
+  </tr>
+  
  <tr>
    <td class="vizheading">0. Generate initial input</td>
    <td class="vizheading">0. Compute initial output</td>
@@ -32,7 +47,7 @@ font-family: helvetica;
 
  <tr>
    <td>
-     <table style="border-style:solid;border-width:20px; border-right:0px;">
+     <table class="editor" style="border-style:solid;border-width:20px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
@@ -46,7 +61,7 @@ font-family: helvetica;
      </table>
    </td>
    <td>
-     <table style="border-style:solid;border-width:20px;">
+     <table class="archivist" style="border-style:solid;border-width:20px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
@@ -70,7 +85,7 @@ font-family: helvetica;
 
  <tr>
    <td>
-     <table style="border-style:solid;border-width:20px; border-right:0px;">
+     <table class="editor" style="border-style:solid;border-width:20px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
@@ -84,7 +99,7 @@ font-family: helvetica;
      </table>
    </td>
    <td>
-     <table style="border-style:solid;border-width:20px;">
+     <table class="archivist" style="border-style:solid;border-width:20px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
@@ -106,7 +121,7 @@ font-family: helvetica;
 
  <tr>
    <td>
-     <table style="border-style:solid;border-width:20px; border-right:0px;">
+     <table class="enginesample" style="border-style:solid;border-width:20px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
@@ -120,7 +135,7 @@ font-family: helvetica;
      </table>
    </td>
    <td>
-     <table style="border-style:solid;border-width:20px; border-right:0px;">
+     <table class="enginesample" style="border-style:solid;border-width:20px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
@@ -142,7 +157,7 @@ font-family: helvetica;
 
  <tr>
    <td>
-     <table style="border-style:solid;border-width:20px; border-right:0px;">
+     <table class="enginesample" style="border-style:solid;border-width:20px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
@@ -156,7 +171,7 @@ font-family: helvetica;
      </table>
    </td>
    <td>
-     <table style="border-style:solid;border-width:20px; border-right:0px;">
+     <table class="enginesample" style="border-style:solid;border-width:20px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
@@ -178,7 +193,7 @@ font-family: helvetica;
 
  <tr>
    <td>
-     <table style="border-style:solid;border-width:20px; border-right:0px;">
+     <table class="enginesample" style="border-style:solid;border-width:20px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
@@ -192,7 +207,7 @@ font-family: helvetica;
      </table>
    </td>
    <td>
-     <table style="border-style:solid;border-width:20px; border-right:0px;">
+     <table class="enginesample" style="border-style:solid;border-width:20px; border-right:0px;">
        <tr>
 	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
 	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
