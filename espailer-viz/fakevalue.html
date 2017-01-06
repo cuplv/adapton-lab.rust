@@ -1,4 +1,37 @@
 <style>
+  div.thunk {
+  font-family: monospace;
+  font-size: 8px;
+  line-height: 8px;
+
+  border-radius: 5px;
+  
+  background-color: #afafff;
+  border-style: solid;
+  padding: 1px;
+  
+  border-top: solid blue;
+  border-left: solid white;
+  border-right: solid black;
+  border-bottom: solid blue;
+  border-width: 2px 2px 2px 1px;
+  
+  float: left;
+  clear: both;
+  
+  display: inline-block;
+  padding: 2px;
+  }
+  div.thunk:hover {
+  background-color: white;
+  border-left: solid white;
+  border-top: solid black;
+  border-bottom: solid black;
+  border-width: 1px 2px 2px 1px;
+
+  //padding: 5px;
+  }
+
   div {
   font-family: monospace;
   font-size: 8px;
@@ -7,7 +40,7 @@
   font-weight: 500;
   line-height: 8px;
   
-  color: #bf8fbf;
+  color: #0f0f0f;
   background-color: #bf8fbf;
   
   border-style: solid;
@@ -35,26 +68,63 @@
   border-bottom: solid white 2px;
   //padding: 1px;
   }
+
+  div.data {
+  font-family: monospace;
+  font-size: 8px;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 500;
+  line-height: 8px;
+  
+  color: #ffffaa;
+  background-color: #ffffaa;
+  
+  border-style: solid;
+  padding: 2px;
+  
+  border-radius: 4px;
+
+  border-top: solid white 2px;
+  border-left: solid purple 1px;
+  border-right: solid purple 1px;
+  border-bottom: solid black 2px;
+  
+  text-align: left;
+  
+  display: inline-block;
+  padding: 2px;
+  }
+  div.data:hover {
+  font-size: 6px;
+  color:black;
+  font-weight:bold;
+  font-size: 8px;
+  background-color: #ffeeff;
+  border-top: solid black 2px;
+  border-bottom: solid white 2px;
+  //padding: 1px;
+  }
 </style>
 <div>
   1
-  <div>
+  <div class="data">
     2
-    <div>
+    <div class="data">
       3
     </div>
   </div>
   <div>  
     4  
-    <div>
+    <div class="data">
       5
       <div>
 	6
-	<div>
+	<div class="data">
 	  10
 	  <div>
 	    10
-	    <div>
+	    <div class="thunk" >
 	      11
 	    </div>
 	  </div>
@@ -62,7 +132,7 @@
 	    12
 	    <div>
 	      10
-	      <div>
+	      <div class="thunk">
 		11
 	      </div>
 	    </div>
@@ -78,7 +148,7 @@
 	    </div>
 	  </div>
 
-	  <div>
+	  <div class="thunk">
 	    11
 	  </div>
 	</div>
@@ -93,7 +163,7 @@
 	  7
 	  <div>
 	    8
-	    <div>
+	    <div class="thunk">
 	      9
 	      <div>
 		10
@@ -107,7 +177,7 @@
 		  13
 		</div>
 	      </div>
-	      <div>
+	      <div class="data">
 		14
 		<div>
 		  15
