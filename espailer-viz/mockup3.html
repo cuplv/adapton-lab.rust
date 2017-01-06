@@ -5,15 +5,13 @@ body{
   zoom:1;
   height:400px;
   width:100%;
-  border-width: 0px;
 }
 .vizheading {
 padding:5px;
 font-style:bold;
-font-size:9px;
+font-size:12px;
 font-family: helvetica;
 }
-
 .editor {
 border-style:solid;
 border-left:1px  #445599;
@@ -41,10 +39,10 @@ color: black;
 <table>
   
   <tr>
-    <td style="font-size:10px;" class="vizheading editor">
+    <td style="font-size:18px;" class="vizheading editor">
       &#x262f;
       <strong>Editor</strong> -- <strong>Generates</strong> and <strong>edits</strong> (mutates and/or changes) input over time.</td>
-    <td style="background:#fefefe; font-color:white; font-size:10px; border-style:solid;border-width:2px; border-right:0px;" class="vizheading archivist">
+    <td style="font-size:18px;" class="vizheading archivist">
       &#x262f;      
       <strong>Archivist</strong> -- Computes <strong>changing output</strong> from <strong>changing input</strong>.</td>
   </tr>
@@ -96,28 +94,28 @@ color: black;
    <td>
      <table class="editor">
        <tr>
-	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+	 <td><span class="vizheading editorx">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+	 <td><span class="vizheading editorx">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+	 <td><span class="vizheading editorx">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
        </tr>
        <tr>
-	 <td><iframe class="vizviewport" src="fakealloc.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakeobserve.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakevalue.html"></iframe></td>
+	 <td><iframe class="vizviewport editor" src="fakealloc.html"></iframe></td>
+	 <td><iframe class="vizviewport editor" src="fakeobserve.html"></iframe></td>
+	 <td><iframe class="vizviewport editor" src="fakevalue.html"></iframe></td>
        </tr>
      </table>
    </td>
    <td>
      <table class="archivist">
        <tr>
-	 <td><span class="vizheading">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
-	 <td><span class="vizheading">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+	 <td><span class="vizheading archivistx">Alloc <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+	 <td><span class="vizheading archivistx">Observe <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
+	 <td><span class="vizheading archivistx">Value <a href="https://en.wikipedia.org/wiki/Espalier">Espailer</a></span></td>
        </tr>
        <tr>
-	 <td><iframe class="vizviewport" src="fakealloc.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakeobserve.html"></iframe></td>
-	 <td><iframe class="vizviewport" src="fakevalue.html"></iframe></td>
+	 <td><iframe class="vizviewport archivist" src="fakealloc.html"></iframe></td>
+	 <td><iframe class="vizviewport archivist" src="fakeobserve.html"></iframe></td>
+	 <td><iframe class="vizviewport archivist" src="fakevalue.html"></iframe></td>
        </tr>
      </table>
    </td>
