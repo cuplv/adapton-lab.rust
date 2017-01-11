@@ -39,11 +39,16 @@ pub struct TestState<R:Rng+Clone,
 fn get_engine_metrics<X,F:FnOnce() -> X> (thunk:F) -> (X,EngineMetrics)
 {
   let time_start = time::precise_time_ns();
+  
+  dcg_reflect_begin();
   let (x,cnt) = cnt(thunk);
+  let traces = dcg_reflect_end();
+
   let time_end = time::precise_time_ns();
   return (x, EngineMetrics{
     time_ns:time_end - time_start,
     engine_cnt:cnt,
+    dcg_traces:traces,
   })
 }
 
@@ -142,7 +147,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
         swap(&mut naive_state, &mut self.naive_state );
 
         // Run Naive Version
-        println!("Naive - - - - - ");
+        println!("Naive - - - - - ({:?} / {:?})", self.change_batch_num, self.params.change_batch_loopc );
         let _ = use_engine(Engine::Naive); assert!(engine_is_naive());
         let mut rng = self.rng.clone(); // Restore Rng
         let (naive_output, naive_input_edited, naive_editst, naive_sample) = 
