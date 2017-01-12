@@ -10,7 +10,10 @@ use adapton::engine::reflect::*;
 /// that signal various subcases (e.g., of `enum`s in the `reflect`
 /// module).  Finally, for Rust structures that have subfields and/or
 /// substructure, the `Div`'s `extent` field lists their reflections
-/// into `Div`s.
+/// into `Div`s.  In principle, the produced `Div` structure has an
+/// equivalent amount of information to the corresponding Rust
+/// datatype, and could be "parsed" back into this Rust datatype later
+/// (let's not do that, though!).
 #[derive(Debug,Clone)]
 pub struct Div {
   pub tag:     String,
