@@ -1,7 +1,3 @@
-/// This module of Adapton Lab extends Adapton's existing reflection
-/// (see `adapton::engine::reflect`) with further reflections.  In
-/// particular, we produce HTML output structure, for human user
-/// interaction and consumption.
 use adapton::engine::reflect::*;
 
 /// The `Div` struct represents a restricted form of `<div>` tags in

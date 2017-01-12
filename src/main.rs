@@ -14,7 +14,10 @@ extern crate adapton;
 /// [Adapton Lab README](https://github.com/cuplv/adapton-lab.rust).
 pub mod labdef;
 
-/// doc TODO
+/// This module of Adapton Lab extends Adapton's existing reflection
+/// (see `adapton::engine::reflect`) with further reflections.  In
+/// particular, we produce HTML output structure, for human user
+/// interaction and consumption.
 pub mod labviz;
 
 /// See also: **Generically implements** the abstract commutative
