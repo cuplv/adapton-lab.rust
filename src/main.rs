@@ -14,6 +14,9 @@ extern crate adapton;
 /// [Adapton Lab README](https://github.com/cuplv/adapton-lab.rust).
 pub mod labdef;
 
+/// doc TODO
+pub mod labviz;
+
 /// See also: **Generically implements** the abstract commutative
 /// diagram. See [Adapton Lab
 /// README](https://github.com/cuplv/adapton-lab.rust).

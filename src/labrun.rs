@@ -40,9 +40,9 @@ fn get_engine_metrics<X,F:FnOnce() -> X> (thunk:F) -> (X,EngineMetrics)
 {
   let time_start = time::precise_time_ns();
   
-  dcg_reflect_begin();
+  reflect::dcg_reflect_begin();
   let (x,cnt) = cnt(thunk);
-  let traces = dcg_reflect_end();
+  let traces = reflect::dcg_reflect_end();
 
   let time_end = time::precise_time_ns();
   return (x, EngineMetrics{
