@@ -11,6 +11,8 @@ extern crate rand;
 #[macro_use]
 extern crate adapton;
 
+extern crate pmfp_collections;
+
 /// See also: Defines lab parameters `LabParams` and `LabDef`, the
 /// parameters for running the abstract commutative diagram. See
 /// [Adapton Lab README](https://github.com/cuplv/adapton-lab.rust).
