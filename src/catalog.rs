@@ -4,6 +4,41 @@ use adapton::engine::*;
 use rand::{Rng};
 use std::marker::PhantomData;
 use std::rc::Rc;
+use pmfp_collections::gauged_raz::{Raz,RazTree};
+use pmfp_collections::split_btree_cursor::{gen_level};
+
+
+#[derive(Clone,Debug)]
+pub struct UniformInsert<T,S> { t:PhantomData<T>, s:PhantomData<S> }
+
+impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
+  fn generate<R:Rng> (rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
+    let mut r = Raz::new();
+    for i in 0..params.size {
+      if i % params.gauge == 0 {
+        r.archive_left( gen_level() );
+      } else { } ;
+      r.push_left(i);
+    }
+    r.unfocus()
+  }
+}
+
+impl Edit<RazTree<usize>, usize> for UniformInsert<RazTree<usize>, usize> {
+  fn edit_init<R:Rng>(_rng:&mut R, params:&GenerateParams) -> usize { 
+    return params.size // Initial editing state = The size of the generated input
+  }
+  fn edit<R:Rng>(tree:RazTree<usize>, i:usize,
+                 rng:&mut R, params:&GenerateParams) -> (RazTree<usize>, usize) {
+    let mut t = tree;
+    let pos = rng.gen::<usize>() % ( i + 1 );
+    let mut r = t.focus( pos ).unwrap();
+    r.push_left( rng.gen() );
+    let t = r.unfocus();    
+    (t, i + 1)
+  }
+}
+
 
 
 #[derive(Clone,Debug)]
