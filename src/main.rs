@@ -1,4 +1,4 @@
-/// Travis CI Test ...
+//! Travis test
 
 #![feature(field_init_shorthand)]
 //#![feature(rustc_private)]
