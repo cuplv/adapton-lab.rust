@@ -1,6 +1,6 @@
 use adapton::engine::Cnt; // Counters for engine costs
 use adapton::engine::Name; // Names, for naming things uniquely
-use adapton::engine::reflect::DCGTraces; // Traces
+use adapton::engine::reflect::trace::Trace;
 use rand::Rng;
 use std::marker::PhantomData;
 
@@ -124,5 +124,5 @@ pub struct EngineSample {
 pub struct EngineMetrics {
   pub time_ns:    u64,
   pub engine_cnt: Cnt,
-  pub dcg_traces: DCGTraces,
+  pub dcg_traces: Vec<Trace>,
 }

@@ -74,6 +74,7 @@ fn main2() { run_all_tests() }
 
 fn main () {
   use std::thread;
+  labviz::write();
   let child =
     thread::Builder::new().stack_size(64 * 1024 * 1024).spawn(move || { 
       main2()

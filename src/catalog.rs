@@ -83,6 +83,8 @@ pub struct EagerMergesort { }
 #[derive(Clone,Debug)]
 pub struct Quickhull { }
 
+pub struct RazTest1 {} 
+
 impl Compute<List<usize>,List<usize>> for EagerMap {
   fn compute(inp:List<usize>) -> List<usize> {
     list_map_eager(inp,Rc::new(|x| x * x))

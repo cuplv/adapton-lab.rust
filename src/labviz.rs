@@ -1,9 +1,10 @@
 use adapton::engine::reflect::*;
 
-/// The `Div` struct represents a restricted form of `<div>` tags in
-/// HTML.  A distinguished `tag` class holds the name of the Rust
-/// datatype reflected into this `Div`.  The other `classes` hold bits
-/// that signal various subcases (e.g., of `enum`s in the `reflect`
+/// The `Div` struct represents a restricted form of a `<div>` element
+/// in HTML.  The field `tag` is a string, which corresponds to a a
+/// distinguished `tag` CSS class indicates the Rust datatype
+/// reflected into this `Div`.  The other CSS `classes` hold bits that
+/// signal various subcases (e.g., of `enum`s in the `reflect`
 /// module).  Finally, for Rust structures that have subfields and/or
 /// substructure, the `Div`'s `extent` field lists their reflections
 /// into `Div`s.  In principle, the produced `Div` structure has an
@@ -45,3 +46,30 @@ pub struct Div {
 //       x.effect.reflect(),
 //       x.edge.reflect(),
 //       x.extent.reflect() ]
+
+// 
+// Notes:
+// use std::fs;
+// try!(fs::create_dir_all("/some/dir"));
+
+pub fn write() {
+  use std::io;
+  use std::io::prelude::*;
+  use std::io::BufWriter;
+  use std::fs::File;
+
+  pub trait WriteHTML {
+    fn write_html<Wr:Write>(&self, wr: &mut Wr) {
+      writeln!(wr, "foo");
+    }
+  }
+  
+  let f = File::create("foo.txt").unwrap();
+  {
+    let mut writer = BufWriter::new(f);
+    
+    // write a byte to the buffer
+    writeln!(writer, "hello {:?}", 1 + 2 + 3);
+    
+  } // the buffer is flushed once writer goes out of scope
+}
