@@ -146,14 +146,15 @@ hr {
   display: inline;
 }
 .batch-name {
-  font-size: 20px;
+  font-size: 16px;
+  font-family: sans-serif;
   border: solid;
   display: inline;
   padding: 7px;
   margin: 5px;
   float: left;
-  clear: both;
   background: #aa88aa;
+  width: 32px;
 }
 .traces {
   font-size: 8px;
