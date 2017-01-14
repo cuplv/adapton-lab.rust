@@ -271,6 +271,7 @@ pub fn style_string() -> &'static str {
 <style>
 body {
   background: #552266;
+  font-family: sans-serif;
 }
 hr {
   float: left;
@@ -279,7 +280,7 @@ hr {
   border: none;
 }
 .test-name {
-  font-size: 66px;
+  font-size: 32px;
   font-family: sans-serif;
   color: #ccaadd;
 }
@@ -332,6 +333,12 @@ hr {
   width: 70%;
   background: #dddddd;
 }
+.tr-effect {
+  display: inline;
+  font-size: 10px;
+  background-color: white;
+  border-radius: 2px;
+}
 .tr-extent, .trace {
   display: inline-block;
   border-style: solid;
@@ -346,8 +353,8 @@ hr {
   border-style: dotted;
 }
 .path {
-  display: flex;
   display: none;
+  display: flex;
 
   margin: 0px;
   padding: 0px;
@@ -359,8 +366,8 @@ hr {
   autoflow: auto;
 }
 .name {
-  display: inline;
   display: none;
+  display: inline;
 
   font-size: 9px;
   font-family: sans-serif;
