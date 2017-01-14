@@ -154,17 +154,23 @@ impl Compute<List<usize>,List<usize>> for LazyMergesort {
   fn compute(inp:List<usize>) -> List<usize> {    
     let tree = ns( name_of_str("tree_of_list"), 
                    move ||tree_of_list::<usize,usize,Tree<_>,_>(Dir2::Right,inp) );
-    // TODO: Is this eager or lazy?
     mergesort_list_of_tree2(tree,None)
   }
 }
 
 impl Compute<List<usize>,List<usize>> for EagerMergesort {
   fn compute(inp:List<usize>) -> List<usize> {
-    let tree = ns( name_of_str("tree_of_list"), 
-                   move ||tree_of_list::<usize,usize,Tree<_>,_>(Dir2::Right,inp) );
-    // TODO: Is this eager or lazy?
-    mergesort_list_of_tree2(tree,None)
+    let tree = 
+      ns( name_of_str("tree_of_list"), 
+          move || tree_of_list::<usize,usize,Tree<_>,_>(Dir2::Right,inp) );
+    let sorted = 
+      ns( name_of_str("mergesort"),
+          move || mergesort_list_of_tree2(tree,None));
+    let tree2 = 
+      ns ( name_of_str("tree_of_list2"),
+           move || tree_of_list::<_,_,Tree<_>,List<_>>(Dir2::Left,sorted) );
+    ns ( name_of_str("list_of_tree"),
+         move || list_of_tree(tree2, Dir2::Left ) )
   }
 }
 

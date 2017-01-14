@@ -234,6 +234,7 @@ pub fn write_test_results(testname:Name, results:&LabResults) {
   writeln!(writer, "<div class=\"batch-name-lab\"><div class=\"batch-name\"></div></div>");
   writeln!(writer, "<div style=\"font-size:20px\" class=\"editor\">Editor</div>");
   writeln!(writer, "<div style=\"font-size:20px\" class=\"archivist\">Archivist</div>");
+  writeln!(writer, "<hr/>").unwrap();
 
   for sample in results.samples.iter() {
     writeln!(writer, "<div class=\"batch-name-lab\">batch name<div class=\"batch-name\">{:?}</div></div>", 
@@ -327,7 +328,7 @@ hr {
   padding: 2px;
   margin: 2px;
   float: left;
-  width: 20%;
+  width: 10%;
   background: #dddddd;
 }
 .archivist {
@@ -337,11 +338,12 @@ hr {
   padding: 2px;
   margin: 2px;
   float: left;
-  width: 70%;
+  width: 80%;
   background: #dddddd;
 }
-.tr-effect {
+.tr-effect { 
   display: inline;
+  display: none;
   font-size: 10px;
   background-color: white;
   border-radius: 2px;
@@ -360,8 +362,8 @@ hr {
   border-style: dotted;
 }
 .path {
-  display: none;
   display: flex;
+  display: none;
 
   margin: 0px;
   padding: 0px;
@@ -373,8 +375,8 @@ hr {
   autoflow: auto;
 }
 .name {
-  display: none;
   display: inline;
+  display: none;
 
   font-size: 9px;
   font-family: sans-serif;
