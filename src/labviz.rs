@@ -95,9 +95,9 @@ pub fn write_test_results(testname:Name, results:&LabResults) {
              sample.batch_name).unwrap();
     
     writeln!(writer, "<div class=\"editor\">").unwrap();
-    writeln!(writer, "<div class=\"time-ns-lab\">time (ns)<div class=\"time-ns\">{:?}</div></div>", 
+    writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.process_input.time_ns).unwrap();    
-    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>)<div class=\"traces\">{:?}</div></div>", 
+    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>): <div class=\"traces\">{:?}</div></div>", 
              trace_url,
              sample.dcg_sample.process_input.dcg_traces).unwrap();
     writeln!(writer, "</div>").unwrap();
@@ -105,9 +105,9 @@ pub fn write_test_results(testname:Name, results:&LabResults) {
     // - - - - - - - 
     
     writeln!(writer, "<div class=\"archivist\">").unwrap();
-    writeln!(writer, "<div class=\"time-ns-lab\">time (ns)<div class=\"time-ns\">{:?}</div></div>", 
+    writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.compute_output.time_ns).unwrap();    
-    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>)<div class=\"traces\">{:?}</div></div>", 
+    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>): <div class=\"traces\">{:?}</div></div>", 
              trace_url,
              sample.dcg_sample.compute_output.dcg_traces).unwrap();
     writeln!(writer, "</div>").unwrap();    
@@ -127,6 +127,9 @@ body {
 }
 hr {
   float: left;
+  clear: both;
+  width: 0px;
+  border: none;
 }
 
 .test-name {
@@ -140,6 +143,7 @@ hr {
 .time-ns {
   font-size: 20px;
   font-family: sans-serif;
+  display: inline;
 }
 .batch-name {
   font-size: 20px;
@@ -148,36 +152,37 @@ hr {
   padding: 7px;
   margin: 5px;
   float: left;
+  clear: both;
   background: #aa88aa;
 }
 .traces {
   font-size: 8px;
   border: solid 1px;
   display: inline;
-  padding: 7px;
-  margin: 5px;
+  padding: 1px;
+  margin: 0px;
   float: left;
-  width: 98%;
+  width: 100%;
   background: #dddddd;
 }
 .editor {
   font-size: 14px;
   border: solid;
   display: inline;
-  padding: 7px;
-  margin: 5px;
+  padding: 2px;
+  margin: 2px;
   float: left;
-  width: 98%;
+  width: 20%;
   background: #dddddd;
 }
 .archivist {
   font-size: 14px;
   border: solid;
   display: inline;
-  padding: 7px;
-  margin: 5px;
+  padding: 2px;
+  margin: 2px;
   float: left;
-  width: 98%;
+  width: 70%;
   background: #dddddd;
 }
 </style>
