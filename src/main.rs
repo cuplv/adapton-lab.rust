@@ -49,7 +49,7 @@ fn lab_params_defaults() -> LabParams {
     sample_params: SampleParams{
       input_seeds: vec![0],
       generate_params: GenerateParams{
-        size:128,
+        size:16,
         gauge:1,
         nominal_strategy:NominalStrategy::Regular,
       },
