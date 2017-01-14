@@ -6,6 +6,7 @@ use std::fs::File;
 
 use adapton::engine::Name;
 use adapton::engine::reflect::*;
+use adapton::engine::reflect::trace;
 
 use labdef::{LabResults};
 
@@ -25,6 +26,7 @@ pub struct Div {
   pub tag:     String,
   pub classes: Vec<String>,
   pub extent:  Box<Vec<Div>>,
+  pub text:    Option<String>,
 }
 
 // Questions:
@@ -56,6 +58,122 @@ pub struct Div {
 //       x.edge.reflect(),
 //       x.extent.reflect() ]
 
+pub fn div_of_name (n:&Name) -> Div {
+  Div{ tag: String::from("name"),
+       // TODO: Remove illegal chars for CSS classes (check spec)
+       classes: vec![ format!("{:?}", n) ],
+       extent: Box::new( vec![ ] ),
+       text: Some( format!("{:?}", n) ) }
+}
+
+pub fn div_of_path (p:&Path) -> Div {
+  Div{ tag: String::from("path"),
+       classes: vec![ format!("{:?}", p) ],
+       extent: Box::new(
+         p.iter().map( div_of_name ).collect()
+       ),
+       text: None }
+}
+
+pub fn div_of_loc (l:&Loc) -> Div {
+  Div{ tag: String::from("loc"),
+       // TODO: Remove illegal chars for CSS classes (check spec)
+       classes: vec![ format!("{:?}", l) ],
+       extent: Box::new(vec![ div_of_path(&l.path), div_of_name(&l.name) ]),
+       //text: Some( format!("{:?}",l) )
+       text:None,
+  }
+}
+
+pub fn div_of_oploc (ol:&Option<Loc>) -> Div {
+  if true {
+    Div{ tag: String::from("oploc"), 
+         classes: vec![],
+         extent: Box::new(vec![]),
+         text: None,
+    }
+  } else {
+    Div{ tag: String::from("oploc"),
+         classes: vec![],
+         extent: Box::new(match *ol { 
+           None => vec![],
+           Some(ref l) => vec![ div_of_loc(l)]}),
+         text: None
+    }
+  }
+}
+
+pub fn div_of_succ (s:&Succ) -> Div {
+  Div{ tag: String::from("succ"),
+       classes: vec![
+         String::from(match s.effect {
+           Effect::Alloc => "succ-alloc",
+           Effect::Force => "succ-force"
+         }),
+         String::from(match s.dirty {
+           true  => "succ-dirty",
+           false => "succ-not-dirty"
+         }),
+       ],
+       text: None,
+       extent: Box::new(vec![
+         div_of_loc(&s.loc),
+       ])}
+}
+
+pub fn div_of_edge (e:&trace::Edge) -> Div {
+  Div{ tag: String::from("edge"),
+       classes: vec![],
+       text: None,
+       extent: Box::new(
+         vec![ div_of_oploc(&e.loc),
+               div_of_succ(&e.succ) ]) }
+}
+
+pub fn div_of_trace (tr:&trace::Trace) -> Div {
+  Div{ tag: String::from("trace"),
+       text: None,
+       classes: vec![
+         String::from(match tr.effect {
+           trace::Effect::CleanRec  => "tr-clean-rec",
+           trace::Effect::CleanEval => "tr-clean-eval",
+           trace::Effect::CleanEdge => "tr-clean-edge",
+           trace::Effect::Dirty     => "tr-dirty",
+           trace::Effect::Remove    => "tr-remove",
+           trace::Effect::Alloc(trace::AllocCase::LocFresh)       => "tr-alloc-loc-fresh",
+           trace::Effect::Alloc(trace::AllocCase::LocExists)      => "tr-alloc-loc-exists",
+           trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "tr-force-compcache-miss",
+           trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "tr-force-compcache-hit",
+           trace::Effect::Force(trace::ForceCase::RefGet)         => "tr-force-refget",
+         })
+       ],
+       extent: Box::new(
+         vec![
+           Div{ 
+             tag: String::from("tr-effect"),
+             text: Some(String::from(match tr.effect {
+               trace::Effect::CleanRec  => "CleanRec",
+               trace::Effect::CleanEval => "CleanEval",
+               trace::Effect::CleanEdge => "CleanEdge",
+               trace::Effect::Dirty     => "Dirty",
+               trace::Effect::Remove    => "Remove",
+               trace::Effect::Alloc(trace::AllocCase::LocFresh)       => "Alloc(LocFresh)",
+               trace::Effect::Alloc(trace::AllocCase::LocExists)      => "Alloc(LocExists)",
+               trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "Force(CompCacheMiss)",
+               trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "Force(CompCacheHit)",
+               trace::Effect::Force(trace::ForceCase::RefGet)         => "Force(RefGet)",
+             })),
+             classes:vec![],
+             extent: Box::new(vec![]),
+           },
+           div_of_edge(&tr.edge),
+           Div{ tag: String::from("tr-extent"),
+                text: None,
+                classes: vec![],
+                extent: Box::new(tr.extent.iter().map(div_of_trace).collect()),
+           }])
+  }
+}
 
 pub trait WriteHTML {
   fn write_html<Wr:Write>(&self, wr: &mut Wr);
@@ -63,7 +181,7 @@ pub trait WriteHTML {
 
 impl WriteHTML for Div {
   fn write_html<Wr:Write>(&self, wr: &mut Wr) {    
-    writeln!(wr, "<div class=\"{:?} {:?}\">", 
+    writeln!(wr, "<div class=\"{} {}\">", 
              self.tag, 
              self.classes.iter().fold(
                String::new(), 
@@ -71,10 +189,22 @@ impl WriteHTML for Div {
                           cs.push_str(c.as_str()); cs}
              )
     );
+    match self.text {
+      None => (),
+      Some(ref text) => writeln!(wr, "{}", text).unwrap()
+    };
     for div in self.extent.iter() {
       div.write_html(wr);
     }
     writeln!(wr, "</div>");
+  }
+}
+
+impl<T:WriteHTML> WriteHTML for Vec<T> {
+  fn write_html<Wr:Write>(&self, wr:&mut Wr) {
+    for x in self.iter() {
+      x.write_html(wr);
+    }
   }
 }
 
@@ -97,9 +227,12 @@ pub fn write_test_results(testname:Name, results:&LabResults) {
     writeln!(writer, "<div class=\"editor\">").unwrap();
     writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.process_input.time_ns).unwrap();    
-    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>): <div class=\"traces\">{:?}</div></div>", 
-             trace_url,
-             sample.dcg_sample.process_input.dcg_traces).unwrap();
+    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>)</div>", trace_url).unwrap();
+    writeln!(writer, "<div class=\"traces\">").unwrap();
+    for tr in sample.dcg_sample.process_input.dcg_traces.iter() {
+      div_of_trace(tr).write_html(&mut writer)
+    }
+    writeln!(writer, "</div>").unwrap();
     writeln!(writer, "</div>").unwrap();
     
     // - - - - - - - 
@@ -107,12 +240,15 @@ pub fn write_test_results(testname:Name, results:&LabResults) {
     writeln!(writer, "<div class=\"archivist\">").unwrap();
     writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.compute_output.time_ns).unwrap();    
-    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>): <div class=\"traces\">{:?}</div></div>", 
-             trace_url,
-             sample.dcg_sample.compute_output.dcg_traces).unwrap();
+    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>):</div>", trace_url).unwrap();
+    writeln!(writer, "<div class=\"traces\">").unwrap();
+    for tr in sample.dcg_sample.compute_output.dcg_traces.iter() {
+      div_of_trace(tr).write_html(&mut writer)
+    }
     writeln!(writer, "</div>").unwrap();    
     writeln!(writer, "</div>").unwrap();
 
+    // - - - - - - - - - - - - - - - 
     writeln!(writer, "<hr/>").unwrap();
    
   }
@@ -185,6 +321,63 @@ hr {
   float: left;
   width: 70%;
   background: #dddddd;
+}
+.trace {
+  float: left;
+  display: inline;
+  border: solid;
+  border-width: 1px;
+  font-size: 0px;
+  padding: 2px;
+  margin: 1px;
+  border-radius: 3px;
+}
+.tr-force-compcache-miss {  
+  background: #ccccff;
+  border-color: blue;
+}
+.tr-force-compcache-hit {  
+  background: #ccccff;
+  border-color: blue;
+  border-width: 3px;
+}
+.tr-force-refget {  
+  background: #ffccff;
+  border-color: violet;  
+}
+.tr-clean-rec {  
+  background: #000055;
+  border-color: #aaaaff;
+  border-width: 2px; 
+}
+.tr-clean-eval {  
+  background: white;
+  border-color: #aaaaff;
+  border-width: 5px; 
+}
+.tr-clean-edge {  
+  background: white;
+  border-color: #aaaaff;
+  border-width: 5px; 
+}
+.tr-alloc-loc-fresh {  
+  background: #ccffcc;
+  border-color: green;
+}
+.tr-alloc-loc-exists {  
+  background: #ccffcc;
+  border-color: green;
+  border-width: 3px;
+}
+.tr-dirty {  
+  background: #550000;
+  border-color: #ffaaaa;
+  border-width: 2px;
+}
+.tr-remove {  
+  background: red;
+  border-color: red;
+  border-width: 2px;
 }
 </style>
 "
