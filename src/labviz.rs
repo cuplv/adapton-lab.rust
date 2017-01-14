@@ -231,6 +231,10 @@ pub fn write_test_results(testname:Name, results:&LabResults) {
   writeln!(writer, "{}", style_string()).unwrap();
   writeln!(writer, "<div class={:?}>{:?}</div>", "test-name", testname).unwrap();
 
+  writeln!(writer, "<div class=\"batch-name-lab\"><div class=\"batch-name\"></div></div>");
+  writeln!(writer, "<div style=\"font-size:20px\" class=\"editor\">Editor</div>");
+  writeln!(writer, "<div style=\"font-size:20px\" class=\"archivist\">Archivist</div>");
+
   for sample in results.samples.iter() {
     writeln!(writer, "<div class=\"batch-name-lab\">batch name<div class=\"batch-name\">{:?}</div></div>", 
              sample.batch_name).unwrap();
@@ -312,6 +316,9 @@ hr {
   float: left;
   width: 100%;
   background: #dddddd;
+}
+.title {
+  font-size: 20px;
 }
 .editor {
   font-size: 14px;
