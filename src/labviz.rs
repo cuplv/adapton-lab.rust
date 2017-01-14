@@ -56,10 +56,6 @@ pub struct Div {
 //       x.edge.reflect(),
 //       x.extent.reflect() ]
 
-// 
-// Notes:
-// use std::fs;
-// try!(fs::create_dir_all("/some/dir"));
 
 pub trait WriteHTML {
   fn write_html<Wr:Write>(&self, wr: &mut Wr);
@@ -91,6 +87,7 @@ pub fn write_test_results(testname:Name, results:&LabResults) {
   let f = File::create(format!("lab-results/{:?}.html", testname)).unwrap();
   let mut writer = BufWriter::new(f);
 
+  writeln!(writer, "{}", style_string()).unwrap();
   writeln!(writer, "<div class={:?}>{:?}</div>", "test-name", testname).unwrap();
 
   for sample in results.samples.iter() {
@@ -120,4 +117,64 @@ pub fn write_test_results(testname:Name, results:&LabResults) {
    
   }
   writer.flush().unwrap();  
+}
+
+pub fn style_string() -> &'static str {
+"
+<style>
+hr {
+  float: left;
+}
+
+.test-name {
+  font-size: 66px;
+  font-family: sans-serif;
+}
+.batch-name-lab {
+  font-size: 0px;
+}
+.time-ns {
+  font-size: 20px;
+  font-family: sans-serif;
+}
+.batch-name {
+  font-size: 20px;
+  border: solid;
+  display: inline;
+  padding: 7px;
+  margin: 5px;
+  float: left;
+}
+.traces {
+  font-size: 8px;
+  border: solid 1px;
+  display: inline;
+  padding: 7px;
+  margin: 5px;
+  float: left;
+  width: 98%;
+  background: #dddddd;
+}
+.editor {
+  font-size: 14px;
+  border: solid;
+  display: inline;
+  padding: 7px;
+  margin: 5px;
+  float: left;
+  width: 98%;
+  background: #dddddd;
+}
+.archivist {
+  font-size: 14px;
+  border: solid;
+  display: inline;
+  padding: 7px;
+  margin: 5px;
+  float: left;
+  width: 98%;
+  background: #dddddd;
+}
+</style>
+"
 }
