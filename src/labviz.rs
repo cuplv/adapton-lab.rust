@@ -61,14 +61,16 @@ pub struct Div {
 pub fn div_of_name (n:&Name) -> Div {
   Div{ tag: String::from("name"),
        // TODO: Remove illegal chars for CSS classes (check spec)
-       classes: vec![ format!("{:?}", n) ],
+       // classes: vec![ format!("{:?}", n) ],
+       classes: vec![ ],
        extent: Box::new( vec![ ] ),
        text: Some( format!("{:?}", n) ) }
 }
 
 pub fn div_of_path (p:&Path) -> Div {
   Div{ tag: String::from("path"),
-       classes: vec![ format!("{:?}", p) ],
+       //classes: vec![ format!("{:?}", p) ],
+       classes: vec![ ],
        extent: Box::new(
          p.iter().map( div_of_name ).collect()
        ),
@@ -78,7 +80,8 @@ pub fn div_of_path (p:&Path) -> Div {
 pub fn div_of_loc (l:&Loc) -> Div {
   Div{ tag: String::from("loc"),
        // TODO: Remove illegal chars for CSS classes (check spec)
-       classes: vec![ format!("{:?}", l) ],
+       //classes: vec![ format!("{:?}", l) ],
+       classes: vec![ ],       
        extent: Box::new(vec![ div_of_path(&l.path), div_of_name(&l.name) ]),
        //text: Some( format!("{:?}",l) )
        text:None,
@@ -131,48 +134,56 @@ pub fn div_of_edge (e:&trace::Edge) -> Div {
 }
 
 pub fn div_of_trace (tr:&trace::Trace) -> Div {
-  Div{ tag: String::from("trace"),
-       text: None,
-       classes: vec![
-         String::from(match tr.effect {
-           trace::Effect::CleanRec  => "tr-clean-rec",
-           trace::Effect::CleanEval => "tr-clean-eval",
-           trace::Effect::CleanEdge => "tr-clean-edge",
-           trace::Effect::Dirty     => "tr-dirty",
-           trace::Effect::Remove    => "tr-remove",
-           trace::Effect::Alloc(trace::AllocCase::LocFresh)       => "tr-alloc-loc-fresh",
-           trace::Effect::Alloc(trace::AllocCase::LocExists)      => "tr-alloc-loc-exists",
-           trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "tr-force-compcache-miss",
-           trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "tr-force-compcache-hit",
-           trace::Effect::Force(trace::ForceCase::RefGet)         => "tr-force-refget",
-         })
-       ],
-       extent: Box::new(
-         vec![
-           Div{ 
-             tag: String::from("tr-effect"),
-             text: Some(String::from(match tr.effect {
-               trace::Effect::CleanRec  => "CleanRec",
-               trace::Effect::CleanEval => "CleanEval",
-               trace::Effect::CleanEdge => "CleanEdge",
-               trace::Effect::Dirty     => "Dirty",
-               trace::Effect::Remove    => "Remove",
-               trace::Effect::Alloc(trace::AllocCase::LocFresh)       => "Alloc(LocFresh)",
-               trace::Effect::Alloc(trace::AllocCase::LocExists)      => "Alloc(LocExists)",
-               trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "Force(CompCacheMiss)",
-               trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "Force(CompCacheHit)",
-               trace::Effect::Force(trace::ForceCase::RefGet)         => "Force(RefGet)",
-             })),
-             classes:vec![],
-             extent: Box::new(vec![]),
-           },
-           div_of_edge(&tr.edge),
-           Div{ tag: String::from("tr-extent"),
-                text: None,
-                classes: vec![],
-                extent: Box::new(tr.extent.iter().map(div_of_trace).collect()),
-           }])
-  }
+  let mut div = 
+    Div{ 
+      tag: String::from("trace"),
+      text: None,
+      classes: vec![
+        String::from(match tr.effect {
+          trace::Effect::CleanRec  => "tr-clean-rec",
+          trace::Effect::CleanEval => "tr-clean-eval",
+          trace::Effect::CleanEdge => "tr-clean-edge",
+          trace::Effect::Dirty     => "tr-dirty",
+          trace::Effect::Remove    => "tr-remove",
+          trace::Effect::Alloc(trace::AllocCase::LocFresh)       => "tr-alloc-loc-fresh",
+          trace::Effect::Alloc(trace::AllocCase::LocExists)      => "tr-alloc-loc-exists",
+          trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "tr-force-compcache-miss",
+          trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "tr-force-compcache-hit",
+          trace::Effect::Force(trace::ForceCase::RefGet)         => "tr-force-refget",
+        })
+      ],
+      extent: Box::new(
+        vec![
+          Div{ 
+            tag: String::from("tr-effect"),
+            text: Some(String::from(match tr.effect {
+              trace::Effect::CleanRec  => "CleanRec",
+              trace::Effect::CleanEval => "CleanEval",
+              trace::Effect::CleanEdge => "CleanEdge",
+              trace::Effect::Dirty     => "Dirty",
+              trace::Effect::Remove    => "Remove",
+              trace::Effect::Alloc(trace::AllocCase::LocFresh)       => "Alloc(LocFresh)",
+              trace::Effect::Alloc(trace::AllocCase::LocExists)      => "Alloc(LocExists)",
+              trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "Force(CompCacheMiss)",
+              trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "Force(CompCacheHit)",
+              trace::Effect::Force(trace::ForceCase::RefGet)         => "Force(RefGet)",
+            })),
+            classes:vec![],
+            extent: Box::new(vec![]),
+          },
+          div_of_edge(&tr.edge),
+        ])};  
+  if tr.extent.len() > 0 {
+    div.extent.push(
+      Div{ tag: String::from("tr-extent"),
+           text: None,
+           classes: vec![],
+           extent: 
+           Box::new(tr.extent.iter().map(div_of_trace).collect())
+      }
+    )
+  };
+  return div
 }
 
 pub trait WriteHTML {
@@ -267,7 +278,6 @@ hr {
   width: 0px;
   border: none;
 }
-
 .test-name {
   font-size: 66px;
   font-family: sans-serif;
@@ -322,15 +332,46 @@ hr {
   width: 70%;
   background: #dddddd;
 }
-.trace {
-  float: left;
-  display: inline;
-  border: solid;
+.tr-extent, .trace {
+  display: inline-block;
+  border-style: solid;
+  border-color: white;
   border-width: 1px;
   font-size: 0px;
   padding: 2px;
   margin: 1px;
   border-radius: 3px;
+}
+.tr-extent {
+  border-style: dotted;
+}
+.path {
+  display: flex;
+  display: none;
+
+  margin: 0px;
+  padding: 0px;
+  border-radius: 1px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #664466;
+  background-color: #664466; 
+  autoflow: auto;
+}
+.name {
+  display: inline;
+  display: none;
+
+  font-size: 9px;
+  font-family: sans-serif;
+  color: black;
+  background: white;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #664466; 
+  border-radius: 2px;
+  padding: 1px;
+  margin: 1px;
 }
 .tr-force-compcache-miss {  
   background: #ccccff;
