@@ -122,6 +122,9 @@ pub fn write_test_results(testname:Name, results:&LabResults) {
 pub fn style_string() -> &'static str {
 "
 <style>
+body {
+  background: #552266;
+}
 hr {
   float: left;
 }
@@ -129,6 +132,7 @@ hr {
 .test-name {
   font-size: 66px;
   font-family: sans-serif;
+  color: #ccaadd;
 }
 .batch-name-lab {
   font-size: 0px;
@@ -144,6 +148,7 @@ hr {
   padding: 7px;
   margin: 5px;
   float: left;
+  background: #aa88aa;
 }
 .traces {
   font-size: 8px;
