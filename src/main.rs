@@ -66,10 +66,10 @@ fn run_all_tests() {
   let params = lab_params_defaults();
   let tests = catalog::all_tests();
   for test in tests.iter() {
-    println!("Test: {:?}", test.name());
+    println!("Running: {:?}", test.name());
     let results = test.run(&params);
-    drop(results)
-  }
+    labviz::write_test_results(test.name(), &results);
+  }  
 }
 
 #[test]
@@ -78,7 +78,6 @@ fn main2() { run_all_tests() }
 
 fn main () {
   use std::thread;
-  labviz::write();
   let child =
     thread::Builder::new().stack_size(64 * 1024 * 1024).spawn(move || { 
       main2()

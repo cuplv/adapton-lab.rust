@@ -73,14 +73,14 @@ fn get_engine_sample
         get_engine_metrics(
           move || InputDist::edit(input, editst, &mut rng2, &params.generate_params))
     };
-  println!("EngineSample::process_input: {:?}", process_input); // XXX Temp  
+  //println!("EngineSample::process_input: {:?}", process_input); // XXX Temp  
 
   let input2 = edited_input.clone();
   let (output, compute_output): (Output,EngineMetrics) 
     = ns(name_of_str("compute"),
          move || get_engine_metrics(move || Computer::compute(input2) ));
 
-  println!("EngineSample::compute_output: {:?}", compute_output); // XXX Temp  
+  //println!("EngineSample::compute_output: {:?}", compute_output); // XXX Temp  
 
   if false {
     println!(" Input: {:?}", edited_input); // XXX Temp
@@ -147,7 +147,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
         swap(&mut naive_state, &mut self.naive_state );
 
         // Run Naive Version
-        println!("Naive - - - - - ({:?} / {:?})", self.change_batch_num, self.params.change_batch_loopc );
+        //println!("Naive - - - - - ({:?} / {:?})", self.change_batch_num, self.params.change_batch_loopc );
         let _ = use_engine(Engine::Naive); assert!(engine_is_naive());
         let mut rng = self.rng.clone(); // Restore Rng
         let (naive_output, naive_input_edited, naive_editst, naive_sample) = 
@@ -156,7 +156,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
         self.naive_state.input = Some((naive_input_edited, naive_editst)); // Save the input and input-editing state
 
         // Run DCG Version
-        println!("DCG - - - - - ");
+        //println!("DCG - - - - - ");
         let _ = use_engine(dcg_state.engine); // Restore saved DCG
         assert!(engine_is_dcg()); // This really is the DCG version
         let mut rng = self.rng.clone(); // Restore Rng
@@ -198,11 +198,11 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
     {            
       let mut st = get_sample_gen::<Input,EditSt,Output,InputDist,Computer>(params);
       loop {
-        println!("{:?}", self.name());
+        //println!("{:?}", self.name());
         let sample = (&mut st).sample();
-        //println!("{:?}", sample);
+        //println!("{:?}", sample);        
         match sample {
-          Some(_) => continue,
+          Some(s) => {st.samples.push(s); continue},
           None => break,
         }
       };

@@ -1,4 +1,13 @@
+use std::fs;
+use std::io;
+use std::io::prelude::*;
+use std::io::BufWriter;
+use std::fs::File;
+
+use adapton::engine::Name;
 use adapton::engine::reflect::*;
+
+use labdef::{LabResults};
 
 /// The `Div` struct represents a restricted form of a `<div>` element
 /// in HTML.  The field `tag` is a string, which corresponds to a a
@@ -52,24 +61,63 @@ pub struct Div {
 // use std::fs;
 // try!(fs::create_dir_all("/some/dir"));
 
-pub fn write() {
-  use std::io;
-  use std::io::prelude::*;
-  use std::io::BufWriter;
-  use std::fs::File;
+pub trait WriteHTML {
+  fn write_html<Wr:Write>(&self, wr: &mut Wr);
+}
 
-  pub trait WriteHTML {
-    fn write_html<Wr:Write>(&self, wr: &mut Wr) {
-      writeln!(wr, "foo");
+impl WriteHTML for Div {
+  fn write_html<Wr:Write>(&self, wr: &mut Wr) {    
+    writeln!(wr, "<div class=\"{:?} {:?}\">", 
+             self.tag, 
+             self.classes.iter().fold(
+               String::new(), 
+               |mut cs,c|{cs.push_str(" ");
+                          cs.push_str(c.as_str()); cs}
+             )
+    );
+    for div in self.extent.iter() {
+      div.write_html(wr);
     }
+    writeln!(wr, "</div>");
   }
+}
+
+pub fn write_test_results(testname:Name, results:&LabResults) {
   
-  let f = File::create("foo.txt").unwrap();
-  {
-    let mut writer = BufWriter::new(f);
+  // For linking to rustdoc documentation from the output HTML
+  let trace_url = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/struct.Trace.html";
+  
+  fs::create_dir_all("lab-results").unwrap();
+  let f = File::create(format!("lab-results/{:?}.html", testname)).unwrap();
+  let mut writer = BufWriter::new(f);
+
+  writeln!(writer, "<div class={:?}>{:?}</div>", "test-name", testname).unwrap();
+
+  for sample in results.samples.iter() {
+    writeln!(writer, "<div class=\"batch-name-lab\">batch name<div class=\"batch-name\">{:?}</div></div>", 
+             sample.batch_name).unwrap();
     
-    // write a byte to the buffer
-    writeln!(writer, "hello {:?}", 1 + 2 + 3);
+    writeln!(writer, "<div class=\"editor\">").unwrap();
+    writeln!(writer, "<div class=\"time-ns-lab\">time (ns)<div class=\"time-ns\">{:?}</div></div>", 
+             sample.dcg_sample.process_input.time_ns).unwrap();    
+    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>)<div class=\"traces\">{:?}</div></div>", 
+             trace_url,
+             sample.dcg_sample.process_input.dcg_traces).unwrap();
+    writeln!(writer, "</div>").unwrap();
     
-  } // the buffer is flushed once writer goes out of scope
+    // - - - - - - - 
+    
+    writeln!(writer, "<div class=\"archivist\">").unwrap();
+    writeln!(writer, "<div class=\"time-ns-lab\">time (ns)<div class=\"time-ns\">{:?}</div></div>", 
+             sample.dcg_sample.compute_output.time_ns).unwrap();    
+    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>)<div class=\"traces\">{:?}</div></div>", 
+             trace_url,
+             sample.dcg_sample.compute_output.dcg_traces).unwrap();
+    writeln!(writer, "</div>").unwrap();    
+    writeln!(writer, "</div>").unwrap();
+
+    writeln!(writer, "<hr/>").unwrap();
+   
+  }
+  writer.flush().unwrap();  
 }
