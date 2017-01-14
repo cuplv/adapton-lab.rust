@@ -45,19 +45,6 @@ pub struct Div {
 // names in the lineage.  E.g., `11.L.r.L` is likely related to
 // `11.L.r.r` since a single `fork` operation produced them both.
 
-// div![ loc ;;
-//       x.path.reflect(),
-//       x.name.reflect() ]
-
-// div![ dcg-edge ;;
-//       x.loc.reflect(),
-//       x.succ.reflect() ]
-
-// div![ dcg-trace ;;
-//       x.effect.reflect(),
-//       x.edge.reflect(),
-//       x.extent.reflect() ]
-
 pub fn div_of_name (n:&Name) -> Div {
   Div{ tag: String::from("name"),
        // TODO: Remove illegal chars for CSS classes (check spec)
