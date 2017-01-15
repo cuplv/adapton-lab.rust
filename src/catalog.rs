@@ -105,16 +105,26 @@ impl Edit<List<Pt2D>,usize> for UniformPrepend<List<Pt2D>,usize> { // TODO
 pub struct LazyMap { }
 #[derive(Clone,Debug)]
 pub struct EagerMap { }
+
 #[derive(Clone,Debug)]
 pub struct LazyFilter { }
 #[derive(Clone,Debug)]
 pub struct EagerFilter { }
+
 #[derive(Clone,Debug)]
-pub struct Reverse { }
+pub struct ListTreeMax { }
+
+#[derive(Clone,Debug)]
+pub struct ListTreeSum { }
+
+#[derive(Clone,Debug)]
+pub struct ListReverse { }
+
 #[derive(Clone,Debug)]
 pub struct LazyMergesort { }
 #[derive(Clone,Debug)]
 pub struct EagerMergesort { }
+
 #[derive(Clone,Debug)]
 pub struct Quickhull { }
 
@@ -144,9 +154,29 @@ impl Compute<List<usize>,List<usize>> for LazyFilter {
   }
 }
 
-impl Compute<List<usize>,List<usize>> for Reverse {
+impl Compute<List<usize>,List<usize>> for ListReverse {
   fn compute(inp:List<usize>) -> List<usize> {
     list_reverse(inp, list_nil())
+  }
+}
+
+impl Compute<List<usize>,usize> for ListTreeMax {
+  fn compute(inp:List<usize>) -> usize {
+    let tree : Tree<usize> = 
+      ns(name_of_str("tree_of_list"),
+         move|| tree_of_list(Dir2::Left,inp));
+    monoid_of_tree(tree, 0, 
+                   Rc::new(|x,y| if x > y { x } else { y }))
+  }
+}
+
+impl Compute<List<usize>,usize> for ListTreeSum {
+  fn compute(inp:List<usize>) -> usize {
+    let tree : Tree<usize> = 
+      ns(name_of_str("tree_of_list"),
+         move|| tree_of_list(Dir2::Left,inp));
+    monoid_of_tree(tree, 0, 
+                   Rc::new(|x,y| x + y ))
   }
 }
 
@@ -228,11 +258,23 @@ pub fn all_tests() -> Vec<Box<LabDef>> {
                   UniformPrepend<_,_>,
                   LazyFilter)
       ,
+    testcomputer!(name_of_str("list-tree-max"),
+                  List<usize>, usize,
+                  usize,
+                  UniformPrepend<_,_>,
+                  ListTreeMax)
+      ,
+    testcomputer!(name_of_str("list-tree-sum"),
+                  List<usize>, usize,
+                  usize,
+                  UniformPrepend<_,_>,
+                  ListTreeSum)
+      ,
     testcomputer!(name_of_str("list-reverse"),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
-                  Reverse)
+                  ListReverse)
       ,
     testcomputer!(name_of_str("eager-mergesort"),
                   List<usize>, usize,
@@ -246,11 +288,11 @@ pub fn all_tests() -> Vec<Box<LabDef>> {
                   UniformPrepend<_,_>,
                   LazyMergesort)
       ,
-    testcomputer!(name_of_str("list-quickhull"),
-                  List<Pt2D>, usize,
-                  List<Pt2D>,
-                  UniformPrepend<_,_>,
-                  Quickhull)
-      ,
+    // testcomputer!(name_of_str("list-quickhull"),
+    //               List<Pt2D>, usize,
+    //               List<Pt2D>,
+    //               UniformPrepend<_,_>,
+    //               Quickhull)
+    // ,
   ]
 }
