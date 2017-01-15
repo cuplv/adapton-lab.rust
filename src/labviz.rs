@@ -155,7 +155,7 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
               trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "Force(CompCacheHit)",
               trace::Effect::Force(trace::ForceCase::RefGet)         => "Force(RefGet)",
             })),
-            classes:vec![],
+            classes: vec![],
             extent: Box::new(vec![]),
           },
           Div{
@@ -171,7 +171,13 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
           div_of_edge(&tr.edge),
         ])}
   ;
+  match tr.effect {
+    trace::Effect::Alloc(_,trace::AllocKind::RefCell) => div.classes.push(String::from("alloc-kind-refcell")),
+    trace::Effect::Alloc(_,trace::AllocKind::Thunk)   => div.classes.push(String::from("alloc-kind-thunk")),
+    _ => ()
+  };
   if tr.extent.len() > 0 {
+    div.classes.push( String::from("has-extent") );
     div.extent.push(
       Div{ tag: String::from("tr-extent"),
            text: None,
@@ -180,6 +186,8 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
            Box::new(tr.extent.iter().map(div_of_trace).collect())
       }
     )
+  } else {
+    div.classes.push( String::from("no-extent") );
   };
   return div
 }
@@ -359,12 +367,20 @@ hr {
 .trace {
   display: inline-block;
   border-style: solid;
-  border-color: white;
+  border-color: red;
   border-width: 1px;
   font-size: 0px;
   padding: 0px;
   margin: 1px;
-  border-radius: 3px;
+  border-radius: 5px;
+}
+.alloc-kind-thunk {
+  border-color: green;
+  border-radius:20px;
+}
+.alloc-kind-refcell {
+  border-color: green;
+  border-radius:0;
 }
 .tr-symbols {  
   font-size: 10px;
@@ -401,26 +417,27 @@ hr {
 .tr-force-compcache-miss {  
   background: #ccccff;
   border-color: blue;
+  padding: 0px;
 }
 .tr-force-compcache-hit {  
   background: #ccccff;
   border-color: blue;
-  border-width: 3px;
-}
-.tr-force-refget {  
-  background: #ffccff;
-  border-color: violet;  
+  border-width: 4px;
   padding: 3px;
 }
+.tr-force-refget {  
+  border-radius: 0;
+  border-color: blue;
+}
 .tr-clean-rec {  
-  background: #000055;
+  background: #222244;
   border-color: #aaaaff;
   border-width: 1px; 
 }
 .tr-clean-eval {  
-  background: white;
-  border-color: #aaaaff;
-  border-width: 5px; 
+  background: #8888ff;
+  border-color: white;
+  border-width: 4px; 
 }
 .tr-clean-edge {  
   background: white;
@@ -429,14 +446,14 @@ hr {
   padding: 3px;
 }
 .tr-alloc-loc-fresh {  
-  background: #ccffcc;
-  border-color: green;
   padding: 3px;
+  background: #ccffcc;
 }
 .tr-alloc-loc-exists {  
+  padding: 3px;
   background: #ccffcc;
+  border-width: 4px;
   border-color: green;
-  border-width: 3px;
 }
 .tr-dirty {  
   background: #550000;
@@ -448,6 +465,9 @@ hr {
   border-color: black;
   border-width: 2px;
   padding: 2px;
+}
+.no-extent {
+  padding: 3px;
 }
 </style>
 "
