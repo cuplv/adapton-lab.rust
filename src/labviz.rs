@@ -132,8 +132,8 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
           trace::Effect::CleanEdge => "tr-clean-edge",
           trace::Effect::Dirty     => "tr-dirty",
           trace::Effect::Remove    => "tr-remove",
-          trace::Effect::Alloc(trace::AllocCase::LocFresh)       => "tr-alloc-loc-fresh",
-          trace::Effect::Alloc(trace::AllocCase::LocExists)      => "tr-alloc-loc-exists",
+          trace::Effect::Alloc(trace::AllocCase::LocFresh,_)     => "tr-alloc-loc-fresh",
+          trace::Effect::Alloc(trace::AllocCase::LocExists,_)    => "tr-alloc-loc-exists",
           trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "tr-force-compcache-miss",
           trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "tr-force-compcache-hit",
           trace::Effect::Force(trace::ForceCase::RefGet)         => "tr-force-refget",
@@ -149,8 +149,8 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
               trace::Effect::CleanEdge => "CleanEdge",
               trace::Effect::Dirty     => "Dirty",
               trace::Effect::Remove    => "Remove",
-              trace::Effect::Alloc(trace::AllocCase::LocFresh)       => "Alloc(LocFresh)",
-              trace::Effect::Alloc(trace::AllocCase::LocExists)      => "Alloc(LocExists)",
+              trace::Effect::Alloc(trace::AllocCase::LocFresh,_)     => "Alloc(LocFresh)",
+              trace::Effect::Alloc(trace::AllocCase::LocExists,_)    => "Alloc(LocExists)",
               trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "Force(CompCacheMiss)",
               trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "Force(CompCacheHit)",
               trace::Effect::Force(trace::ForceCase::RefGet)         => "Force(RefGet)",
@@ -158,8 +158,19 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
             classes:vec![],
             extent: Box::new(vec![]),
           },
+          Div{
+            tag: String::from("tr-symbols"),
+            text: match tr.effect {
+              trace::Effect::Alloc(_,trace::AllocKind::RefCell) => Some(String::from("▣")),
+              trace::Effect::Alloc(_,trace::AllocKind::Thunk)   => Some(String::from("◯")),
+              _ => None,              
+            },
+            classes:vec![],
+            extent: Box::new(vec![]),
+          },
           div_of_edge(&tr.edge),
-        ])};  
+        ])}
+  ;
   if tr.extent.len() > 0 {
     div.extent.push(
       Div{ tag: String::from("tr-extent"),
@@ -241,9 +252,15 @@ pub fn write_test_results(testname:Name, results:&LabResults) {
     // - - - - - - - 
     
     writeln!(writer, "<div class=\"archivist\">").unwrap();
+    
     writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.compute_output.time_ns).unwrap();    
-    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>):</div>", trace_url).unwrap();
+
+    writeln!(writer, "<div class=\"time-ms-lab\">time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
+             2, (sample.dcg_sample.compute_output.time_ns as f64) / (1000000 as f64),
+    ).unwrap();    
+    
+    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>):</div>", trace_url).unwrap();    
     writeln!(writer, "<div class=\"traces\">").unwrap();
     for tr in sample.dcg_sample.compute_output.dcg_traces.iter() {
       div_of_trace(tr).write_html(&mut writer)
@@ -273,7 +290,6 @@ hr {
 }
 .test-name {
   font-size: 32px;
-  font-family: sans-serif;
   color: #ccaadd;
 }
 .batch-name-lab {
@@ -281,12 +297,17 @@ hr {
 }
 .time-ns {
   font-size: 20px;
-  font-family: sans-serif;
+  display: inline;
+}
+.time-ms-lab {
+  display: inline;
+}
+.time-ms {
+  font-size: 20px;
   display: inline;
 }
 .batch-name {
   font-size: 16px;
-  font-family: sans-serif;
   border: solid;
   display: inline;
   padding: 7px;
@@ -335,20 +356,22 @@ hr {
   background-color: white;
   border-radius: 2px;
 }
-.tr-extent, .trace {
+.trace {
   display: inline-block;
   border-style: solid;
   border-color: white;
   border-width: 1px;
   font-size: 0px;
-  padding: 2px;
+  padding: 0px;
   margin: 1px;
   border-radius: 3px;
 }
-.tr-extent {
-  border-style: dotted;
+.tr-symbols {  
+  font-size: 10px;
+  display: inline;
+  display: none;
 }
-.path {
+.path {  
   display: flex;
   display: none;
 
@@ -366,7 +389,6 @@ hr {
   display: none;
 
   font-size: 9px;
-  font-family: sans-serif;
   color: black;
   background: white;
   border-style: solid;
@@ -388,11 +410,12 @@ hr {
 .tr-force-refget {  
   background: #ffccff;
   border-color: violet;  
+  padding: 3px;
 }
 .tr-clean-rec {  
   background: #000055;
   border-color: #aaaaff;
-  border-width: 2px; 
+  border-width: 1px; 
 }
 .tr-clean-eval {  
   background: white;
@@ -402,11 +425,13 @@ hr {
 .tr-clean-edge {  
   background: white;
   border-color: #aaaaff;
-  border-width: 5px; 
+  border-width: 2px; 
+  padding: 3px;
 }
 .tr-alloc-loc-fresh {  
   background: #ccffcc;
   border-color: green;
+  padding: 3px;
 }
 .tr-alloc-loc-exists {  
   background: #ccffcc;
@@ -416,12 +441,13 @@ hr {
 .tr-dirty {  
   background: #550000;
   border-color: #ffaaaa;
-  border-width: 2px;
+  border-width: 1px;
 }
 .tr-remove {  
   background: red;
-  border-color: red;
+  border-color: black;
   border-width: 2px;
+  padding: 2px;
 }
 </style>
 "

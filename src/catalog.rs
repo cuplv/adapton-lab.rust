@@ -165,7 +165,7 @@ impl Compute<List<usize>,List<usize>> for EagerMergesort {
           move || tree_of_list::<usize,usize,Tree<_>,_>(Dir2::Right,inp) );
     let sorted : List<_> = 
       ns( name_of_str("mergesort"),
-          move || mergesort_list_of_tree2(tree,None));
+          move || mergesort_list_of_tree2(tree, None));
     let sorted2 = sorted.clone();
     let tree2 = // Demand the output of mergesort (making it "eager")
       ns ( name_of_str("tree_of_list2"),
