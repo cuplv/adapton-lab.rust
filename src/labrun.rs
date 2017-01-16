@@ -195,6 +195,7 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
      Computer:'static+Compute<Input,Output>>
   LabDef for TestComputer<Input,EditSt,Output,InputDist,Computer> {
     fn name(self:&Self) -> Name { self.identity.clone() }
+    fn url(self:&Self) -> &Option<String> { &self.url }
     fn run(self:&Self, params:&LabParams) -> LabResults 
     {            
       let mut st = get_sample_gen::<Input,EditSt,Output,InputDist,Computer>(params);

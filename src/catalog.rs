@@ -215,12 +215,13 @@ impl Compute<List<Pt2D>,List<Pt2D>> for Quickhull {
 
 #[macro_export]
 macro_rules! testcomputer {
-  ( $name:expr, $inp:ty, $editst:ty, $out:ty, $dist:ty, $comp:ty ) => {{ 
+  ( $name:expr, $url:expr, $inp:ty, $editst:ty, $out:ty, $dist:ty, $comp:ty ) => {{ 
     Box::new( 
       TestComputer
         ::<$inp,$editst,$out,$dist,$comp>
       { 
         identity:$name,
+        url:$url,
         input:PhantomData,
         editst:PhantomData,
         output:PhantomData,
@@ -230,59 +231,89 @@ macro_rules! testcomputer {
   }}
 }
 
-
-/// This is the master list of all tests in the current Adapton Lab
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+/// `all_tests`: This is the master list of all tests in the current
+/// Adapton Lab.
+///
+/// To add a new test, just add a `testcomputer!` to the `vec!` in
+/// this definition.  Doing so generally requires doing at least the
+/// following:
+/// 
+/// 1. Add a new (empty struct) type that implements the `Compute` trait
+/// for some input- and output-type pair.
+///
+/// 2. The input type must be a type parameter to some implementation
+/// of the `Generate` and `Edit` traits, which you must also provide
+/// to `testcomputer!`.  Together, these trait implementations give
+/// the distribution of the input (how it is chosen, and how it
+/// changes, respectively).
+///
+/// 3. The other arguments consist of the type of the `Editor` state
+/// (e.g., a counter of type `usize` in many cases), and a name and
+/// url to display in generated output.  The URL should link to the
+/// rustdoc for this module, which in turn provides other related
+/// documentation about Adapton Lab and Adapton.
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 pub fn all_tests() -> Vec<Box<LabDef>> {
   return vec![
     testcomputer!(name_of_str("list-lazy-map"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMap.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
                   LazyMap)
       ,
     testcomputer!(name_of_str("list-lazy-filter"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyFilter.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
                   LazyFilter)
       ,
     testcomputer!(name_of_str("list-tree-max"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTreeMax.html")),
                   List<usize>, usize,
                   usize,
                   UniformPrepend<_,_>,
                   ListTreeMax)
       ,
     testcomputer!(name_of_str("list-tree-sum"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTreeSum.html")),
                   List<usize>, usize,
                   usize,
                   UniformPrepend<_,_>,
                   ListTreeSum)
       ,
     testcomputer!(name_of_str("eager-mergesort"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
                   EagerMergesort)
       ,
     testcomputer!(name_of_str("lazy-mergesort"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
                   LazyMergesort)
       ,
     testcomputer!(name_of_str("list-eager-map"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMap.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
                   EagerMap)
       ,
     testcomputer!(name_of_str("list-eager-filter"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerFilter.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
                   EagerFilter)
       ,
     testcomputer!(name_of_str("list-reverse"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListReverse.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,

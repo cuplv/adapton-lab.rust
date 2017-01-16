@@ -229,17 +229,24 @@ impl<T:WriteHTML> WriteHTML for Vec<T> {
   }
 }
 
-pub fn write_test_results(testname:Name, results:&LabResults) {
+pub fn write_test_results(testname:Name, testurl:&Option<String>, results:&LabResults) {
   
   // For linking to rustdoc documentation from the output HTML
-  let trace_url = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/struct.Trace.html";
+  let trace_url   = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/struct.Trace.html";
+  let catalog_url = String::from("http://adapton.org/rustdoc/adapton_lab/catalog/index.html");
   
   fs::create_dir_all("lab-results").unwrap();
   let f = File::create(format!("lab-results/{:?}.html", testname)).unwrap();
   let mut writer = BufWriter::new(f);
-
   writeln!(writer, "{}", style_string()).unwrap();
-  writeln!(writer, "<div class={:?}>{:?}</div>", "test-name", testname).unwrap();
+  writeln!(writer, "<div class={:?}><a href={:?} class={:?}>{:?}</a></div>", 
+           "test-name", 
+           match *testurl {
+             Some(ref url) => url,
+             None => & catalog_url
+           },
+           "test-name",
+           testname).unwrap();
 
   writeln!(writer, "<div style=\"font-size:12px\" class=\"batch-name\"> step</div>");
   writeln!(writer, "<div style=\"font-size:20px\" class=\"editor\">Editor</div>");
@@ -293,8 +300,15 @@ pub fn style_string() -> &'static str {
 body {
   background: #552266;
   font-family: sans-serif;
+  text-decoration: none;
   padding: 0px;
   margin: 0px;
+}
+a {
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
 }
 hr {
   float: left;
@@ -302,11 +316,19 @@ hr {
   width: 0px;
   border: none;
 }
+
 .test-name {
   font-size: 32px;
   color: #ccaadd;
   margin: 8px;
 }
+.test-name:visited {
+  color: #ccaadd;
+}
+.test-name:hover {
+  color: white;
+}
+
 .batch-name-lab {
   font-size: 0px;
 }

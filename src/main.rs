@@ -1,4 +1,5 @@
-//! Travis test
+//! For more information and instructions, see the [Adapton Lab
+//! README](https://github.com/cuplv/adapton-lab.rust).
 
 #![feature(field_init_shorthand)]
 //#![feature(rustc_private)]
@@ -13,9 +14,9 @@ extern crate adapton;
 
 extern crate pmfp_collections;
 
-/// See also: Defines lab parameters `LabParams` and `LabDef`, the
-/// parameters for running the abstract commutative diagram. See
-/// [Adapton Lab README](https://github.com/cuplv/adapton-lab.rust).
+/// Defines lab parameters `LabParams` and `LabDef`, the parameters
+/// for running the test diagram from the [Adapton Lab
+/// README](https://github.com/cuplv/adapton-lab.rust).
 pub mod labdef;
 
 /// This module of Adapton Lab extends Adapton's existing reflection
@@ -24,12 +25,11 @@ pub mod labdef;
 /// interaction and consumption.
 pub mod labviz;
 
-/// See also: **Generically implements** the abstract commutative
-/// diagram. See [Adapton Lab
+/// **Generically implements** the test diagram in the [Adapton Lab
 /// README](https://github.com/cuplv/adapton-lab.rust).
 pub mod labrun;
 
-/// See also: Provides **concrete instances** of the diagram from
+/// Provides **concrete instances** of the test diagram from the
 /// [Adapton Lab README](https://github.com/cuplv/adapton-lab.rust).
 pub mod catalog;
 
@@ -69,7 +69,7 @@ fn run_all_tests() {
   for test in tests.iter() {
     println!("Running: {:?}", test.name());
     let results = test.run(&params);
-    labviz::write_test_results(test.name(), &results);
+    labviz::write_test_results(test.name(), test.url(), &results);
   }  
 }
 

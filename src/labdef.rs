@@ -47,6 +47,7 @@ pub struct TestComputer<Input,EditSt,Output,
                         InputDist:Generate<Input>+Edit<Input,EditSt>,
                         Computer:Compute<Input,Output>> {
   pub identity:  Name,
+  pub url:       Option<String>,
   pub computer:  PhantomData<Computer>,
   pub input:     PhantomData<Input>,
   pub editst:    PhantomData<EditSt>,
@@ -59,6 +60,7 @@ pub struct TestComputer<Input,EditSt,Output,
 /// See catalog module for example instances.
 pub trait LabDef {
   fn name(self:&Self) -> Name;
+  fn url(self:&Self) -> &Option<String>;
   fn run(self:&Self, params:&LabParams) -> LabResults;
 }
 
