@@ -8,7 +8,7 @@ use adapton::engine::Name;
 use adapton::engine::reflect::*;
 use adapton::engine::reflect::trace;
 
-use labdef::{LabResults};
+use labdef::{LabParams,LabDef,LabResults};
 
 /// The `Div` struct represents a restricted form of a `<div>` element
 /// in HTML.  The field `tag` is a string, which corresponds to a a
@@ -229,15 +229,34 @@ impl<T:WriteHTML> WriteHTML for Vec<T> {
   }
 }
 
-pub fn write_test_results(testname:Name, testurl:&Option<String>, results:&LabResults) {
+pub fn write_all_test_results(params:&LabParams, 
+                              tests:&Vec<Box<LabDef>>, 
+                              results:&Vec<LabResults>) 
+{
+  // Create directories and files on local filesystem:
+  fs::create_dir_all("lab-results").unwrap();
+  let f = File::create(format!("lab-results/index.html")).unwrap();
+  let mut writer = BufWriter::new(f);
+
+  writeln!(writer, "{}", style_string()).unwrap();
+
+  // TODO: Write an index file that summarizes all of the tests that we ran
+}
+
+pub fn write_test_results(params:&LabParams, test:&Box<LabDef>, results:&LabResults) {
   
+  let testname = test.name();
+  let testurl  = test.url();
+
   // For linking to rustdoc documentation from the output HTML
   let trace_url   = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/struct.Trace.html";
   let catalog_url = String::from("http://adapton.org/rustdoc/adapton_lab/catalog/index.html");
   
+  // Create directories and files on local filesystem:
   fs::create_dir_all("lab-results").unwrap();
   let f = File::create(format!("lab-results/{:?}.html", testname)).unwrap();
   let mut writer = BufWriter::new(f);
+
   writeln!(writer, "{}", style_string()).unwrap();
   writeln!(writer, "<div class={:?}><a href={:?} class={:?}>{:?}</a></div>", 
            "test-name", 

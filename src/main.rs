@@ -65,12 +65,15 @@ fn lab_params_defaults() -> LabParams {
 
 fn run_all_tests() {
   let params = lab_params_defaults();
-  let tests = catalog::all_tests();
+  let tests   = catalog::all_tests();
+  let mut results = vec![];
   for test in tests.iter() {
     println!("Running: {:?}", test.name());
-    let results = test.run(&params);
-    labviz::write_test_results(test.name(), test.url(), &results);
+    let result = test.run(&params);
+    labviz::write_test_results(&params, test, &result);
+    results.push(result);
   }  
+  labviz::write_all_test_results(&params, &tests, &results);
 }
 
 #[test]
