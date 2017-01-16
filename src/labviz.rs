@@ -253,8 +253,8 @@ pub fn write_test_results(params:&LabParams, test:&Box<LabDef>, results:&LabResu
   let catalog_url = String::from("http://adapton.org/rustdoc/adapton_lab/catalog/index.html");
   
   // Create directories and files on local filesystem:
-  fs::create_dir_all("lab-results").unwrap();
-  let f = File::create(format!("lab-results/{:?}.html", testname)).unwrap();
+  fs::create_dir_all(format!("lab-results/{:?}/", testname)).unwrap();
+  let f = File::create(format!("lab-results/{:?}/index.html", testname)).unwrap();
   let mut writer = BufWriter::new(f);
 
   writeln!(writer, "{}", style_string()).unwrap();
