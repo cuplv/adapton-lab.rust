@@ -234,18 +234,6 @@ macro_rules! testcomputer {
 /// This is the master list of all tests in the current Adapton Lab
 pub fn all_tests() -> Vec<Box<LabDef>> {
   return vec![
-    testcomputer!(name_of_str("list-eager-map"),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  EagerMap)
-      ,
-    testcomputer!(name_of_str("list-eager-filter"),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  EagerFilter)
-      ,
     testcomputer!(name_of_str("list-lazy-map"),
                   List<usize>, usize,
                   List<usize>,
@@ -270,12 +258,6 @@ pub fn all_tests() -> Vec<Box<LabDef>> {
                   UniformPrepend<_,_>,
                   ListTreeSum)
       ,
-    testcomputer!(name_of_str("list-reverse"),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  ListReverse)
-      ,
     testcomputer!(name_of_str("eager-mergesort"),
                   List<usize>, usize,
                   List<usize>,
@@ -287,6 +269,24 @@ pub fn all_tests() -> Vec<Box<LabDef>> {
                   List<usize>,
                   UniformPrepend<_,_>,
                   LazyMergesort)
+      ,
+    testcomputer!(name_of_str("list-eager-map"),
+                  List<usize>, usize,
+                  List<usize>,
+                  UniformPrepend<_,_>,
+                  EagerMap)
+      ,
+    testcomputer!(name_of_str("list-eager-filter"),
+                  List<usize>, usize,
+                  List<usize>,
+                  UniformPrepend<_,_>,
+                  EagerFilter)
+      ,
+    testcomputer!(name_of_str("list-reverse"),
+                  List<usize>, usize,
+                  List<usize>,
+                  UniformPrepend<_,_>,
+                  ListReverse)
       ,
     // testcomputer!(name_of_str("list-quickhull"),
     //               List<Pt2D>, usize,

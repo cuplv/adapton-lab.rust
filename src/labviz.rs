@@ -121,6 +121,9 @@ pub fn div_of_edge (e:&trace::Edge) -> Div {
 }
 
 pub fn div_of_trace (tr:&trace::Trace) -> Div {
+  // For linking to rustdoc documentation from the output HTML
+  let tr_eff_url = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/enum.Effect.html";
+
   let mut div = 
     Div{ 
       tag: String::from("trace"),
@@ -143,18 +146,19 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
         vec![
           Div{ 
             tag: String::from("tr-effect"),
-            text: Some(String::from(match tr.effect {
-              trace::Effect::CleanRec  => "CleanRec",
-              trace::Effect::CleanEval => "CleanEval",
-              trace::Effect::CleanEdge => "CleanEdge",
-              trace::Effect::Dirty     => "Dirty",
-              trace::Effect::Remove    => "Remove",
-              trace::Effect::Alloc(trace::AllocCase::LocFresh,_)     => "Alloc(LocFresh)",
-              trace::Effect::Alloc(trace::AllocCase::LocExists,_)    => "Alloc(LocExists)",
-              trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "Force(CompCacheMiss)",
-              trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "Force(CompCacheHit)",
-              trace::Effect::Force(trace::ForceCase::RefGet)         => "Force(RefGet)",
-            })),
+            text: Some(              
+              format!("<a href={:?}>{}</a>", tr_eff_url, match tr.effect {
+                trace::Effect::CleanRec  => "CleanRec",
+                trace::Effect::CleanEval => "CleanEval",
+                trace::Effect::CleanEdge => "CleanEdge",
+                trace::Effect::Dirty     => "Dirty",
+                trace::Effect::Remove    => "Remove",
+                trace::Effect::Alloc(trace::AllocCase::LocFresh,_)     => "Alloc(LocFresh)",
+                trace::Effect::Alloc(trace::AllocCase::LocExists,_)    => "Alloc(LocExists)",
+                trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "Force(CompCacheMiss)",
+                trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "Force(CompCacheHit)",
+                trace::Effect::Force(trace::ForceCase::RefGet)         => "Force(RefGet)",
+              })),
             classes: vec![],
             extent: Box::new(vec![]),
           },
@@ -289,6 +293,8 @@ pub fn style_string() -> &'static str {
 body {
   background: #552266;
   font-family: sans-serif;
+  padding: 0px;
+  margin: 0px;
 }
 hr {
   float: left;
@@ -299,71 +305,61 @@ hr {
 .test-name {
   font-size: 32px;
   color: #ccaadd;
+  margin: 8px;
 }
 .batch-name-lab {
   font-size: 0px;
 }
+.batch-name {
+  font-size: 16px;
+  border: solid;
+  display: inline;
+  padding: 3px;
+  margin: 3px;
+  float: left;
+  background: #aa88aa;
+  width: 32px;
+}
 .time-ns {
   font-size: 20px;
-  display: inline;
-}
-.time-ms-lab {
   display: inline;
 }
 .time-ms {
   font-size: 20px;
   display: inline;
 }
-.batch-name {
-  font-size: 16px;
-  border: solid;
-  display: inline;
-  padding: 7px;
-  margin: 5px;
-  float: left;
-  background: #aa88aa;
-  width: 32px;
-}
-.traces {
-  font-size: 8px;
-  border: solid 1px;
-  display: inline;
-  padding: 1px;
-  margin: 0px;
-  float: left;
-  width: 100%;
-  background: #dddddd;
-}
-.title {
-  font-size: 20px;
-}
 .editor {
   font-size: 14px;
   border: solid;
-  display: inline;
-  padding: 2px;
-  margin: 2px;
+  display: block;
+  padding: 1px;
+  margin: 1px;
   float: left;
   width: 10%;
-  background: #dddddd;
+  background: #aaaaaa;
 }
 .archivist {
   font-size: 14px;
   border: solid;
-  display: inline;
-  padding: 2px;
-  margin: 2px;
+  display: block;
+  padding: 1px;
+  margin: 1px;
   float: left;
-  width: 80%;
+  width: 85%;
   background: #dddddd;
 }
-.tr-effect { 
-  display: inline;
-  display: none;
-  font-size: 10px;
-  background-color: white;
-  border-radius: 2px;
+.traces {
+  font-size: 8px;
+  border: solid 0px;
+  border-top: solid 1px;
+  padding: 0px;
+
+  display: block;
+  margin: 0px;
+  float: left;
+  width: 100%;
 }
+
 .trace {
   display: inline-block;
   border-style: solid;
@@ -374,19 +370,19 @@ hr {
   margin: 1px;
   border-radius: 5px;
 }
-.alloc-kind-thunk {
-  border-color: green;
-  border-radius:20px;
-}
-.alloc-kind-refcell {
-  border-color: green;
-  border-radius:0;
+.tr-effect { 
+  display: inline;
+  display: none;
+  font-size: 10px;
+  background-color: white;
+  border-radius: 2px;
 }
 .tr-symbols {  
   font-size: 10px;
   display: inline;
   display: none;
 }
+
 .path {  
   display: flex;
   display: none;
@@ -413,6 +409,15 @@ hr {
   border-radius: 2px;
   padding: 1px;
   margin: 1px;
+}
+
+.alloc-kind-thunk {
+  border-color: green;
+  border-radius:20px;
+}
+.alloc-kind-refcell {
+  border-color: green;
+  border-radius:0;
 }
 .tr-force-compcache-miss {  
   background: #ccccff;
