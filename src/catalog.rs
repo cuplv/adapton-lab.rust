@@ -12,7 +12,7 @@ use pmfp_collections::split_btree_cursor::{gen_level};
 pub struct UniformInsert<T,S> { t:PhantomData<T>, s:PhantomData<S> }
 
 impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
-  fn generate<R:Rng> (rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
+  fn generate<R:Rng> (_rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
     let mut r = Raz::new();
     for i in 0..params.size {
       if i % params.gauge == 0 {
@@ -29,8 +29,8 @@ impl Edit<RazTree<usize>, usize> for UniformInsert<RazTree<usize>, usize> {
     return params.size // Initial editing state = The size of the generated input
   }
   fn edit<R:Rng>(tree:RazTree<usize>, i:usize,
-                 rng:&mut R, params:&GenerateParams) -> (RazTree<usize>, usize) {
-    let mut t = tree;
+                 rng:&mut R, _params:&GenerateParams) -> (RazTree<usize>, usize) {
+    let t = tree;
     let pos = rng.gen::<usize>() % ( i + 1 );
     let mut r = t.focus( pos ).unwrap();
     r.push_left( rng.gen() );
@@ -50,11 +50,15 @@ impl<S> Generate<List<usize>> for UniformPrepend<List<usize>,S> {
     for i in 0..params.size {
       if i % params.gauge == 0 {
         l = list_art(cell(name_of_usize(i), l));
-        l = list_name(name_of_usize(i), l);
+        //l = list_name(name_of_usize(i), l);
       } else { } ;
       let elm : usize = rng.gen() ;
       let elm = elm % params.size ;
       l = list_cons(elm,  l);
+      if i % params.gauge == 0 {
+        //l = list_art(cell(name_of_usize(i), l));
+        l = list_name(name_of_usize(i), l);
+      } else { } ;
     } ;
     l
   }
@@ -71,11 +75,16 @@ impl Edit<List<usize>, usize> for UniformPrepend<List<usize>,usize> {
     let i = next_name ;
     if i % params.gauge == 0 {
       l = list_art(cell(name_of_usize(i), l));
-      l = list_name(name_of_usize(i), l);      
+      //l = list_name(name_of_usize(i), l);      
     } else { } ;
     let elm : usize = rng.gen() ;
     let elm = elm % params.size ;
-    (list_cons(elm, l), i + 1)
+    l = list_cons(elm, l);
+    if i % params.gauge == 0 {
+      //l = list_art(cell(name_of_usize(i), l));
+      l = list_name(name_of_usize(i), l);      
+    } else { } ;
+    (l, i + 1)
   }
 }
 
@@ -202,6 +211,7 @@ impl Compute<List<usize>,List<usize>> for EagerMergesort {
            move || tree_of_list::<_,_,Tree<_>,List<_>>(Dir2::Left,sorted) );
     // ns ( name_of_str("list_of_tree"),
     //      move || list_of_tree(tree2, Dir2::Left ) )
+    drop(tree2);
     sorted2
   }
 }
@@ -284,14 +294,14 @@ pub fn all_tests() -> Vec<Box<LabDef>> {
                   UniformPrepend<_,_>,
                   ListTreeSum)
       ,
-    testcomputer!(name_of_str("eager-mergesort"),
+    testcomputer!(name_of_str("list-eager-mergesort"),
                   Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
                   EagerMergesort)
       ,
-    testcomputer!(name_of_str("lazy-mergesort"),
+    testcomputer!(name_of_str("list-lazy-mergesort"),
                   Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort.html")),
                   List<usize>, usize,
                   List<usize>,

@@ -34,6 +34,7 @@ pub mod labrun;
 pub mod catalog;
 
 use labdef::*;
+use adapton::engine::reflect::string_of_name;
 
 // fn csv_of_runtimes(path:&str, samples: Vec<Sample>) {
 //   let path = Path::new(path);
@@ -49,7 +50,7 @@ fn lab_params_defaults() -> LabParams {
     sample_params: SampleParams{
       input_seeds: vec![0],
       generate_params: GenerateParams{
-        size: 256,
+        size: 64,
         //size: 100000,
         gauge:1,
         nominal_strategy:NominalStrategy::Regular,
@@ -68,9 +69,9 @@ fn run_all_tests() {
   let tests   = catalog::all_tests();
   let mut results = vec![];
   for test in tests.iter() {
-    println!("Running: {:?}", test.name());
+    println!("Running: {}", string_of_name( &test.name() ) );
     let result = test.run(&params);
-    labviz::write_test_results(&params, test, &result);
+    labviz::write_test_results_traces(&params, test, &result);
     results.push(result);
   }  
   labviz::write_all_test_results(&params, &tests, &results);

@@ -1,13 +1,13 @@
 use std::fs;
-use std::io;
+//use std::io;
 use std::io::prelude::*;
 use std::io::BufWriter;
 use std::fs::File;
+use std::collections::HashMap;
 
 use adapton::engine::Name;
 use adapton::engine::reflect::*;
-use adapton::engine::reflect::trace;
-
+use adapton::engine::reflect::{trace, string_of_name};
 use labdef::{LabParams,LabDef,LabResults};
 
 /// The `Div` struct represents a restricted form of a `<div>` element
@@ -49,9 +49,9 @@ pub fn div_of_name (n:&Name) -> Div {
   Div{ tag: String::from("name"),
        // TODO: Remove illegal chars for CSS classes (check spec)
        // classes: vec![ format!("{:?}", n) ],
-       classes: vec![ ],
+       classes: vec![ string_of_name(n) ],
        extent: Box::new( vec![ ] ),
-       text: Some( format!("{:?}", n) ) }
+       text: Some( format!("{}", string_of_name(n) ) ) }
 }
 
 pub fn div_of_path (p:&Path) -> Div {
@@ -118,6 +118,76 @@ pub fn div_of_edge (e:&trace::Edge) -> Div {
        extent: Box::new(
          vec![ div_of_oploc(&e.loc),
                div_of_succ(&e.succ) ]) }
+}
+
+pub fn div_of_force_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc) -> Div {  
+  let mut div = Div {
+    tag:String::from("force-tree"),
+    text:None,
+    classes: vec![],
+    extent: Box::new(vec![ div_of_loc( loc ) ]),
+  };
+  visited.insert( loc.clone(), () );
+  let no_extent = match dcg.table.get( loc ) {
+    None => panic!("dangling pointer in reflected DCG!"),
+    Some( nd ) => {
+      match succs_of_node( nd ) {
+        None => true, // No succs; E.g., ref cells have no succs
+        Some( succs ) => {
+          let mut no_extent = true;
+          for succ in succs {
+            if succ.effect == Effect::Force {
+              no_extent = false;
+              let succ_div = div_of_force_tree (dcg, visited, &succ.loc);
+              div.extent.push( succ_div )
+            }
+          };
+          no_extent
+        }
+      }
+    }
+  };
+  if no_extent {
+    div.classes.push(String::from("no-extent"))
+  };
+  div
+}
+
+pub fn div_of_alloc_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc) -> Div {  
+  let mut div = Div {
+    tag:String::from("alloc-tree"),
+    text:None,
+    classes: vec![],
+    extent: Box::new(vec![ div_of_loc( loc ) ]),
+  };
+  visited.insert( loc.clone(), () );
+  let no_extent = match dcg.table.get( loc ) {
+    None => panic!("dangling pointer in reflected DCG!"),
+    Some( nd ) => {
+      match succs_of_node( nd ) {
+        None => true, // No succs; E.g., ref cells have no succs
+        Some( succs ) => {
+          let mut no_extent = true;
+          for succ in succs {
+            if succ.effect == Effect::Alloc {
+              no_extent = false;
+              let succ_div = div_of_alloc_tree (dcg, visited, &succ.loc);
+              div.extent.push( succ_div )
+            }
+          };
+          no_extent
+        }
+      }
+    }
+  };
+  if no_extent {
+    div.classes.push(String::from("no-extent"))
+  };
+  div
+}
+
+pub fn div_of_value_tree (dcg:&DCG, tr:&trace::Trace) -> Div {
+  panic!("")  
 }
 
 pub fn div_of_trace (tr:&trace::Trace) -> Div {
@@ -209,7 +279,7 @@ impl WriteHTML for Div {
                |mut cs,c|{cs.push_str(" ");
                           cs.push_str(c.as_str()); cs}
              )
-    );
+    ).unwrap();
     match self.text {
       None => (),
       Some(ref text) => writeln!(wr, "{}", text).unwrap()
@@ -217,7 +287,7 @@ impl WriteHTML for Div {
     for div in self.extent.iter() {
       div.write_html(wr);
     }
-    writeln!(wr, "</div>");
+    writeln!(wr, "</div>").unwrap();
   }
 }
 
@@ -229,7 +299,7 @@ impl<T:WriteHTML> WriteHTML for Vec<T> {
   }
 }
 
-pub fn write_all_test_results(params:&LabParams, 
+pub fn write_all_test_results(_params:&LabParams, 
                               tests:&Vec<Box<LabDef>>, 
                               results:&Vec<LabResults>) 
 {
@@ -240,37 +310,77 @@ pub fn write_all_test_results(params:&LabParams,
 
   writeln!(writer, "{}", style_string()).unwrap();
 
-  // TODO: Write an index file that summarizes all of the tests that we ran
+  assert!( tests.len() == results.len() );
+
+  for ((_i,test),(_j,_result)) in tests.iter().enumerate().zip(results.iter().enumerate()) {
+    //writeln!(writer, "(({:?},{:?}),({:?},{:?}))", i, test.name(), j, result);
+    writeln!(&mut writer, "<div class={:?}>", "test-summary-title").unwrap();
+    write_test_name(&mut writer, test, false);
+    write_cr(&mut writer);
+    writeln!(&mut writer, "<a class={:?} href=./{:?}/traces.html>example traces</a>", 
+             "test-summary-examples", 
+             string_of_name(&test.name())
+    ).unwrap();
+    writeln!(&mut writer, "</div").unwrap();    
+    write_cr(&mut writer);
+    
+    writeln!(&mut writer, "<div class={:?}>", "test-summary").unwrap();    
+    writeln!(&mut writer, "<div class={:?}>", "test-summary-info").unwrap();
+    //
+    writeln!(&mut writer, "</div>").unwrap();    
+    writeln!(&mut writer, "<div class={:?}>", "test-summary-large-results").unwrap();
+    //
+    writeln!(&mut writer, "</div>").unwrap();
+    writeln!(&mut writer, "<div class={:?}>", "test-summary-small-results").unwrap();
+    //
+    writeln!(&mut writer, "</div>").unwrap();        
+    writeln!(&mut writer, "</div>").unwrap();    
+  }
 }
 
-pub fn write_test_results(params:&LabParams, test:&Box<LabDef>, results:&LabResults) {
-  
-  let testname = test.name();
+pub fn write_cr<W:Write>(writer:&mut W) {
+  /// We style this with clear:both, and without any appearance
+  writeln!(writer, "<hr/>").unwrap();
+}
+
+pub fn write_test_name<W:Write>(writer:&mut W, test:&Box<LabDef>, is_title:bool) {
+  let catalog_url = String::from("http://adapton.org/rustdoc/adapton_lab/catalog/index.html");
+
+  let testname = string_of_name( &test.name() );
   let testurl  = test.url();
 
-  // For linking to rustdoc documentation from the output HTML
-  let trace_url   = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/struct.Trace.html";
-  let catalog_url = String::from("http://adapton.org/rustdoc/adapton_lab/catalog/index.html");
-  
-  // Create directories and files on local filesystem:
-  fs::create_dir_all(format!("lab-results/{:?}/", testname)).unwrap();
-  let f = File::create(format!("lab-results/{:?}/index.html", testname)).unwrap();
-  let mut writer = BufWriter::new(f);
-
-  writeln!(writer, "{}", style_string()).unwrap();
-  writeln!(writer, "<div class={:?}><a href={:?} class={:?}>{:?}</a></div>", 
-           "test-name", 
+  writeln!(writer, "<div class={:?}><a href={:?} class={:?}>{}</a></div>", 
+           "test-name",
            match *testurl {
              Some(ref url) => url,
              None => & catalog_url
            },
-           "test-name",
-           testname).unwrap();
+           format!("test-name {}", if is_title { "page-title" } else { "" }), 
+           testname
+  ).unwrap();
+}
 
-  writeln!(writer, "<div style=\"font-size:12px\" class=\"batch-name\"> step</div>");
-  writeln!(writer, "<div style=\"font-size:20px\" class=\"editor\">Editor</div>");
-  writeln!(writer, "<div style=\"font-size:20px\" class=\"archivist\">Archivist</div>");
-  writeln!(writer, "<hr/>").unwrap();
+pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:&LabResults) {
+  
+  let testname = string_of_name( &test.name() );
+  //let testurl  = test.url();
+
+  // For linking to rustdoc documentation from the output HTML
+  let trace_url   = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/struct.Trace.html";
+  
+  // Create directories and files on local filesystem:
+  fs::create_dir_all(format!("lab-results/{}/", testname)).unwrap();
+  let f = File::create(format!("lab-results/{}/traces.html", testname)).unwrap();
+  let mut writer = BufWriter::new(f);
+
+  writeln!(writer, "{}", style_string()).unwrap();
+  
+  write_test_name(&mut writer, test, true);
+
+  writeln!(writer, "<div style=\"font-size:12px\" class=\"batch-name\"> step</div>").unwrap();
+  writeln!(writer, "<div style=\"font-size:20px\" class=\"editor\">Editor</div>").unwrap();
+  writeln!(writer, "<div style=\"font-size:20px\" class=\"archivist\">Archivist</div>").unwrap();
+  write_cr(&mut writer);
 
   for sample in results.samples.iter() {
     writeln!(writer, "<div class=\"batch-name-lab\">batch name<div class=\"batch-name\">{:?}</div></div>", 
@@ -280,11 +390,43 @@ pub fn write_test_results(params:&LabParams, test:&Box<LabDef>, results:&LabResu
     writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.process_input.time_ns).unwrap();    
     writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>)</div>", trace_url).unwrap();
+    
     writeln!(writer, "<div class=\"traces\">").unwrap();
     for tr in sample.dcg_sample.process_input.dcg_traces.iter() {
       div_of_trace(tr).write_html(&mut writer)
     }
     writeln!(writer, "</div>").unwrap();
+
+    match sample.dcg_sample.process_input.dcg_reflect {
+      Some(ref dcg) => {
+        writeln!(writer, "<div class=\"alloc-tree\">").unwrap();
+        for tr in sample.dcg_sample.process_input.dcg_traces.iter() {
+          if tr.edge.succ.effect == Effect::Alloc {
+            div_of_alloc_tree(dcg, 
+                              &mut HashMap::new(), 
+                              &tr.edge.succ.loc)
+              .write_html(&mut writer)
+          }
+        }
+        writeln!(writer, "</div>").unwrap();
+
+        writeln!(writer, "<div class=\"force-tree\">").unwrap();
+        for tr in sample.dcg_sample.process_input.dcg_traces.iter() {
+          if tr.edge.succ.effect == Effect::Force {
+            div_of_force_tree(dcg, 
+                              &mut HashMap::new(), 
+                              &tr.edge.succ.loc)
+              .write_html(&mut writer)
+          }
+        }
+        writeln!(writer, "</div>").unwrap();
+
+      }
+      None => {
+        // No reflected DCG
+      }
+    }
+    
     writeln!(writer, "</div>").unwrap();
     
     // - - - - - - - 
@@ -304,10 +446,40 @@ pub fn write_test_results(params:&LabParams, test:&Box<LabDef>, results:&LabResu
       div_of_trace(tr).write_html(&mut writer)
     }
     writeln!(writer, "</div>").unwrap();    
+
+    match sample.dcg_sample.compute_output.dcg_reflect {
+      Some(ref dcg) => {
+        writeln!(writer, "<div class=\"alloc-tree\">").unwrap();
+        for tr in sample.dcg_sample.compute_output.dcg_traces.iter() {
+          if tr.edge.succ.effect == Effect::Alloc {
+            div_of_alloc_tree(dcg, 
+                              &mut HashMap::new(), 
+                              &tr.edge.succ.loc)
+              .write_html(&mut writer)
+          }
+        }
+        writeln!(writer, "</div>").unwrap();
+
+        writeln!(writer, "<div class=\"force-tree\">").unwrap();
+        for tr in sample.dcg_sample.compute_output.dcg_traces.iter() {
+          if tr.edge.succ.effect == Effect::Force {
+            div_of_force_tree(dcg, 
+                              &mut HashMap::new(), 
+                              &tr.edge.succ.loc)
+              .write_html(&mut writer)
+          }
+        }
+        writeln!(writer, "</div>").unwrap();
+      }
+      None => {
+        // No reflected DCG
+      }
+    }
+
     writeln!(writer, "</div>").unwrap();
 
     // - - - - - - - - - - - - - - - 
-    writeln!(writer, "<hr/>").unwrap();
+    write_cr(&mut writer);
    
   }
   writer.flush().unwrap();  
@@ -315,6 +487,10 @@ pub fn write_test_results(params:&LabParams, test:&Box<LabDef>, results:&LabResu
 
 pub fn style_string() -> &'static str {
 "
+<html>
+<head>
+<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js\"></script>
+
 <style>
 body {
   background: #552266;
@@ -322,6 +498,9 @@ body {
   text-decoration: none;
   padding: 0px;
   margin: 0px;
+}
+:visited {
+  color: black;
 }
 a {
   text-decoration: none;
@@ -337,9 +516,29 @@ hr {
 }
 
 .test-name {
-  font-size: 32px;
   color: #ccaadd;
+  margin: 1px;
+  padding: 1px;
+}
+
+.test-summary-title {
   margin: 8px;
+  font-size: 20px;
+}
+.test-summary {
+  margin: 8px;
+  padding: 2px;
+}
+.test-summary-examples {
+  font-size: 14px;
+  color: black;
+  border: solid black 1px;
+  padding: 2px;
+  background-color: yellow;
+  margin: 3px;
+}
+.test-summary-examples:hover {
+  background-color: white;
 }
 .test-name:visited {
   color: #ccaadd;
@@ -401,7 +600,7 @@ hr {
   width: 100%;
 }
 
-.trace {
+.trace, .force-tree, .alloc-tree {
   display: inline-block;
   border-style: solid;
   border-color: red;
@@ -425,17 +624,16 @@ hr {
 }
 
 .path {  
-  display: flex;
+  display: inline-block;
   display: none;
 
   margin: 0px;
-  padding: 0px;
+  padding: 1px;
   border-radius: 1px;
   border-style: solid;
   border-width: 1px;
   border-color: #664466;
   background-color: #664466; 
-  autoflow: auto;
 }
 .name {
   display: inline;
@@ -512,9 +710,67 @@ hr {
   border-width: 2px;
   padding: 2px;
 }
+
+.force-tree {
+  background: #ccccff;
+  border-color: blue;
+}
+.alloc-tree {
+  background: #ccffcc;
+  border-color: green;
+}
+
 .no-extent {
   padding: 3px;
 }
+.page-title {
+  font-size: 32px;
+  color: #ccaadd;
+  margin: 8px;
+}
+
 </style>
+
+<script>
+function togglePaths() {
+ var selection = document.getElementById(\"checkbox-1\");
+ if (selection.checked) {
+   $('.path').css('display', 'inline-block')
+ } else {
+   $('.path').css('display', 'none')
+ }
+}
+
+function toggleNames() {
+ var selection = document.getElementById(\"checkbox-2\");
+ if (selection.checked) {
+   $('.name').css('display', 'inline')
+ } else {
+   $('.name').css('display', 'none')
+ }
+}
+
+function toggleEffects() {
+ var selection = document.getElementById(\"checkbox-3\");
+ if (selection.checked) {
+   $('.tr-effect').css('display', 'inline')
+ } else {
+   $('.tr-effect').css('display', 'none')
+ }
+}
+</script>
+</head>
+
+<body>
+
+<fieldset>
+ <legend>Toggle labels: </legend>
+ <label for=\"show-paths-checkbox\">paths</label>
+ <input type=\"checkbox\" name=\"show-paths-checkbox\" id=\"checkbox-1\" onchange=\"togglePaths()\">
+ <label for=\"show-names-checkbox\">names</label>
+ <input type=\"checkbox\" name=\"show-names-checkbox\" id=\"checkbox-2\" onchange=\"toggleNames()\">
+ <label for=\"show-effects-checkbox\">effects</label>
+ <input type=\"checkbox\" name=\"show-effects-checkbox\" id=\"checkbox-3\" onchange=\"toggleEffects()\">
+</fieldset>
 "
 }
