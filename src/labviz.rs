@@ -317,7 +317,7 @@ pub fn write_all_test_results(_params:&LabParams,
     writeln!(&mut writer, "<div class={:?}>", "test-summary-title").unwrap();
     write_test_name(&mut writer, test, false);
     write_cr(&mut writer);
-    writeln!(&mut writer, "<a class={:?} href=./{:?}/traces.html>example traces</a>", 
+    writeln!(&mut writer, "<a class={:?} href=./{}/traces.html>example traces</a>", 
              "test-summary-examples", 
              string_of_name(&test.name())
     ).unwrap();
