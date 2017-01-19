@@ -490,13 +490,26 @@ pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:
   writeln!(writer, "<div style=\"font-size:12px\" class=\"batch-name\"> step</div>").unwrap();
   writeln!(writer, "<div style=\"font-size:20px\" class=\"editor\">Editor</div>").unwrap();
   writeln!(writer, "<div style=\"font-size:20px\" class=\"archivist\">Archivist</div>").unwrap();
-  write_cr(&mut writer);
   
   let mut prev_sample = None;
   for sample in results.samples.iter() {
+    write_cr(&mut writer);
+    // - - - - - - - 
+    // 0. Write batch name (a counter)
     writeln!(writer, "<div class=\"batch-name-lab\">batch name<div class=\"batch-name\">{:?}</div></div>", 
              sample.batch_name).unwrap();
+    write_cr(&mut writer);
     
+    // 1. Write input,
+    // 2. Write output,
+    // 3. Write last DCG, after edit but before update.
+    // 4. Write DCG of the update.
+    write_sample_dcg(&mut writer, test, prev_sample, sample);      
+    write_cr(&mut writer);
+    
+    // - - - - - - - 
+    // 5. Write traces of editor
+
     writeln!(writer, "<div class=\"editor\">").unwrap();
     writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.process_input.time_ns).unwrap();    
@@ -509,6 +522,7 @@ pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:
     writeln!(writer, "</div>").unwrap();
     
     // - - - - - - - 
+    // 6. Write traces of archivist
     
     writeln!(writer, "<div class=\"archivist\">").unwrap();
     
@@ -526,12 +540,9 @@ pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:
     }
     writeln!(writer, "</div>").unwrap();    
     writeln!(writer, "</div>").unwrap();
-    write_cr(&mut writer);
-    // - - - - - - - - - - - - - - - 
-
-    write_sample_dcg(&mut writer, test, prev_sample, sample);      
-    write_cr(&mut writer);
-      
+    
+    write_cr(&mut writer);    
+    // - - - - - - - - - - - - - - -       
     prev_sample = Some(sample) ; // Must be last!
   }
   writer.flush().unwrap();  
