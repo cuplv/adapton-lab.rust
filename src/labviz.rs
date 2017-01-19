@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use adapton::engine::Name;
 use adapton::engine::reflect::*;
 use adapton::engine::reflect::{trace, string_of_name};
-use labdef::{LabParams,LabDef,LabResults};
+use labdef::{LabParams,LabDef,LabResults, Sample};
 
 /// The `Div` struct represents a restricted form of a `<div>` element
 /// in HTML.  The field `tag` is a string, which corresponds to a a
@@ -360,6 +360,116 @@ pub fn write_test_name<W:Write>(writer:&mut W, test:&Box<LabDef>, is_title:bool)
   ).unwrap();
 }
 
+pub fn write_dcg_edge_tree<W:Write> (writer:&mut W, dcg:&DCG, traces:&Vec<trace::Trace>, effect:Effect) {
+  for tr in traces.iter() {
+    if tr.edge.succ.effect == effect {
+      match effect {
+        Effect::Alloc =>
+          div_of_alloc_tree(dcg, &mut HashMap::new(), &tr.edge.succ.loc)
+          .write_html(writer),
+        Effect::Force =>
+          div_of_force_tree(dcg,&mut HashMap::new(),  &tr.edge.succ.loc)
+          .write_html(writer),
+      }
+    }
+  }
+}
+
+pub fn write_sample_dcg<W:Write>
+  (writer:&mut W,
+   test:&Box<LabDef>, 
+   prev_sample:Option<&Sample>,
+   this_sample:&Sample)
+{
+  match this_sample.dcg_sample.input {
+    None => {
+    
+    },
+    Some(ref input) => {
+      // TODO write the input as a tree of div's
+    }
+  }
+  ;
+  match this_sample.dcg_sample.output {
+    None => {
+    
+    },
+    Some(ref output) => {
+      // TODO write the input as a tree of div's
+    }
+  }
+  ;
+  // Separate the input and output from the DCG trees, below
+  write_cr(writer);
+  ;
+  match this_sample.dcg_sample.process_input.reflect_dcg {
+    Some(ref dcg_post_edit) => {
+      match prev_sample {
+        Some(ref prev_sample) => {
+          // 1/4: alloc tree for compute, after this edit, but before the update
+          writeln!(writer, "<div class=\"archivist-alloc-tree-post-edit\">").unwrap();
+          write_dcg_edge_tree
+            (writer, 
+             dcg_post_edit,
+             &prev_sample.dcg_sample.compute_output.reflect_traces,
+             Effect::Alloc
+            );
+          writeln!(writer, "</div>").unwrap();
+          
+          // 2/4: force tree for compute, after this edit, but before the update
+          writeln!(writer, "<div class=\"archivist-force-tree-post-edit\">").unwrap();
+          write_dcg_edge_tree
+            (writer, 
+             dcg_post_edit,
+             &prev_sample.dcg_sample.compute_output.reflect_traces,
+             Effect::Force,         
+            );
+          writeln!(writer, "</div>").unwrap();
+        },    
+        _ => {
+          writeln!(writer,"<div class=\"archivist-alloc-tree-post-edit\"></div>").unwrap();
+          writeln!(writer,"<div class=\"archivist-force-tree-post-edit\"></div>").unwrap();
+        }}
+    },    
+    _ => {
+      writeln!(writer,"<div class=\"archivist-alloc-tree-post-edit\"></div>").unwrap();
+      writeln!(writer,"<div class=\"archivist-force-tree-post-edit\"></div>").unwrap();
+    }
+  }
+  ;
+  writeln!(writer,"<div class=\"archivist-update-sep\"></div>").unwrap();
+ 
+  match this_sample.dcg_sample.compute_output.reflect_dcg {
+    Some(ref dcg_post_update) => {
+      
+      // 3/4: alloc tree for compute, after the update
+      writeln!(writer, "<div class=\"archivist-alloc-tree-post-update\">").unwrap();
+      write_dcg_edge_tree
+        (writer, 
+         dcg_post_update,
+         &this_sample.dcg_sample.compute_output.reflect_traces,
+         Effect::Alloc
+        );
+      writeln!(writer, "</div>").unwrap();
+      
+      // 4/4: force tree for compute, after the update
+      writeln!(writer, "<div class=\"archivist-force-tree-post-edit\">").unwrap();
+      write_dcg_edge_tree
+        (writer, 
+         dcg_post_update,
+         &this_sample.dcg_sample.compute_output.reflect_traces,
+         Effect::Force,         
+        );
+      writeln!(writer, "</div>").unwrap();
+    },    
+    _ => {
+      writeln!(writer,"<div class=\"archivist-alloc-tree-post-update\"></div>").unwrap();
+      writeln!(writer,"<div class=\"archivist-force-tree-post-update\"></div>").unwrap();
+    }
+  };
+
+}
+
 pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:&LabResults) {
   
   let testname = string_of_name( &test.name() );
@@ -381,7 +491,8 @@ pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:
   writeln!(writer, "<div style=\"font-size:20px\" class=\"editor\">Editor</div>").unwrap();
   writeln!(writer, "<div style=\"font-size:20px\" class=\"archivist\">Archivist</div>").unwrap();
   write_cr(&mut writer);
-
+  
+  let mut prev_sample = None;
   for sample in results.samples.iter() {
     writeln!(writer, "<div class=\"batch-name-lab\">batch name<div class=\"batch-name\">{:?}</div></div>", 
              sample.batch_name).unwrap();
@@ -389,44 +500,12 @@ pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:
     writeln!(writer, "<div class=\"editor\">").unwrap();
     writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.process_input.time_ns).unwrap();    
-    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>)</div>", trace_url).unwrap();
-    
+    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>)</div>", trace_url).unwrap();    
     writeln!(writer, "<div class=\"traces\">").unwrap();
-    for tr in sample.dcg_sample.process_input.dcg_traces.iter() {
+    for tr in sample.dcg_sample.process_input.reflect_traces.iter() {
       div_of_trace(tr).write_html(&mut writer)
     }
-    writeln!(writer, "</div>").unwrap();
-
-    match sample.dcg_sample.process_input.dcg_reflect {
-      Some(ref dcg) => {
-        writeln!(writer, "<div class=\"alloc-tree\">").unwrap();
-        for tr in sample.dcg_sample.process_input.dcg_traces.iter() {
-          if tr.edge.succ.effect == Effect::Alloc {
-            div_of_alloc_tree(dcg, 
-                              &mut HashMap::new(), 
-                              &tr.edge.succ.loc)
-              .write_html(&mut writer)
-          }
-        }
-        writeln!(writer, "</div>").unwrap();
-
-        writeln!(writer, "<div class=\"force-tree\">").unwrap();
-        for tr in sample.dcg_sample.process_input.dcg_traces.iter() {
-          if tr.edge.succ.effect == Effect::Force {
-            div_of_force_tree(dcg, 
-                              &mut HashMap::new(), 
-                              &tr.edge.succ.loc)
-              .write_html(&mut writer)
-          }
-        }
-        writeln!(writer, "</div>").unwrap();
-
-      }
-      None => {
-        // No reflected DCG
-      }
-    }
-    
+    writeln!(writer, "</div>").unwrap();   
     writeln!(writer, "</div>").unwrap();
     
     // - - - - - - - 
@@ -442,45 +521,18 @@ pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:
     
     writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>):</div>", trace_url).unwrap();    
     writeln!(writer, "<div class=\"traces\">").unwrap();
-    for tr in sample.dcg_sample.compute_output.dcg_traces.iter() {
+    for tr in sample.dcg_sample.compute_output.reflect_traces.iter() {
       div_of_trace(tr).write_html(&mut writer)
     }
     writeln!(writer, "</div>").unwrap();    
-
-    match sample.dcg_sample.compute_output.dcg_reflect {
-      Some(ref dcg) => {
-        writeln!(writer, "<div class=\"alloc-tree\">").unwrap();
-        for tr in sample.dcg_sample.compute_output.dcg_traces.iter() {
-          if tr.edge.succ.effect == Effect::Alloc {
-            div_of_alloc_tree(dcg, 
-                              &mut HashMap::new(), 
-                              &tr.edge.succ.loc)
-              .write_html(&mut writer)
-          }
-        }
-        writeln!(writer, "</div>").unwrap();
-
-        writeln!(writer, "<div class=\"force-tree\">").unwrap();
-        for tr in sample.dcg_sample.compute_output.dcg_traces.iter() {
-          if tr.edge.succ.effect == Effect::Force {
-            div_of_force_tree(dcg, 
-                              &mut HashMap::new(), 
-                              &tr.edge.succ.loc)
-              .write_html(&mut writer)
-          }
-        }
-        writeln!(writer, "</div>").unwrap();
-      }
-      None => {
-        // No reflected DCG
-      }
-    }
-
     writeln!(writer, "</div>").unwrap();
-
-    // - - - - - - - - - - - - - - - 
     write_cr(&mut writer);
-   
+    // - - - - - - - - - - - - - - - 
+
+    write_sample_dcg(&mut writer, test, prev_sample, sample);      
+    write_cr(&mut writer);
+      
+    prev_sample = Some(sample) ; // Must be last!
   }
   writer.flush().unwrap();  
 }
@@ -727,6 +779,25 @@ hr {
   font-size: 32px;
   color: #ccaadd;
   margin: 8px;
+}
+
+.archivist-alloc-tree-post-edit,
+.archivist-force-tree-post-edit, 
+.archivist-alloc-tree-post-update, 
+.archivist-force-tree-post-update  
+{
+  display: inline;
+  float: left;
+  width: 24%;
+
+  padding: 0px;
+  margin: 2px;
+
+  background: black;
+  border-radius: 20px;
+  border-style: solid;
+  border-width: 2px;
+  border-color: purple;
 }
 
 </style>

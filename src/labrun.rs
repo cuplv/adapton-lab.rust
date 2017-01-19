@@ -36,23 +36,19 @@ pub struct TestState<R:Rng+Clone,
 }
 
       
-fn get_engine_metrics<X,F:FnOnce() -> X> (thunk:F) -> (X,EngineMetrics)
+fn get_engine_metrics<X,F:FnOnce() -> X> (params:&SampleParams, thunk:F) -> (X,EngineMetrics)
 {
+  if params.reflect_trace { reflect::dcg_reflect_begin(); };
   let time_start = time::precise_time_ns();
-  
-  reflect::dcg_reflect_begin();
   let (x,cnt) = cnt(thunk);
   let time_end = time::precise_time_ns();
-
-  let traces = reflect::dcg_reflect_end();
-  let dcg    = reflect::dcg_reflect_now();
-  //let traces = vec![];
-
+  let traces = if params.reflect_trace { reflect::dcg_reflect_end() } else { vec![ ] };
+  let dcg    = if params.reflect_dcg   { reflect::dcg_reflect_now() } else { None };
   return (x, EngineMetrics{
     time_ns:time_end - time_start,
     engine_cnt:cnt,
-    dcg_traces:traces,
-    dcg_reflect:dcg,
+    reflect_traces:traces,
+    reflect_dcg:dcg,
   })
 }
 
@@ -70,32 +66,37 @@ fn get_engine_sample
   let ((edited_input, editst), process_input) : ((Input,EditSt),EngineMetrics) = 
     match input {
       None => 
-        get_engine_metrics(
+        get_engine_metrics( params,
           move || ( InputDist::generate(&mut rng2, &params.generate_params), 
                     InputDist::edit_init(&mut rng2, &params.generate_params ))),
       Some((input, editst)) => 
-        get_engine_metrics(
+        get_engine_metrics( params,
           move || InputDist::edit(input, editst, &mut rng2, &params.generate_params))
     };
-  //println!("EngineSample::process_input: {:?}", process_input); // XXX Temp  
 
-  let input2 = edited_input.clone();
+  let input2  = edited_input.clone();
+  
+  let input2r = 
+    if params.reflect_dcg { 
+      Some(reflect::reflect_val(&input2)) 
+    } else { None };
+
   let (output, compute_output): (Output,EngineMetrics) 
     = ns(name_of_str("compute"),
-         move || get_engine_metrics(move || Computer::compute(input2) ));
+         move || get_engine_metrics( params, move || Computer::compute(input2) ));
 
-  //println!("EngineSample::compute_output: {:?}", compute_output); // XXX Temp  
-
-  if false {
-    println!(" Input: {:?}", edited_input); // XXX Temp
-    println!("Output: {:?}", output); // XXX Temp
-  };
+  let outputr = 
+    if params.reflect_dcg { 
+      Some(reflect::reflect_val(&output)) 
+    } else { None };
   
   let engine_sample = EngineSample{
     process_input,
+    input: input2r,
     compute_output,
+    output: outputr,
   };
-  //println!("{:?}", engine_sample); // XXX Temp
+
   return (output, edited_input, editst, engine_sample)
 }
 

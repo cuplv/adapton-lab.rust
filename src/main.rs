@@ -47,16 +47,21 @@ use adapton::engine::reflect::string_of_name;
 
 fn lab_params_defaults() -> LabParams {
   return LabParams {
-    sample_params: SampleParams{
+    sample_params: SampleParams {
       input_seeds: vec![0],
-      generate_params: GenerateParams{
-        size: 64,
-        //size: 100000,
+      generate_params: GenerateParams {
+        size: 8,        
+        //size: 64,
+        //size: 128,
+        //size: 256,
+        //size: 1024,
         gauge:1,
-        nominal_strategy:NominalStrategy::Regular,
+        nominal_strategy: NominalStrategy::Regular,
       },
       validate_output: true,
       change_batch_size: 1,
+      reflect_dcg: true,
+      reflect_trace: true,      
     },
     change_batch_loopc:10,
   }
@@ -68,6 +73,7 @@ fn run_all_tests() {
   let params = lab_params_defaults();
   let tests   = catalog::all_tests();
   let mut results = vec![];
+  println!("Params: {:?}", params );
   for test in tests.iter() {
     println!("Running: {}", string_of_name( &test.name() ) );
     let result = test.run(&params);

@@ -1,6 +1,7 @@
 use adapton::engine::Cnt; // Counters for engine costs
 use adapton::engine::Name; // Names, for naming things uniquely
 use adapton::engine::reflect::DCG;
+use adapton::engine::reflect::Val;
 use adapton::engine::reflect::trace::Trace;
 use rand::Rng;
 use std::marker::PhantomData;
@@ -91,6 +92,11 @@ pub struct SampleParams {
   pub validate_output:   bool,
   /// Size of each batch of changes.
   pub change_batch_size: usize,
+  /// Reflect the trace (See `adapton::engine::reflect::trace::Trace`).
+  pub reflect_trace: bool,
+  /// Reflect the DCG (See `adapton::engine::reflect::DCG`), including
+  /// its values (See `adapton::engine::reflect_val`).
+  pub reflect_dcg: bool,
 }
 
 /// The result of a lab is a sequence of samples.
@@ -117,16 +123,28 @@ pub struct Sample {
 /// input (left vertical edge in `README.md` diagram).
 #[derive(Clone,Debug)]
 pub struct EngineSample {
+  /// TODO: Rename: 'editor' (for editor role)
   pub process_input:    EngineMetrics,
+  /// TODO: Rename: 'archivist' (for archivist role)
   pub compute_output:   EngineMetrics,
+  
+  pub input: Option<Val>,
+  pub output: Option<Val>,
 }
 
 /// For each engine, for each sampled subcomputation, we record the
 /// real time (in nanoseconds) and engine-based counters for DCG costs.
 #[derive(Clone,Debug)]
 pub struct EngineMetrics {
+  /// Time in milliseconds.
   pub time_ns:    u64,
+  /// Counts of engine (engine trace-level) operations (See
+  /// `engine::reflect::trace::Trace`) during the sample.
   pub engine_cnt: Cnt,
-  pub dcg_traces: Vec<Trace>,
-  pub dcg_reflect: Option<DCG>,
+  /// The reflected traces of the DCG during the sample; empty if this
+  /// option is disabled.
+  pub reflect_traces: Vec<Trace>,
+  /// The reflected version of the DCG, at the conclusion of the
+  /// sample; None if this option is disabled.
+  pub reflect_dcg: Option<DCG>,
 }

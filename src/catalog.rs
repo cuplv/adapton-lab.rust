@@ -135,6 +135,11 @@ pub struct LazyMergesort { }
 pub struct EagerMergesort { }
 
 #[derive(Clone,Debug)]
+pub struct LazyMergesortBad { }
+#[derive(Clone,Debug)]
+pub struct EagerMergesortBad { }
+
+#[derive(Clone,Debug)]
 pub struct Quickhull { }
 
 pub struct RazTest1 {} 
@@ -205,6 +210,33 @@ impl Compute<List<usize>,List<usize>> for EagerMergesort {
     let sorted : List<_> = 
       ns( name_of_str("mergesort"),
           move || mergesort_list_of_tree2(tree, None));
+    let sorted2 = sorted.clone();
+    let tree2 = // Demand the output of mergesort (making it "eager")
+      ns ( name_of_str("tree_of_list2"),
+           move || tree_of_list::<_,_,Tree<_>,List<_>>(Dir2::Left,sorted) );
+    // ns ( name_of_str("list_of_tree"),
+    //      move || list_of_tree(tree2, Dir2::Left ) )
+    drop(tree2);
+    sorted2
+  }
+}
+
+impl Compute<List<usize>,List<usize>> for LazyMergesortBad {
+  fn compute(inp:List<usize>) -> List<usize> {    
+    let tree = ns( name_of_str("tree_of_list"), 
+                   move ||tree_of_list::<usize,usize,Tree<_>,_>(Dir2::Right,inp) );
+    mergesort_list_of_tree(tree) // <<--- This version of mergesort is bad.
+  }
+}
+
+impl Compute<List<usize>,List<usize>> for EagerMergesortBad {
+  fn compute(inp:List<usize>) -> List<usize> {
+    let tree = 
+      ns( name_of_str("tree_of_list"), 
+          move || tree_of_list::<usize,usize,Tree<_>,_>(Dir2::Right,inp) );
+    let sorted : List<_> = 
+      ns( name_of_str("mergesort"),
+          move || mergesort_list_of_tree(tree)); // <<--- This version of mergesort is bad.
     let sorted2 = sorted.clone();
     let tree2 = // Demand the output of mergesort (making it "eager")
       ns ( name_of_str("tree_of_list2"),
@@ -307,6 +339,20 @@ pub fn all_tests() -> Vec<Box<LabDef>> {
                   List<usize>,
                   UniformPrepend<_,_>,
                   LazyMergesort)
+      ,
+    testcomputer!(name_of_str("list-eager-mergesort-bad"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesortBad.html")),
+                  List<usize>, usize,
+                  List<usize>,
+                  UniformPrepend<_,_>,
+                  EagerMergesortBad)
+      ,
+    testcomputer!(name_of_str("list-lazy-mergesort-bad"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesortBad.html")),
+                  List<usize>, usize,
+                  List<usize>,
+                  UniformPrepend<_,_>,
+                  LazyMergesortBad)
       ,
     testcomputer!(name_of_str("list-eager-map"),
                   Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMap.html")),
