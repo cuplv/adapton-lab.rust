@@ -51,14 +51,14 @@ impl<S> Generate<List<usize>> for UniformPrepend<List<usize>,S> {
     for i in 0..params.size {
       if i % params.gauge == 0 {
         l = list_art(cell(name_of_usize(i), l));
-        //l = list_name(name_of_usize(i), l);
+        l = list_name(name_of_usize(i), l);
       } else { } ;
       let elm : usize = rng.gen() ;
       let elm = elm % ( params.size * 100 ) ;
       l = list_cons(elm,  l);
       if i % params.gauge == 0 {
         //l = list_art(cell(name_of_usize(i), l));
-        l = list_name(name_of_usize(i), l);
+        //l = list_name(name_of_usize(i), l);
       } else { } ;
     } ;
     l
@@ -76,14 +76,14 @@ impl Edit<List<usize>, usize> for UniformPrepend<List<usize>,usize> {
     let i = next_name ;
     if i % params.gauge == 0 {
       l = list_art(cell(name_of_usize(i), l));
-      //l = list_name(name_of_usize(i), l);      
+      l = list_name(name_of_usize(i), l);      
     } else { } ;
     let elm : usize = rng.gen() ;
     let elm = elm % ( params.size * 100 ) ;
     l = list_cons(elm, l);
     if i % params.gauge == 0 {
       //l = list_art(cell(name_of_usize(i), l));
-      l = list_name(name_of_usize(i), l);      
+      //l = list_name(name_of_usize(i), l);      
     } else { } ;
     (l, i + 1)
   }
@@ -122,8 +122,9 @@ pub struct LazyFilter { }
 pub struct EagerFilter { }
 
 #[derive(Clone,Debug)]
+pub struct ListTree { }
+#[derive(Clone,Debug)]
 pub struct ListTreeMax { }
-
 #[derive(Clone,Debug)]
 pub struct ListTreeSum { }
 
@@ -177,6 +178,12 @@ impl Compute<List<usize>,List<usize>> for LazyFilter {
 impl Compute<List<usize>,List<usize>> for ListReverse {
   fn compute(inp:List<usize>) -> List<usize> {
     list_reverse(inp, list_nil())
+  }
+}
+
+impl Compute<List<usize>,Tree<usize>> for ListTree {
+  fn compute(inp:List<usize>) -> Tree<usize> {
+    tree_of_list(Dir2::Left,inp)
   }
 }
 
@@ -344,6 +351,15 @@ pub fn all_tests() -> Vec<Box<LabDef>> {
                   List<usize>,
                   UniformPrepend<_,_>,
                   LazyFilter)
+      ,
+
+
+    testcomputer!(name_of_str("list-tree"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTree.html")),
+                  List<usize>, usize,
+                  Tree<usize>,
+                  UniformPrepend<_,_>,
+                  ListTree)
       ,
     testcomputer!(name_of_str("list-tree-max"),
                   Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTreeMax.html")),
