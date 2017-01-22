@@ -7,20 +7,21 @@ use std::collections::HashMap;
 
 use adapton::engine::Name;
 use adapton::engine::reflect::*;
-use adapton::engine::reflect::{trace, string_of_name};
+use adapton::engine::reflect::{trace, string_of_name, string_of_loc, string_of_path};
 use labdef::{LabParams,LabDef,LabResults, Sample};
 
 /// The `Div` struct represents a restricted form of a `<div>` element
-/// in HTML.  The field `tag` is a string, which corresponds to a a
-/// distinguished `tag` CSS class indicates the Rust datatype
+/// in HTML.  The field `tag` is a string, which corresponds to a
+/// distinguished `tag` CSS class that indicates the Rust datatype
 /// reflected into this `Div`.  The other CSS `classes` hold bits that
 /// signal various subcases (e.g., of `enum`s in the `reflect`
-/// module).  Finally, for Rust structures that have subfields and/or
+/// module).  For Rust structures that have subfields and/or
 /// substructure, the `Div`'s `extent` field lists their reflections
 /// into `Div`s.  In principle, the produced `Div` structure has an
 /// equivalent amount of information to the corresponding Rust
 /// datatype, and could be "parsed" back into this Rust datatype later
-/// (let's not do that, though!).
+/// (let's not do that, though!).  The text field is useful for `Div`
+/// versions of `Name`s, for giving the text of the name.
 #[derive(Debug,Clone)]
 pub struct Div {
   pub tag:     String,
@@ -120,6 +121,54 @@ pub fn div_of_edge (e:&trace::Edge) -> Div {
                div_of_succ(&e.succ) ]) }
 }
 
+pub fn div_of_value_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, val:&Val) -> Div {
+  let mut div = Div {
+    tag: match *val {
+      Val::Constr(ref n, _) => { format!("val-constr constr-{}", string_of_name(n) ) },
+      Val::Struct(ref n, _) => { format!("val-struct struct-{}", string_of_name(n) ) },
+      Val::Const( ref c )     => { format!("val-const  const-{}" , match *c {
+        Const::Nat( ref n ) => format!("{}", n),
+        Const::String( ref s ) => s.clone(),
+      })},
+      Val::Tuple(ref vs) => { format!("val-tuple tuple-{}", vs.len()) },
+      Val::Vec(ref vs) => { format!("val-vec vec-{}", vs.len()) }
+      Val::Art(ref loc, _) => { format!("val-art {}", string_of_loc( loc ) ) }
+      Val::ValTODO => { format!("val-TODO") }
+    },
+    classes: vec![],
+    text: 
+      match *val {
+        Val::Constr(ref n, _) => { Some(string_of_name(n)) },
+        Val::Struct(ref n, _) => { Some(string_of_name(n)) },
+        Val::Const( ref c )     => Some(match *c {
+          Const::Nat( ref n ) => format!("{}", n),
+          Const::String( ref s ) => format!("{:?}", s),
+        }),
+        Val::Tuple( _ ) => None,
+        Val::Vec( _ ) => None,
+        Val::ValTODO => None,
+        Val::Art( ref l, _ ) => {
+          Some(format!("{}", string_of_loc(l)))
+        }},
+    extent: Box::new(
+      match *val {
+        Val::Constr(_, ref vs) => { let ds : Vec<_> = vs.iter().map( |v| div_of_value_tree(dcg, visited,  v) ).collect() ; ds },
+        Val::Struct(_, ref fs) => { let ds : Vec<_> = fs.iter().map(  |&(ref f, ref v) | 
+                                                                         div_of_value_tree(dcg, visited, &v) ).collect() ; ds },
+        Val::Tuple(ref vs) =>     { let ds : Vec<_> = vs.iter().map( |v| div_of_value_tree(dcg, visited,  v) ).collect() ; ds },
+        Val::Vec(ref vs) =>       { let ds : Vec<_> = vs.iter().map( |v| div_of_value_tree(dcg, visited,  v) ).collect() ; ds },
+        Val::Const( _ ) => vec![],
+        Val::ValTODO => vec![],
+        Val::Art( ref l, _ ) => vec![
+          div_of_loc(l), // TODO Derefence the DCG at this location, and continue crawling values..
+        ],
+      }
+    )
+  }
+  ;
+  div
+}
+
 pub fn div_of_force_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc) -> Div {  
   let mut div = Div {
     tag:String::from("force-tree"),
@@ -184,10 +233,6 @@ pub fn div_of_alloc_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc) -> 
     div.classes.push(String::from("no-extent"))
   };
   div
-}
-
-pub fn div_of_value_tree (dcg:&DCG, tr:&trace::Trace) -> Div {
-  panic!("")  
 }
 
 pub fn div_of_trace (tr:&trace::Trace) -> Div {
@@ -381,12 +426,18 @@ pub fn write_sample_dcg<W:Write>
    prev_sample:Option<&Sample>,
    this_sample:&Sample)
 {
-  match this_sample.dcg_sample.input {
-    None => {
-    
-    },
-    Some(ref input) => {
-      // TODO write the input as a tree of div's
+  write_cr(writer)
+    ;
+  match this_sample.dcg_sample.process_input.reflect_dcg {
+    None => { },
+    Some(ref dcg_post_edit) => {
+      match this_sample.dcg_sample.input {
+        None => { },
+        Some(ref input) => {
+          div_of_value_tree(dcg_post_edit, &mut HashMap::new(), input)
+            .write_html( writer );
+        }
+      }
     }
   }
   ;
