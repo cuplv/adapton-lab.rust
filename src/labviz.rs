@@ -131,9 +131,10 @@ pub fn div_of_value_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, val:&Val) -> 
         Const::String( ref s ) => s.clone(),
       })},
       Val::Tuple(ref vs) => { format!("val-tuple tuple-{}", vs.len()) },
-      Val::Vec(ref vs) => { format!("val-vec vec-{}", vs.len()) }
-      Val::Art(ref loc, _) => { format!("val-art {}", string_of_loc( loc ) ) }
-      Val::ValTODO => { format!("val-TODO") }
+      Val::Vec(ref vs) => { format!("val-vec vec-{}", vs.len()) },
+      Val::Art(ref loc, _) => { format!("val-art {}", string_of_loc( loc ) ) },
+      Val::ValTODO => { format!("val-TODO") },
+      Val::Name(ref n) => { format!("name val-name {}", string_of_name(n)) },
     },
     classes: vec![],
     text: 
@@ -149,7 +150,12 @@ pub fn div_of_value_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, val:&Val) -> 
         Val::ValTODO => None,
         Val::Art( ref l, _ ) => {
           Some(format!("{}", string_of_loc(l)))
-        }},
+        }
+        Val::Name(ref n) => {
+          Some(format!("{}", string_of_name(n)))
+        }
+      },
+    
     extent: Box::new(
       match *val {
         Val::Constr(_, ref vs) => { let ds : Vec<_> = vs.iter().map( |v| div_of_value_tree(dcg, visited,  v) ).collect() ; ds },
@@ -159,6 +165,7 @@ pub fn div_of_value_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, val:&Val) -> 
         Val::Vec(ref vs) =>       { let ds : Vec<_> = vs.iter().map( |v| div_of_value_tree(dcg, visited,  v) ).collect() ; ds },
         Val::Const( _ ) => vec![],
         Val::ValTODO => vec![],
+        Val::Name(_) => vec![],
         Val::Art( ref l, _ ) => vec![
           div_of_loc(l), 
           match dcg.table.get(l) {
@@ -450,31 +457,37 @@ pub fn write_sample_dcg<W:Write>
 {
   write_cr(writer)
     ;
-    match this_sample.dcg_sample.process_input.reflect_dcg {
-      None => { },
-      Some(ref dcg_post_edit) => {
-        match this_sample.dcg_sample.input {
-          None => { },
-          Some(ref input) => {
-            writeln!(writer, "<div class=\"input-value\">").unwrap();
-            writeln!(writer, "<div class=\"label\">{}</div>", "Input:").unwrap();
-            div_of_value_tree(dcg_post_edit, &mut HashMap::new(), input)
-              .write_html( writer );
-            writeln!(writer, "</div>").unwrap();
-          }
-        };        
-        match this_sample.dcg_sample.output {
-          None => { },
-          Some(ref output) => {
-            writeln!(writer, "<div class=\"output-value\">").unwrap();
-            writeln!(writer, "<div class=\"label\">{}</div>", "Output:").unwrap();
-            div_of_value_tree(dcg_post_edit, &mut HashMap::new(), output)
-              .write_html( writer );            
-            writeln!(writer, "</div>").unwrap();            
-          }
+  match this_sample.dcg_sample.process_input.reflect_dcg {
+    None => { },
+    Some(ref dcg_post_edit) => {
+      match this_sample.dcg_sample.input {
+        None => { },
+        Some(ref input) => {
+          writeln!(writer, "<div class=\"input-value\">").unwrap();
+          writeln!(writer, "<div class=\"label\">{}</div>", "Input:").unwrap();
+          div_of_value_tree(dcg_post_edit, &mut HashMap::new(), input)
+            .write_html( writer );
+          writeln!(writer, "</div>").unwrap();
         }
       }
     }
+  }
+  ;
+  match this_sample.dcg_sample.compute_output.reflect_dcg {
+    None => { },
+    Some(ref dcg_post_update) => {      
+      match this_sample.dcg_sample.output {
+        None => { },
+        Some(ref output) => {
+          writeln!(writer, "<div class=\"output-value\">").unwrap();
+          writeln!(writer, "<div class=\"label\">{}</div>", "Output:").unwrap();
+          div_of_value_tree(dcg_post_update, &mut HashMap::new(), output)
+            .write_html( writer );            
+          writeln!(writer, "</div>").unwrap();            
+        }
+      }
+    }
+  }
   ;
   // Separate the input and output from the DCG trees, below
   write_cr(writer);
@@ -825,20 +838,6 @@ hr {
   border-color: #664466;
   background-color: #664466; 
 }
-.name {
-  display: inline;
-  display: none;
-
-  font-size: 9px;
-  color: black;
-  background: white;
-  border-style: solid;
-  border-width: 1px;
-  border-color: #664466; 
-  border-radius: 2px;
-  padding: 1px;
-  margin: 1px;
-}
 
 .alloc-kind-thunk {
   border-color: green;
@@ -919,19 +918,27 @@ hr {
   margin: 8px;
 }
 
+.val-name,
 .val-constr,
-.val-art,
-.val-const
+.val-art
 {
   display: inline-block;
   border-style: solid;
-  border-color: black;
   border-width: 1px;
-  background-color: grey;
-  padding: 2px;
+  border-color: #dd88ff;
+  background-color: #220033;
+  padding: 1px;
   margin: 1px;
-  border-radius 5px;  
+  border-radius 2px;  
   font-size: 0px;  
+}
+.val-constr {
+  border-color: #dd88ff;
+  background-color: #773388;
+}
+.val-art
+{
+  padding: 2px;
 }
 
 .input-value, 
@@ -969,6 +976,35 @@ hr {
 .archivist-force-tree-post-update  
 {
   width: 24%;
+}
+
+.name {
+  display: inline;
+  display: none;
+
+  font-size: 9px;
+  color: black;
+  background: white;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #664466; 
+  border-radius: 2px;
+  padding: 1px;
+  margin: 1px;
+}
+
+.val-const
+{
+  display: inline-block;
+  border-style: solid;
+  border-color: black;
+  border-width: 1px;
+  color: black;
+  background-color: grey;
+  padding: 2px;
+  margin: 1px;
+  border-radius 5px;  
+  font-size: 8px;  
 }
 
 </style>
