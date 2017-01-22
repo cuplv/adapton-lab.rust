@@ -54,7 +54,8 @@ fn lab_params_defaults() -> LabParams {
     sample_params: SampleParams {
       input_seeds: vec![0],
       generate_params: GenerateParams {
-        size: 16,
+        size: 8,
+        //size: 16,
         //size: 32,
         //size: 64,
         //size: 256,
