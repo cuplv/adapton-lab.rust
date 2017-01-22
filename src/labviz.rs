@@ -160,7 +160,29 @@ pub fn div_of_value_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, val:&Val) -> 
         Val::Const( _ ) => vec![],
         Val::ValTODO => vec![],
         Val::Art( ref l, _ ) => vec![
-          div_of_loc(l), // TODO Derefence the DCG at this location, and continue crawling values..
+          div_of_loc(l), 
+          match dcg.table.get(l) {
+            None => Div{ tag: String::from("dangling"), 
+                         classes:vec![String::from("no-extent")], 
+                         text:Some(String::from("Dangling")), 
+                         extent:Box::new(vec![]),
+            },
+            Some(node) => {
+              match *node {
+                Node::Pure(ref p) => div_of_value_tree(dcg, visited, &p.value),
+                Node::Ref(ref n) => div_of_value_tree(dcg, visited, &n.value),
+                Node::Comp(ref n) => match n.value {
+                  None => 
+                    Div{ tag: String::from("Unevald"), 
+                         classes:vec![String::from("no-extent")], 
+                         text:Some(String::from("Uneval'd")), 
+                         extent:Box::new(vec![]),
+                    },
+                  Some(ref v) => div_of_value_tree(dcg, visited, v),
+                }
+              }
+            }
+          }
         ],
       }
     )
@@ -331,7 +353,7 @@ impl WriteHTML for Div {
     };
     for div in self.extent.iter() {
       div.write_html(wr);
-    }
+    };
     writeln!(wr, "</div>").unwrap();
   }
 }
@@ -428,27 +450,31 @@ pub fn write_sample_dcg<W:Write>
 {
   write_cr(writer)
     ;
-  match this_sample.dcg_sample.process_input.reflect_dcg {
-    None => { },
-    Some(ref dcg_post_edit) => {
-      match this_sample.dcg_sample.input {
-        None => { },
-        Some(ref input) => {
-          div_of_value_tree(dcg_post_edit, &mut HashMap::new(), input)
-            .write_html( writer );
+    match this_sample.dcg_sample.process_input.reflect_dcg {
+      None => { },
+      Some(ref dcg_post_edit) => {
+        match this_sample.dcg_sample.input {
+          None => { },
+          Some(ref input) => {
+            writeln!(writer, "<div class=\"input-value\">").unwrap();
+            writeln!(writer, "<div class=\"label\">{}</div>", "Input:").unwrap();
+            div_of_value_tree(dcg_post_edit, &mut HashMap::new(), input)
+              .write_html( writer );
+            writeln!(writer, "</div>").unwrap();
+          }
+        };        
+        match this_sample.dcg_sample.output {
+          None => { },
+          Some(ref output) => {
+            writeln!(writer, "<div class=\"output-value\">").unwrap();
+            writeln!(writer, "<div class=\"label\">{}</div>", "Output:").unwrap();
+            div_of_value_tree(dcg_post_edit, &mut HashMap::new(), output)
+              .write_html( writer );            
+            writeln!(writer, "</div>").unwrap();            
+          }
         }
       }
     }
-  }
-  ;
-  match this_sample.dcg_sample.output {
-    None => {
-    
-    },
-    Some(ref output) => {
-      // TODO write the input as a tree of div's
-    }
-  }
   ;
   // Separate the input and output from the DCG trees, below
   write_cr(writer);
@@ -459,6 +485,7 @@ pub fn write_sample_dcg<W:Write>
         Some(ref prev_sample) => {
           // 1/4: alloc tree for compute, after this edit, but before the update
           writeln!(writer, "<div class=\"archivist-alloc-tree-post-edit\">").unwrap();
+          writeln!(writer, "<div class=\"label\">{}</div>", "Allocs, post-edit:").unwrap();
           write_dcg_edge_tree
             (writer, 
              dcg_post_edit,
@@ -469,6 +496,7 @@ pub fn write_sample_dcg<W:Write>
           
           // 2/4: force tree for compute, after this edit, but before the update
           writeln!(writer, "<div class=\"archivist-force-tree-post-edit\">").unwrap();
+          writeln!(writer, "<div class=\"label\">{}</div>", "Forces, post-edit:").unwrap();
           write_dcg_edge_tree
             (writer, 
              dcg_post_edit,
@@ -478,13 +506,13 @@ pub fn write_sample_dcg<W:Write>
           writeln!(writer, "</div>").unwrap();
         },    
         _ => {
-          writeln!(writer,"<div class=\"archivist-alloc-tree-post-edit\"></div>").unwrap();
-          writeln!(writer,"<div class=\"archivist-force-tree-post-edit\"></div>").unwrap();
+          //writeln!(writer,"<div class=\"archivist-alloc-tree-post-edit\"></div>").unwrap();
+          //writeln!(writer,"<div class=\"archivist-force-tree-post-edit\"></div>").unwrap();
         }}
     },    
     _ => {
-      writeln!(writer,"<div class=\"archivist-alloc-tree-post-edit\"></div>").unwrap();
-      writeln!(writer,"<div class=\"archivist-force-tree-post-edit\"></div>").unwrap();
+      //writeln!(writer,"<div class=\"archivist-alloc-tree-post-edit\"></div>").unwrap();
+      //writeln!(writer,"<div class=\"archivist-force-tree-post-edit\"></div>").unwrap();
     }
   }
   ;
@@ -495,6 +523,7 @@ pub fn write_sample_dcg<W:Write>
       
       // 3/4: alloc tree for compute, after the update
       writeln!(writer, "<div class=\"archivist-alloc-tree-post-update\">").unwrap();
+      writeln!(writer, "<div class=\"label\">{}</div>", "Allocs, post-update:").unwrap();
       write_dcg_edge_tree
         (writer, 
          dcg_post_update,
@@ -504,7 +533,8 @@ pub fn write_sample_dcg<W:Write>
       writeln!(writer, "</div>").unwrap();
       
       // 4/4: force tree for compute, after the update
-      writeln!(writer, "<div class=\"archivist-force-tree-post-edit\">").unwrap();
+      writeln!(writer, "<div class=\"archivist-force-tree-post-update\">").unwrap();
+      writeln!(writer, "<div class=\"label\">{}</div>", "Forces, post-update:").unwrap();
       write_dcg_edge_tree
         (writer, 
          dcg_post_update,
@@ -512,10 +542,12 @@ pub fn write_sample_dcg<W:Write>
          Effect::Force,         
         );
       writeln!(writer, "</div>").unwrap();
+      
+      write_cr(writer);
     },    
     _ => {
-      writeln!(writer,"<div class=\"archivist-alloc-tree-post-update\"></div>").unwrap();
-      writeln!(writer,"<div class=\"archivist-force-tree-post-update\"></div>").unwrap();
+      //writeln!(writer,"<div class=\"archivist-alloc-tree-post-update\"></div>").unwrap();
+      //writeln!(writer,"<div class=\"archivist-force-tree-post-update\"></div>").unwrap();
     }
   };
 
@@ -546,53 +578,82 @@ pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:
   for sample in results.samples.iter() {
     write_cr(&mut writer);
     // - - - - - - - 
-    // 0. Write batch name (a counter)
+    // 0. Write batch name (a counter); and write timing information for this edit batch.
     writeln!(writer, "<div class=\"batch-name-lab\">batch name<div class=\"batch-name\">{:?}</div></div>", 
              sample.batch_name).unwrap();
-    write_cr(&mut writer);
+
+    writeln!(writer, "<div class=\"editor\">").unwrap();
+    writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
+             sample.dcg_sample.process_input.time_ns).unwrap();    
+    writeln!(writer, "</div>").unwrap();
+
+    writeln!(writer, "<div class=\"archivist\">").unwrap();
+
+    writeln!(writer, "<div class=\"time-ns-lab\">Naive time (ns): <div class=\"time-ns\">{:?}</div></div>", 
+             sample.naive_sample.compute_output.time_ns).unwrap();    
+
+    writeln!(writer, "<div class=\"time-ms-lab\">Naive time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
+             2, (sample.naive_sample.compute_output.time_ns as f64) / (1000000 as f64)).unwrap();    
+             
+    
+    writeln!(writer, "<div class=\"time-ns-lab\">DCG time (ns): <div class=\"time-ns\">{:?}</div></div>", 
+             sample.dcg_sample.compute_output.time_ns).unwrap();    
+
+    writeln!(writer, "<div class=\"time-ms-lab\">DCG time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
+             2, (sample.dcg_sample.compute_output.time_ns as f64) / (1000000 as f64)).unwrap();    
+    
+    if ( sample.naive_sample.compute_output.time_ns <
+         sample.dcg_sample.compute_output.time_ns ) {      
+      writeln!(writer, "<div class=\"overhead-lab\">DCG Overhead: <div class=\"overhead\">{:.*}</div></div>", 
+             2, ( (sample.dcg_sample.compute_output.time_ns  as f64) / 
+                   (sample.naive_sample.compute_output.time_ns as f64) )).unwrap();      
+    } else {      
+      writeln!(writer, "<div class=\"speedup-lab\">DCG Speedup: <div class=\"speedup\">{:.*}</div></div>", 
+             2, ( (sample.naive_sample.compute_output.time_ns  as f64) / 
+                   (sample.dcg_sample.compute_output.time_ns as f64) )).unwrap();
+    }    
+    writeln!(writer, "</div>").unwrap();
+    write_cr(&mut writer);    
     
     // 1. Write input,
     // 2. Write output,
     // 3. Write last DCG, after edit but before update.
     // 4. Write DCG of the update.
     write_sample_dcg(&mut writer, test, prev_sample, sample);      
-    write_cr(&mut writer);
     
-    // - - - - - - - 
-    // 5. Write traces of editor
+    if sample.dcg_sample.compute_output.reflect_traces.len() == 0 {
+      // 5 & 6. No traces to write.
+    } else {
+      // - - - - - - - 
+      // 5. Write traces of editor
+      
+      writeln!(writer, "<div class=\"traces-box\">").unwrap();
+      // writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
+      //          sample.dcg_sample.process_input.time_ns).unwrap();    
+      // writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>)</div>", trace_url).unwrap();    
+      writeln!(writer, "<div class=\"label\">{}</div>", "Editor trace:").unwrap();
+      writeln!(writer, "<div class=\"traces\">").unwrap();
+      for tr in sample.dcg_sample.process_input.reflect_traces.iter() {
+        div_of_trace(tr).write_html(&mut writer)
+      }
+      writeln!(writer, "</div>").unwrap();   
+      writeln!(writer, "</div>").unwrap();
+      
+      // - - - - - - - 
+      // 6. Write traces of archivist
 
-    writeln!(writer, "<div class=\"editor\">").unwrap();
-    writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
-             sample.dcg_sample.process_input.time_ns).unwrap();    
-    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>)</div>", trace_url).unwrap();    
-    writeln!(writer, "<div class=\"traces\">").unwrap();
-    for tr in sample.dcg_sample.process_input.reflect_traces.iter() {
-      div_of_trace(tr).write_html(&mut writer)
-    }
-    writeln!(writer, "</div>").unwrap();   
-    writeln!(writer, "</div>").unwrap();
+      //writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>):</div>", trace_url).unwrap();
+      writeln!(writer, "<div class=\"traces-box\">").unwrap();
+      writeln!(writer, "<div class=\"label\">{}</div>", "Archivist trace:").unwrap();
+      writeln!(writer, "<div class=\"traces\">").unwrap();
+      for tr in sample.dcg_sample.compute_output.reflect_traces.iter() {
+        div_of_trace(tr).write_html(&mut writer)
+      }
+      writeln!(writer, "</div>").unwrap();    
+      writeln!(writer, "</div>").unwrap();
+      write_cr(&mut writer);
+    }    
     
-    // - - - - - - - 
-    // 6. Write traces of archivist
-    
-    writeln!(writer, "<div class=\"archivist\">").unwrap();
-    
-    writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
-             sample.dcg_sample.compute_output.time_ns).unwrap();    
-
-    writeln!(writer, "<div class=\"time-ms-lab\">time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
-             2, (sample.dcg_sample.compute_output.time_ns as f64) / (1000000 as f64),
-    ).unwrap();    
-    
-    writeln!(writer, "<div class=\"traces-lab\">Traces (<a href={:?}>doc</a>):</div>", trace_url).unwrap();    
-    writeln!(writer, "<div class=\"traces\">").unwrap();
-    for tr in sample.dcg_sample.compute_output.reflect_traces.iter() {
-      div_of_trace(tr).write_html(&mut writer)
-    }
-    writeln!(writer, "</div>").unwrap();    
-    writeln!(writer, "</div>").unwrap();
-    
-    write_cr(&mut writer);    
     // - - - - - - - - - - - - - - -       
     prev_sample = Some(sample) ; // Must be last!
   }
@@ -675,8 +736,26 @@ hr {
   width: 32px;
 }
 .time-ns {
+  font-size: 12px;
+  display: inline;
+}
+.time-ms {
   font-size: 20px;
   display: inline;
+}
+.overhead {
+  font-size: 30px;
+  display: inline;
+  color: #880000;
+  background: #ffcccc;
+  border: solid 1px red;
+}
+.speedup {
+  font-size: 30px;
+  display: inline;
+  color: #008800;
+  background: #ccffcc;
+  border: solid 1px green;
 }
 .time-ms {
   font-size: 20px;
@@ -705,9 +784,6 @@ hr {
 .traces {
   font-size: 8px;
   border: solid 0px;
-  border-top: solid 1px;
-  padding: 0px;
-
   display: block;
   margin: 0px;
   float: left;
@@ -843,6 +919,24 @@ hr {
   margin: 8px;
 }
 
+.val-constr,
+.val-art,
+.val-const
+{
+  display: inline-block;
+  border-style: solid;
+  border-color: black;
+  border-width: 1px;
+  background-color: grey;
+  padding: 2px;
+  margin: 1px;
+  border-radius 5px;  
+  font-size: 0px;  
+}
+
+.input-value, 
+.output-value,
+.traces-box,
 .archivist-alloc-tree-post-edit,
 .archivist-force-tree-post-edit, 
 .archivist-alloc-tree-post-update, 
@@ -850,16 +944,31 @@ hr {
 {
   display: inline;
   float: left;
-  width: 24%;
 
   padding: 0px;
   margin: 2px;
 
-  background: black;
-  border-radius: 20px;
+  color: #dd88ff;
+  background: #331144;
+  border-radius: 5px;
   border-style: solid;
-  border-width: 2px;
-  border-color: purple;
+  border-width: 0px;
+  border-color: #dd88ff;
+}
+
+.input-value, 
+.output-value {
+  width: 49%;
+}
+.traces-box {
+  width: 99%;
+}
+.archivist-alloc-tree-post-edit,
+.archivist-force-tree-post-edit, 
+.archivist-alloc-tree-post-update, 
+.archivist-force-tree-post-update  
+{
+  width: 24%;
 }
 
 </style>

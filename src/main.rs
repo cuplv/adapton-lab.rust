@@ -47,17 +47,23 @@ use adapton::engine::reflect::string_of_name;
 
 fn lab_params_defaults() -> LabParams {
   
-  let do_reflect = false;
+  let do_reflect = true;
+  //let do_reflect = false;
   
   return LabParams {
     sample_params: SampleParams {
       input_seeds: vec![0],
       generate_params: GenerateParams {
-        //size: 16,
+        size: 16,
         //size: 32,
+        //size: 64,
         //size: 256,
         //size: 1024,
-        size: 10000,
+        //size: 10000,
+        //size: 20000,
+        //size: 50000,
+        //size: 100000,
+        //size: 200000,
         gauge:1,
         nominal_strategy: NominalStrategy::Regular,
       },

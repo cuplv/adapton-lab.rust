@@ -5,18 +5,19 @@ use rand::{Rng};
 use std::marker::PhantomData;
 use std::rc::Rc;
 use pmfp_collections::gauged_raz::{Raz,RazTree};
-use pmfp_collections::split_btree_cursor::{gen_level};
+use pmfp_collections::level_tree::{gen_branch_level};
 
 
 #[derive(Clone,Debug)]
 pub struct UniformInsert<T,S> { t:PhantomData<T>, s:PhantomData<S> }
 
 impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
-  fn generate<R:Rng> (_rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
+  fn generate<R:Rng> (mut rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
     let mut r = Raz::new();
     for i in 0..params.size {
       if i % params.gauge == 0 {
-        r.archive_left( gen_level() );
+        let l = gen_branch_level(&mut rng);
+        r.archive_left( l );
       } else { } ;
       r.push_left(i);
     }
@@ -53,7 +54,7 @@ impl<S> Generate<List<usize>> for UniformPrepend<List<usize>,S> {
         //l = list_name(name_of_usize(i), l);
       } else { } ;
       let elm : usize = rng.gen() ;
-      let elm = elm % params.size ;
+      let elm = elm % ( params.size * 100 ) ;
       l = list_cons(elm,  l);
       if i % params.gauge == 0 {
         //l = list_art(cell(name_of_usize(i), l));
@@ -78,7 +79,7 @@ impl Edit<List<usize>, usize> for UniformPrepend<List<usize>,usize> {
       //l = list_name(name_of_usize(i), l);      
     } else { } ;
     let elm : usize = rng.gen() ;
-    let elm = elm % params.size ;
+    let elm = elm % ( params.size * 100 ) ;
     l = list_cons(elm, l);
     if i % params.gauge == 0 {
       //l = list_art(cell(name_of_usize(i), l));
@@ -330,20 +331,20 @@ macro_rules! testcomputer {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 pub fn all_tests() -> Vec<Box<LabDef>> {
   return vec![
-    // testcomputer!(name_of_str("list-lazy-map"),
-    //               Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMap.html")),
-    //               List<usize>, usize,
-    //               List<usize>,
-    //               UniformPrepend<_,_>,
-    //               LazyMap)
-    //   ,
-    // testcomputer!(name_of_str("list-lazy-filter"),
-    //               Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyFilter.html")),
-    //               List<usize>, usize,
-    //               List<usize>,
-    //               UniformPrepend<_,_>,
-    //               LazyFilter)
-    //   ,
+    testcomputer!(name_of_str("list-lazy-map"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMap.html")),
+                  List<usize>, usize,
+                  List<usize>,
+                  UniformPrepend<_,_>,
+                  LazyMap)
+      ,
+    testcomputer!(name_of_str("list-lazy-filter"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyFilter.html")),
+                  List<usize>, usize,
+                  List<usize>,
+                  UniformPrepend<_,_>,
+                  LazyFilter)
+      ,
     testcomputer!(name_of_str("list-tree-max"),
                   Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTreeMax.html")),
                   List<usize>, usize,
@@ -359,19 +360,19 @@ pub fn all_tests() -> Vec<Box<LabDef>> {
                   ListTreeSum)
       ,
 
-    testcomputer!(name_of_str("list-eager-mergesort1"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort1.html")),
+    testcomputer!(name_of_str("list-eager-mergesort3"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort3.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
-                  EagerMergesort1)
+                  EagerMergesort3)
       ,
-    testcomputer!(name_of_str("list-lazy-mergesort1"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort1.html")),
+    testcomputer!(name_of_str("list-lazy-mergesort3"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort3.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
-                  LazyMergesort1)
+                  LazyMergesort3)
       ,
 
     testcomputer!(name_of_str("list-eager-mergesort2"),
@@ -389,19 +390,19 @@ pub fn all_tests() -> Vec<Box<LabDef>> {
                   LazyMergesort2)
       ,
 
-    testcomputer!(name_of_str("list-eager-mergesort3"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort3.html")),
+    testcomputer!(name_of_str("list-eager-mergesort1"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort1.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
-                  EagerMergesort3)
+                  EagerMergesort1)
       ,
-    testcomputer!(name_of_str("list-lazy-mergesort3"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort3.html")),
+    testcomputer!(name_of_str("list-lazy-mergesort1"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort1.html")),
                   List<usize>, usize,
                   List<usize>,
                   UniformPrepend<_,_>,
-                  LazyMergesort3)
+                  LazyMergesort1)
       ,
 
     testcomputer!(name_of_str("list-eager-map"),
