@@ -42,25 +42,40 @@ pub trait Compute<Input,Output> {
   fn compute(Input) -> Output;
 }
 
-/// Generic notion of an Incremental Computation to Evaluate and Test.
-/// We instantiate this structure once for each test in our test suite.
-/// We implement the `LabDef` trait generically for this structure.
-pub struct TestComputer<Input,EditSt,Output,
-                        InputDist:Generate<Input>+Edit<Input,EditSt>,
-                        Computer:Compute<Input,Output>> {
+/// Like Compute, but also provides a `demand` size, for lazy algorithms.
+pub trait ComputeDemand<Input,Output> {
+  fn compute(Input, usize) -> Output;
+}
+
+impl<Input,Output,X:Compute<Input,Output>> ComputeDemand<Input,Output> for X {
+  fn compute(inp:Input, demand:usize) -> Output {
+    X::compute(inp)
+  }
+}
+
+/// _lab definition_: generic notion of an incremental computation
+/// that can be evaluated and tested.  We instantiate this structure
+/// once for each test in our test suite.  We implement the `LabDef`
+/// trait generically for this structure.  See `catalog` module for
+/// example instances.
+pub struct LabDef<Input,EditSt,Output,
+               Editor:   Generate<Input>+Edit<Input,EditSt>,
+               Archivist:ComputeDemand<Input,Output>> 
+{
   pub identity:  Name,
   pub url:       Option<String>,
-  pub computer:  PhantomData<Computer>,
+
+  pub editor:    PhantomData<Editor>,
+  pub archivist: PhantomData<Archivist>,
+
   pub input:     PhantomData<Input>,
   pub editst:    PhantomData<EditSt>,
-  pub inputdist: PhantomData<InputDist>,
   pub output:    PhantomData<Output>
 }
 
-/// Lab experiment definition: Hides the Input, Output and Compute types of a
-/// TestComputer, abstracting over them.
-/// See catalog module for example instances.
-pub trait LabDef {
+/// _lab_: Abstracts over parts of a lab definition of type `LabDef`:
+/// Hides the `Input`, `Output` and `Archivist` types of a `LabDef`.
+pub trait Lab {
   fn name(self:&Self) -> Name;
   fn url(self:&Self) -> &Option<String>;
   fn run(self:&Self, params:&LabParams) -> LabResults;
@@ -88,6 +103,11 @@ pub struct SampleParams {
   pub input_seeds:       Vec<usize>, 
   /// Other parameters for generating the input.
   pub generate_params:   GenerateParams, 
+  /// _demand_: For lazy algorithms, the number of output elements to
+  /// force, e.g., by producing a vector of output data.  Eager
+  /// algorithms ignore this parameter (they always produce _all_ of
+  /// their output).
+  pub demand: usize,
   /// Whether to validate the output after each computation using the naive and DCG engines
   pub validate_output:   bool,
   /// Size of each batch of changes.

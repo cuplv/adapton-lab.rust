@@ -68,6 +68,7 @@ fn lab_params_defaults() -> LabParams {
         gauge:1,
         nominal_strategy: NominalStrategy::Regular,
       },
+      demand: 6,
       validate_output: true,
       change_batch_size: 1,
       reflect_dcg: do_reflect,
@@ -81,16 +82,16 @@ fn lab_params_defaults() -> LabParams {
 
 fn run_all_tests() {
   let params = lab_params_defaults();
-  let tests   = catalog::all_tests();
+  let labs   = catalog::all_labs();
   let mut results = vec![];
   println!("Params: {:?}", params );
-  for test in tests.iter() {
-    println!("Running: {}", string_of_name( &test.name() ) );
-    let result = test.run(&params);
-    labviz::write_test_results_traces(&params, test, &result);
+  for lab in labs.iter() {
+    println!("Running lab: {}", string_of_name( &lab.name() ) );
+    let result = lab.run(&params);
+    labviz::write_lab_results_traces(&params, lab, &result);
     results.push(result);
   }  
-  labviz::write_all_test_results(&params, &tests, &results);
+  labviz::write_all_lab_results(&params, &labs, &results);
 }
 
 #[test]

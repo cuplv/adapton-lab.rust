@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use adapton::engine::Name;
 use adapton::engine::reflect::*;
 use adapton::engine::reflect::{trace, string_of_name, string_of_loc, string_of_path};
-use labdef::{LabParams,LabDef,LabResults, Sample};
+use labdef::{LabParams,Lab,LabResults, Sample};
 
 /// The `Div` struct represents a restricted form of a `<div>` element
 /// in HTML.  The field `tag` is a string, which corresponds to a
@@ -373,8 +373,8 @@ impl<T:WriteHTML> WriteHTML for Vec<T> {
   }
 }
 
-pub fn write_all_test_results(_params:&LabParams, 
-                              tests:&Vec<Box<LabDef>>, 
+pub fn write_all_lab_results(_params:&LabParams, 
+                              labs:&Vec<Box<Lab>>, 
                               results:&Vec<LabResults>) 
 {
   // Create directories and files on local filesystem:
@@ -384,31 +384,25 @@ pub fn write_all_test_results(_params:&LabParams,
 
   writeln!(writer, "{}", style_string()).unwrap();
 
-  assert!( tests.len() == results.len() );
+  assert!( labs.len() == results.len() );
 
-  for ((_i,test),(_j,_result)) in tests.iter().enumerate().zip(results.iter().enumerate()) {
-    //writeln!(writer, "(({:?},{:?}),({:?},{:?}))", i, test.name(), j, result);
-    writeln!(&mut writer, "<div class={:?}>", "test-summary-title").unwrap();
-    write_test_name(&mut writer, test, false);
-    write_cr(&mut writer);
-    writeln!(&mut writer, "<a class={:?} href=./{}/traces.html>example traces</a>", 
-             "test-summary-examples", 
-             string_of_name(&test.name())
-    ).unwrap();
-    writeln!(&mut writer, "</div").unwrap();    
-    write_cr(&mut writer);
+  writeln!(writer, "<div class={:?}>Lab results summary</div>", "labsum-title");
+
+  for ((_i,lab),(_j,_result)) in 
+    labs.iter().enumerate().zip(results.iter().enumerate()) 
+  {
+    writeln!(&mut writer, "<div class={:?}>", "labsum-row");
+    writeln!(&mut writer, "<div class={:?}>", "labsum-name");
+    write_lab_name(&mut writer, lab, false);
+    writeln!(&mut writer, "</div>");
     
-    writeln!(&mut writer, "<div class={:?}>", "test-summary").unwrap();    
-    writeln!(&mut writer, "<div class={:?}>", "test-summary-info").unwrap();
-    //
-    writeln!(&mut writer, "</div>").unwrap();    
-    writeln!(&mut writer, "<div class={:?}>", "test-summary-large-results").unwrap();
-    //
-    writeln!(&mut writer, "</div>").unwrap();
-    writeln!(&mut writer, "<div class={:?}>", "test-summary-small-results").unwrap();
-    //
-    writeln!(&mut writer, "</div>").unwrap();        
-    writeln!(&mut writer, "</div>").unwrap();    
+    writeln!(&mut writer, "<a class={:?} href=./{}/traces.html>details</a>", 
+             "lab-details", 
+             string_of_name(&lab.name())
+    ).unwrap();
+
+    writeln!(&mut writer, "</div>");        
+    write_cr(&mut writer);
   }
 }
 
@@ -417,20 +411,20 @@ pub fn write_cr<W:Write>(writer:&mut W) {
   writeln!(writer, "<hr/>").unwrap();
 }
 
-pub fn write_test_name<W:Write>(writer:&mut W, test:&Box<LabDef>, is_title:bool) {
+pub fn write_lab_name<W:Write>(writer:&mut W, lab:&Box<Lab>, is_title:bool) {
   let catalog_url = String::from("http://adapton.org/rustdoc/adapton_lab/catalog/index.html");
 
-  let testname = string_of_name( &test.name() );
-  let testurl  = test.url();
+  let labname = string_of_name( &lab.name() );
+  let laburl  = lab.url();
 
   writeln!(writer, "<div class={:?}><a href={:?} class={:?}>{}</a></div>", 
-           "test-name",
-           match *testurl {
+           "lab-name",
+           match *laburl {
              Some(ref url) => url,
              None => & catalog_url
            },
-           format!("test-name {}", if is_title { "page-title" } else { "" }), 
-           testname
+           format!("lab-name {}", if is_title { "page-title" } else { "" }), 
+           labname
   ).unwrap();
 }
 
@@ -451,7 +445,7 @@ pub fn write_dcg_edge_tree<W:Write> (writer:&mut W, dcg:&DCG, traces:&Vec<trace:
 
 pub fn write_sample_dcg<W:Write>
   (writer:&mut W,
-   test:&Box<LabDef>, 
+   lab:&Box<Lab>, 
    prev_sample:Option<&Sample>,
    this_sample:&Sample)
 {
@@ -566,22 +560,22 @@ pub fn write_sample_dcg<W:Write>
 
 }
 
-pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:&LabResults) {
+pub fn write_lab_results_traces(_params:&LabParams, lab:&Box<Lab>, results:&LabResults) {
   
-  let testname = string_of_name( &test.name() );
-  //let testurl  = test.url();
+  let labname = string_of_name( &lab.name() );
+  //let laburl  = lab.url();
 
   // For linking to rustdoc documentation from the output HTML
   let trace_url   = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/struct.Trace.html";
   
   // Create directories and files on local filesystem:
-  fs::create_dir_all(format!("lab-results/{}/", testname)).unwrap();
-  let f = File::create(format!("lab-results/{}/traces.html", testname)).unwrap();
+  fs::create_dir_all(format!("lab-results/{}/", labname)).unwrap();
+  let f = File::create(format!("lab-results/{}/traces.html", labname)).unwrap();
   let mut writer = BufWriter::new(f);
 
   writeln!(writer, "{}", style_string()).unwrap();
   
-  write_test_name(&mut writer, test, true);
+  write_lab_name(&mut writer, lab, true);
 
   writeln!(writer, "<div style=\"font-size:12px\" class=\"batch-name\"> step</div>").unwrap();
   writeln!(writer, "<div style=\"font-size:20px\" class=\"editor\">Editor</div>").unwrap();
@@ -602,21 +596,24 @@ pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:
 
     writeln!(writer, "<div class=\"archivist\">").unwrap();
 
+    writeln!(writer, "<div class=\"row\">").unwrap();
     writeln!(writer, "<div class=\"time-ns-lab\">Naive time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.naive_sample.compute_output.time_ns).unwrap();    
 
     writeln!(writer, "<div class=\"time-ms-lab\">Naive time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
              2, (sample.naive_sample.compute_output.time_ns as f64) / (1000000 as f64)).unwrap();    
+    writeln!(writer, "</div>").unwrap();
              
-    
+    writeln!(writer, "<div class=\"row\">").unwrap();
     writeln!(writer, "<div class=\"time-ns-lab\">DCG time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.compute_output.time_ns).unwrap();    
 
     writeln!(writer, "<div class=\"time-ms-lab\">DCG time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
              2, (sample.dcg_sample.compute_output.time_ns as f64) / (1000000 as f64)).unwrap();    
+    writeln!(writer, "</div>");
     
-    if ( sample.naive_sample.compute_output.time_ns <
-         sample.dcg_sample.compute_output.time_ns ) {      
+    if sample.naive_sample.compute_output.time_ns <
+      sample.dcg_sample.compute_output.time_ns {
       writeln!(writer, "<div class=\"overhead-lab\">DCG Overhead: <div class=\"overhead\">{:.*}</div></div>", 
              2, ( (sample.dcg_sample.compute_output.time_ns  as f64) / 
                    (sample.naive_sample.compute_output.time_ns as f64) )).unwrap();      
@@ -632,7 +629,7 @@ pub fn write_test_results_traces(_params:&LabParams, test:&Box<LabDef>, results:
     // 2. Write output,
     // 3. Write last DCG, after edit but before update.
     // 4. Write DCG of the update.
-    write_sample_dcg(&mut writer, test, prev_sample, sample);      
+    write_sample_dcg(&mut writer, lab, prev_sample, sample);      
     
     if sample.dcg_sample.compute_output.reflect_traces.len() == 0 {
       // 5 & 6. No traces to write.
@@ -680,7 +677,11 @@ pub fn style_string() -> &'static str {
 <script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js\"></script>
 
 <style>
+div { 
+  display: inline
+}
 body {
+  display: inline;
   background: #552266;
   font-family: sans-serif;
   text-decoration: none;
@@ -697,42 +698,51 @@ a:hover {
   text-decoration: underline;
 }
 hr {
+  display: block;
   float: left;
   clear: both;
   width: 0px;
   border: none;
 }
 
-.test-name {
+.lab-name {
   color: #ccaadd;
   margin: 1px;
   padding: 1px;
 }
+.lab-name:visited {  
+  color: #ccaadd;
+}
+.lab-name:hover {
+  color: white;
+}
 
-.test-summary-title {
+.row {
+  display: block;
+}
+
+.labsum-title {
+  display: block;
   margin: 8px;
   font-size: 20px;
 }
-.test-summary {
+.labsum-row {
+  display: block;  
+}
+.labsum-name {
   margin: 8px;
   padding: 2px;
+  display: inline;
+  width: 30%;
 }
-.test-summary-examples {
+.lab-details {
   font-size: 14px;
-  color: black;
-  border: solid black 1px;
+  color: #ddbbee;
+  border: solid white 1px;
   padding: 2px;
-  background-color: yellow;
+  background-color: #441155;
   margin: 3px;
-}
-.test-summary-examples:hover {
-  background-color: white;
-}
-.test-name:visited {
-  color: #ccaadd;
-}
-.test-name:hover {
-  color: white;
+  display: inline;
 }
 
 .batch-name-lab {
@@ -913,6 +923,7 @@ hr {
   padding: 3px;
 }
 .page-title {
+  display: block;
   font-size: 32px;
   color: #ccaadd;
   margin: 8px;
