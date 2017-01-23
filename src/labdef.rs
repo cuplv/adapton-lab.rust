@@ -48,7 +48,7 @@ pub trait ComputeDemand<Input,Output> {
 }
 
 impl<Input,Output,X:Compute<Input,Output>> ComputeDemand<Input,Output> for X {
-  fn compute(inp:Input, demand:usize) -> Output {
+  fn compute(inp:Input, _demand:usize) -> Output {
     X::compute(inp)
   }
 }

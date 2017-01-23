@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use adapton::engine::Name;
 use adapton::engine::reflect::*;
-use adapton::engine::reflect::{trace, string_of_name, string_of_loc, string_of_path};
+use adapton::engine::reflect::{trace, string_of_name, string_of_loc};
 use labdef::{LabParams,Lab,LabResults, Sample};
 
 /// The `Div` struct represents a restricted form of a `<div>` element
@@ -122,7 +122,7 @@ pub fn div_of_edge (e:&trace::Edge) -> Div {
 }
 
 pub fn div_of_value_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, val:&Val) -> Div {
-  let mut div = Div {
+  let div = Div {
     tag: match *val {
       Val::Constr(ref n, _) => { format!("val-constr constr-{}", string_of_name(n) ) },
       Val::Struct(ref n, _) => { format!("val-struct struct-{}", string_of_name(n) ) },
@@ -159,7 +159,7 @@ pub fn div_of_value_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, val:&Val) -> 
     extent: Box::new(
       match *val {
         Val::Constr(_, ref vs) => { let ds : Vec<_> = vs.iter().map( |v| div_of_value_tree(dcg, visited,  v) ).collect() ; ds },
-        Val::Struct(_, ref fs) => { let ds : Vec<_> = fs.iter().map(  |&(ref f, ref v) | 
+        Val::Struct(_, ref fs) => { let ds : Vec<_> = fs.iter().map(  |&(ref _f, ref v) | 
                                                                          div_of_value_tree(dcg, visited, &v) ).collect() ; ds },
         Val::Tuple(ref vs) =>     { let ds : Vec<_> = vs.iter().map( |v| div_of_value_tree(dcg, visited,  v) ).collect() ; ds },
         Val::Vec(ref vs) =>       { let ds : Vec<_> = vs.iter().map( |v| div_of_value_tree(dcg, visited,  v) ).collect() ; ds },
@@ -386,22 +386,22 @@ pub fn write_all_lab_results(_params:&LabParams,
 
   assert!( labs.len() == results.len() );
 
-  writeln!(writer, "<div class={:?}>Lab results summary</div>", "labsum-title");
+  writeln!(writer, "<div class={:?}>Lab results summary</div>", "labsum-title").unwrap();
 
   for ((_i,lab),(_j,_result)) in 
     labs.iter().enumerate().zip(results.iter().enumerate()) 
   {
-    writeln!(&mut writer, "<div class={:?}>", "labsum-row");
-    writeln!(&mut writer, "<div class={:?}>", "labsum-name");
+    writeln!(&mut writer, "<div class={:?}>", "labsum-row").unwrap();
+    writeln!(&mut writer, "<div class={:?}>", "labsum-name").unwrap();
     write_lab_name(&mut writer, lab, false);
-    writeln!(&mut writer, "</div>");
+    writeln!(&mut writer, "</div>").unwrap();
     
     writeln!(&mut writer, "<a class={:?} href=./{}/traces.html>details</a>", 
              "lab-details", 
              string_of_name(&lab.name())
     ).unwrap();
 
-    writeln!(&mut writer, "</div>");        
+    writeln!(&mut writer, "</div>").unwrap();        
     write_cr(&mut writer);
   }
 }
@@ -445,7 +445,7 @@ pub fn write_dcg_edge_tree<W:Write> (writer:&mut W, dcg:&DCG, traces:&Vec<trace:
 
 pub fn write_sample_dcg<W:Write>
   (writer:&mut W,
-   lab:&Box<Lab>, 
+   _lab:&Box<Lab>, 
    prev_sample:Option<&Sample>,
    this_sample:&Sample)
 {
@@ -566,7 +566,7 @@ pub fn write_lab_results_traces(_params:&LabParams, lab:&Box<Lab>, results:&LabR
   //let laburl  = lab.url();
 
   // For linking to rustdoc documentation from the output HTML
-  let trace_url   = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/struct.Trace.html";
+  //let trace_url   = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/struct.Trace.html";
   
   // Create directories and files on local filesystem:
   fs::create_dir_all(format!("lab-results/{}/", labname)).unwrap();
@@ -610,7 +610,7 @@ pub fn write_lab_results_traces(_params:&LabParams, lab:&Box<Lab>, results:&LabR
 
     writeln!(writer, "<div class=\"time-ms-lab\">DCG time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
              2, (sample.dcg_sample.compute_output.time_ns as f64) / (1000000 as f64)).unwrap();    
-    writeln!(writer, "</div>");
+    writeln!(writer, "</div>").unwrap();
     
     if sample.naive_sample.compute_output.time_ns <
       sample.dcg_sample.compute_output.time_ns {
