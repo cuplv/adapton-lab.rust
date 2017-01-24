@@ -727,22 +727,22 @@ hr {
   font-size: 20px;
 }
 .labsum-row {
-  display: block;  
+  display: block;
 }
 .labsum-name {
+  display: table-cell;
   margin: 8px;
   padding: 2px;
-  display: inline;
-  width: 30%;
+  width: 80%;
 }
 .lab-details {
+  display: table-cell;
   font-size: 14px;
   color: #ddbbee;
   border: solid white 1px;
   padding: 2px;
   background-color: #441155;
   margin: 3px;
-  display: inline;
 }
 
 .batch-name-lab {

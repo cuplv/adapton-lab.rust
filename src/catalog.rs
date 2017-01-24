@@ -166,7 +166,7 @@ impl Compute<List<usize>,List<usize>> for EagerFilter {
 impl ComputeDemand<List<usize>,List<usize>> for LazyMap {
   fn compute(inp:List<usize>, demand:usize) -> List<usize> {
     let out : List<usize> = list_map_lazy(inp,Rc::new(|x| x * x));
-    drop( list_demand( out.clone(), demand ) );
+    list_demand( out.clone(), demand );
     out
   }
 }
