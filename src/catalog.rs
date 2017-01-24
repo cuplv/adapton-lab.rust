@@ -5,19 +5,18 @@ use rand::{Rng};
 use std::marker::PhantomData;
 use std::rc::Rc;
 use pmfp_collections::gauged_raz::{Raz,RazTree};
-use pmfp_collections::level_tree::{gen_branch_level};
+use pmfp_collections::tree_cursor::{gen_level};
 
 
 #[derive(Clone,Debug)]
 pub struct UniformInsert<T,S> { t:PhantomData<T>, s:PhantomData<S> }
 
 impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
-  fn generate<R:Rng> (mut rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
+  fn generate<R:Rng> (rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
     let mut r = Raz::new();
     for i in 0..params.size {
       if i % params.gauge == 0 {
-        let l = gen_branch_level(&mut rng);
-        r.archive_left( l );
+        r.archive_left( gen_level(rng) );
       } else { } ;
       r.push_left(i);
     }
@@ -149,7 +148,8 @@ pub struct EagerMergesort1 { }
 #[derive(Clone,Debug)]
 pub struct Quickhull { }
 
-pub struct RazTest1 {} 
+#[derive(Clone,Debug)]
+pub struct RazMax {}
 
 impl Compute<List<usize>,List<usize>> for EagerMap {
   fn compute(inp:List<usize>) -> List<usize> {
@@ -306,6 +306,13 @@ impl Compute<List<Pt2D>,List<Pt2D>> for Quickhull {
   }
 }
 
+impl Compute<RazTree<usize>,usize> for RazMax {
+  fn compute(inp:RazTree<usize>) -> usize {
+    let max = inp.fold_up(|e|*e,|e1,e2|::std::cmp::max(e1,e2));
+    max.unwrap_or(0)
+  }
+}
+
 #[macro_export]
 macro_rules! labdef {
   ( $name:expr, $url:expr, $inp:ty, $editst:ty, $out:ty, $dist:ty, $comp:ty ) => {{ 
@@ -453,6 +460,13 @@ pub fn all_labs() -> Vec<Box<Lab>> {
                   List<usize>,
                   UniformPrepend<_,_>,
                   ListReverse)
+      ,
+    labdef!(name_of_str("raz-max"),
+                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.RazMax.html")),
+                  RazTree<usize>, usize,
+                  usize,
+                  UniformInsert<_,_>,
+                  RazMax)
       ,
     // labdef!(name_of_str("list-quickhull"),
     //               List<Pt2D>, usize,
