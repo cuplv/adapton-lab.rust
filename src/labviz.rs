@@ -373,9 +373,10 @@ impl<T:WriteHTML> WriteHTML for Vec<T> {
   }
 }
 
-pub fn write_all_lab_results(_params:&LabParams, 
-                              labs:&Vec<Box<Lab>>, 
-                              results:&Vec<LabResults>) 
+pub fn write_lab_results_summary
+  (_params:&LabParams, 
+   labs:&Vec<Box<Lab>>, 
+   results:&Vec<LabResults>) 
 {
   // Create directories and files on local filesystem:
   fs::create_dir_all("lab-results").unwrap();
@@ -383,6 +384,7 @@ pub fn write_all_lab_results(_params:&LabParams,
   let mut writer = BufWriter::new(f);
 
   writeln!(writer, "{}", style_string()).unwrap();
+  writeln!(writer, "<style> .tool-label-toggles {{ display: none }} </style>").unwrap();
 
   assert!( labs.len() == results.len() );
 
@@ -396,7 +398,7 @@ pub fn write_all_lab_results(_params:&LabParams,
     write_lab_name(&mut writer, lab, false);
     writeln!(&mut writer, "</div>").unwrap();
     
-    writeln!(&mut writer, "<a class={:?} href=./{}/traces.html>details</a>", 
+    writeln!(&mut writer, "<a class={:?} href=./{}/index.html>detailed results</a>", 
              "lab-details", 
              string_of_name(&lab.name())
     ).unwrap();
@@ -560,7 +562,7 @@ pub fn write_sample_dcg<W:Write>
 
 }
 
-pub fn write_lab_results_traces(_params:&LabParams, lab:&Box<Lab>, results:&LabResults) {
+pub fn write_lab_results(_params:&LabParams, lab:&Box<Lab>, results:&LabResults) {
   
   let labname = string_of_name( &lab.name() );
   //let laburl  = lab.url();
@@ -570,11 +572,14 @@ pub fn write_lab_results_traces(_params:&LabParams, lab:&Box<Lab>, results:&LabR
   
   // Create directories and files on local filesystem:
   fs::create_dir_all(format!("lab-results/{}/", labname)).unwrap();
-  let f = File::create(format!("lab-results/{}/traces.html", labname)).unwrap();
+  let f = File::create(format!("lab-results/{}/index.html", labname)).unwrap();
   let mut writer = BufWriter::new(f);
 
   writeln!(writer, "{}", style_string()).unwrap();
   
+  writeln!(writer, "<a href=\"../index.html\">↰ Results summary</a>").unwrap();
+  write_cr(&mut writer);
+
   write_lab_name(&mut writer, lab, true);
 
   writeln!(writer, "<div style=\"font-size:12px\" class=\"batch-name\"> step</div>").unwrap();
@@ -682,6 +687,7 @@ div {
 }
 body {
   display: inline;
+  color: #aa88cc;
   background: #552266;
   font-family: sans-serif;
   text-decoration: none;
@@ -689,7 +695,7 @@ body {
   margin: 0px;
 }
 :visited {
-  color: black;
+  color: #aa88cc;
 }
 a {
   text-decoration: none;
@@ -733,7 +739,7 @@ hr {
   display: table-cell;
   margin: 8px;
   padding: 2px;
-  width: 80%;
+  width: 70%;
 }
 .lab-details {
   display: table-cell;
@@ -747,8 +753,10 @@ hr {
 
 .batch-name-lab {
   font-size: 0px;
+  color: black;
 }
 .batch-name {
+  color: black;
   font-size: 16px;
   border: solid;
   display: inline;
@@ -785,6 +793,7 @@ hr {
   display: inline;
 }
 .editor {
+  color: black;
   font-size: 14px;
   border: solid;
   display: block;
@@ -795,6 +804,7 @@ hr {
   background: #aaaaaa;
 }
 .archivist {
+  color: black;
   font-size: 14px;
   border: solid;
   display: block;
@@ -995,6 +1005,11 @@ hr {
   width: 24%;
 }
 
+.tool-label-toggles {
+  display: block;
+  float: right;
+}
+
 .name {
   display: inline;
   display: none;
@@ -1058,7 +1073,7 @@ function toggleEffects() {
 
 <body>
 
-<fieldset>
+<fieldset class=\"tool-label-toggles\">
  <legend>Toggle labels: </legend>
  <label for=\"show-paths-checkbox\">paths</label>
  <input type=\"checkbox\" name=\"show-paths-checkbox\" id=\"checkbox-1\" onchange=\"togglePaths()\">
