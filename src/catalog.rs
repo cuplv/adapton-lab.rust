@@ -18,7 +18,10 @@ impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
       if i % params.gauge == 0 {
         r.archive_left( gen_level(rng) );
       } else { } ;
-      r.push_left(i);
+      // use random data (numbers 1000-1999 )
+      // r.push_left( rng.gen::<usize>() % 1000 + 1000 );
+      // use the insertion count, marked by adding a million
+      r.push_left(i + 1_000_000);
     }
     r.unfocus()
   }
@@ -33,7 +36,13 @@ impl Edit<RazTree<usize>, usize> for UniformInsert<RazTree<usize>, usize> {
     let t = tree;
     let pos = rng.gen::<usize>() % ( i + 1 );
     let mut r = t.focus( pos ).unwrap();
-    r.push_left( rng.gen() );
+    if i % _params.gauge == 0 {
+      r.archive_left( gen_level(rng) );
+    } else { } ;
+    // use random data (numbers 1000-1999 )
+    // r.push_left( rng.gen::<usize>() % 1000 + 1000 );
+    // use the insertion count, marked by adding a million
+    r.push_left( i + 1_000_000 );
     let t = r.unfocus();    
     (t, i + 1)
   }
