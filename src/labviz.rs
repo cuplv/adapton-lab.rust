@@ -931,6 +931,9 @@ hr {
 
 .val-name,
 .val-constr,
+.val-struct,
+.val-tuple,
+.val-vec,
 .val-art
 {
   display: inline-block;
@@ -943,7 +946,10 @@ hr {
   border-radius 2px;  
   font-size: 0px;  
 }
-.val-constr {
+.val-constr,
+.val-struct,
+.val-tuple,
+.val-vec {
   border-color: #dd88ff;
   background-color: #773388;
 }
