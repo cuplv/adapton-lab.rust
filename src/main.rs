@@ -94,7 +94,6 @@ fn run_lab(params:&LabParams, lab:&Box<Lab>) -> LabResults {
 fn run_all_labs(params:LabParams) {
   let labs  = catalog::all_labs();
   let mut results = vec![];
-  println!("Params: {:?}", params );
   for lab in labs.iter() {
     let result = run_lab(&params, &lab);
     results.push(result);
@@ -178,17 +177,30 @@ fn main2() {
   // TODO check --validate
 
 
-  let mut run_all = true;
+  let mut run_one_lab = false;
   {
     let l = value_t!(args.value_of("labname"),String).unwrap_or( String::from("") );
-    for lab in catalog::all_labs() {
-      if lab.name() == name_of_string(l.clone()) {
-        run_all = false;
-        let _ = run_lab( &params, &lab );        
+    if l.len() > 0 {
+      for lab in catalog::all_labs() {
+        if lab.name() == name_of_string(l.clone()) {
+          run_one_lab = true;
+          println!("Lab params:\n\t{:?}", params );
+          let _ = run_lab( &params, &lab );        
+        }
+      };
+      if ! run_one_lab {
+        println!("Error: couldn't find the lab `{}`.", l);
+        println!("Hint: Here's the full lab catalog:");
+        for lab in catalog::all_labs() {
+          println!(" - {:32}: {}", string_of_name (&lab.name()), 
+                   match *lab.url() { Some(ref s) => s, None => "" } );
+        }
+        panic!("Error: couldn't find the lab `{}`.", l);
       }
-    }
+    } else { }
   }
-  if run_all {
+  if ! run_one_lab {
+    println!("Lab params:\n\t{:?}", params );
     run_all_labs(params) 
   }
 }
