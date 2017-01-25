@@ -11,12 +11,25 @@ use pmfp_collections::tree_cursor::{gen_level};
 #[derive(Clone,Debug)]
 pub struct UniformInsert<T,S> { t:PhantomData<T>, s:PhantomData<S> }
 
-#[derive(Clone,Debug)]
-pub struct EditorOopsla2015Sec2 { }
 
-impl Generate<List<usize>> 
-  for EditorOopsla2015Sec2 
-{
+/// Example from _Incremental Computation with Names_ (2015), Section 2 (Figs 1 and 2) 
+/// ==================================================================================
+///
+/// This `generate` function creates the three-element, three-name,
+/// three-ref-cell list in the first parts of Figures 1 and Figure 2.
+///
+/// This `edit` function implements the single insertion of `Cons(2,
+/// ...)` into the generated list, as per the second parts of Figures
+/// 1 and 2.  (It only performs this one edit, and performs no other
+/// actions later).  This code shows two ways of inserting a new
+/// element (and name and ref cell) into the list: The "functional"
+/// way, and the imperative way.  The use of names here bridges the
+/// gap, permitting the functional approach to express the mutation in
+/// the imperative approach.
+/// 
+#[derive(Clone,Debug)]
+pub struct EditorOopsla2015Sec2 { } 
+impl Generate<List<usize>> for EditorOopsla2015Sec2 {
   fn generate<R:Rng> (_rng:&mut R, _params:&GenerateParams) -> List<usize> {
     let l = list_nil();
     
@@ -34,10 +47,7 @@ impl Generate<List<usize>>
     l
   }
 }
-
-impl Edit<List<usize>,usize> 
-  for EditorOopsla2015Sec2 
-{
+impl Edit<List<usize>,usize> for EditorOopsla2015Sec2 {
   fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 
     return 0
   }
@@ -47,6 +57,9 @@ impl Edit<List<usize>,usize>
       let a = match list      { List::Cons(_, box List::Name(_, box List::Art(ref a))) => a.clone(), _ => unreachable!() };
       let b = match force(&a) { List::Cons(_, box List::Name(_, box List::Art(ref b))) => b.clone(), _ => unreachable!() };
       let l = force(&b);
+
+      // Create the new Cons cell, new name and new ref cell, which
+      // points at the tail of the existing list, `l`, above.
       let l = list_art(cell(name_of_str("c"), l));
       let l = list_name(name_of_str("gamma"), l);
       let l = list_cons(2, l);
