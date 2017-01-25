@@ -694,7 +694,7 @@ body {
   padding: 0px;
   margin: 0px;
 }
-:visited {
+body:visited {
   color: #aa88cc;
 }
 a {
@@ -815,6 +815,7 @@ hr {
   background: #dddddd;
 }
 .traces {
+  color: black;
   font-size: 8px;
   border: solid 0px;
   display: block;
@@ -822,8 +823,55 @@ hr {
   float: left;
   width: 100%;
 }
+.traces:visited {
+  color: black;
+}
+
+.input-value, 
+.output-value,
+.traces-box,
+.archivist-alloc-tree-post-edit,
+.archivist-force-tree-post-edit, 
+.archivist-alloc-tree-post-update, 
+.archivist-force-tree-post-update  
+{
+  display: inline;
+  float: left;
+
+  padding: 0px;
+  margin: 2px;
+
+  color: #dd88ff;
+  background: #331144;
+  border-radius: 5px;
+  border-style: solid;
+  border-width: 0px;
+  border-color: #dd88ff;
+}
+
+.input-value, 
+.output-value {
+  width: 49%;
+}
+.traces-box {
+  width: 99%;
+}
+.archivist-alloc-tree-post-edit,
+.archivist-force-tree-post-edit, 
+.archivist-alloc-tree-post-update, 
+.archivist-force-tree-post-update  
+{
+  width: 24%;
+}
+
+.tool-label-toggles {
+  display: block;
+  float: right;
+}
+
 
 .trace, .force-tree, .alloc-tree {
+  color: black;
   display: inline-block;
   border-style: solid;
   border-color: red;
@@ -966,48 +1014,6 @@ hr {
 .val-art
 {
   padding: 2px;
-}
-
-.input-value, 
-.output-value,
-.traces-box,
-.archivist-alloc-tree-post-edit,
-.archivist-force-tree-post-edit, 
-.archivist-alloc-tree-post-update, 
-.archivist-force-tree-post-update  
-{
-  display: inline;
-  float: left;
-
-  padding: 0px;
-  margin: 2px;
-
-  color: #dd88ff;
-  background: #331144;
-  border-radius: 5px;
-  border-style: solid;
-  border-width: 0px;
-  border-color: #dd88ff;
-}
-
-.input-value, 
-.output-value {
-  width: 49%;
-}
-.traces-box {
-  width: 99%;
-}
-.archivist-alloc-tree-post-edit,
-.archivist-force-tree-post-edit, 
-.archivist-alloc-tree-post-update, 
-.archivist-force-tree-post-update  
-{
-  width: 24%;
-}
-
-.tool-label-toggles {
-  display: block;
-  float: right;
 }
 
 .name {

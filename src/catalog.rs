@@ -11,6 +11,78 @@ use pmfp_collections::tree_cursor::{gen_level};
 #[derive(Clone,Debug)]
 pub struct UniformInsert<T,S> { t:PhantomData<T>, s:PhantomData<S> }
 
+#[derive(Clone,Debug)]
+pub struct EditorOopsla2015Sec2 { }
+
+impl Generate<List<usize>> 
+  for EditorOopsla2015Sec2 
+{
+  fn generate<R:Rng> (_rng:&mut R, _params:&GenerateParams) -> List<usize> {
+    let l = list_nil();
+    
+    let l = list_art( cell( name_of_str("d"), l) );
+    let l = list_name( name_of_str("delta"), l );
+    let l = list_cons(3, l);
+
+    let l = list_art( cell( name_of_str("b"), l) );
+    let l = list_name( name_of_str("beta"), l );
+    let l = list_cons(1, l);
+
+    let l = list_art( cell( name_of_str("a"), l) );
+    let l = list_name( name_of_str("alpha"), l );
+    let l = list_cons(0, l);
+    l
+  }
+}
+
+impl Edit<List<usize>,usize> 
+  for EditorOopsla2015Sec2 
+{
+  fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 
+    return 0
+  }
+  fn edit<R:Rng>(list:List<usize>, i:usize,
+                 _rng:&mut R, _params:&GenerateParams) -> (List<usize>, usize) {
+    if i == 0 {
+      let a = match list      { List::Cons(_, box List::Name(_, box List::Art(ref a))) => a.clone(), _ => unreachable!() };
+      let b = match force(&a) { List::Cons(_, box List::Name(_, box List::Art(ref b))) => b.clone(), _ => unreachable!() };
+      let l = force(&b);
+      let l = list_art(cell(name_of_str("c"), l));
+      let l = list_name(name_of_str("gamma"), l);
+      let l = list_cons(2, l);
+      
+      // The following ways of mutating cell b are equivalent for the
+      // DCG, though only the first way is defined for the Naive
+      // engine:
+      if true {
+        let l = list_art(cell( name_of_str("b"), l));
+        
+        // The rest of this is copied from the Generate impl.  We have
+        // to do these steps to keep the Naive version (which does not
+        // have a store) in sync with the DCG's input (which need not do
+        // these steps):
+        let l = list_name( name_of_str("beta"), l );
+        let l = list_cons(1, l);      
+        let l = list_art( cell( name_of_str("a"), l) );
+        let l = list_name( name_of_str("alpha"), l );
+        let l = list_cons(0, l);
+        return (l, 1)
+      } else {
+        // DCG only: The `set` operation is not supported by Naive
+        // computation, since in the Naive computation, articulations
+        // are just (immutable) reference cells holding values or
+        // suspended computations.
+        set(&b, l);
+        return (list, i);
+      }
+    }
+    else {
+      // No more changes.
+      (list, i)
+    }
+  }
+}
+
 impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
   fn generate<R:Rng> (rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
     let mut r = Raz::new();
@@ -366,116 +438,124 @@ macro_rules! labdef {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 pub fn all_labs() -> Vec<Box<Lab>> {
   return vec![
+    labdef!(name_of_str("eg-oopsla2015-sec2"),
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EditorOopsla2015Sec2.html")),
+            List<usize>, usize,
+            List<usize>,
+            EditorOopsla2015Sec2,
+            EagerMap)
+      ,
+
     labdef!(name_of_str("list-lazy-map"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMap.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  LazyMap)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMap.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            LazyMap)
       ,
     labdef!(name_of_str("list-lazy-filter"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyFilter.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  LazyFilter)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyFilter.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            LazyFilter)
       ,
-
-
+    
+    
     labdef!(name_of_str("list-tree"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTree.html")),
-                  List<usize>, usize,
-                  Tree<usize>,
-                  UniformPrepend<_,_>,
-                  ListTree)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTree.html")),
+            List<usize>, usize,
+            Tree<usize>,
+            UniformPrepend<_,_>,
+            ListTree)
       ,
     labdef!(name_of_str("list-tree-max"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTreeMax.html")),
-                  List<usize>, usize,
-                  usize,
-                  UniformPrepend<_,_>,
-                  ListTreeMax)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTreeMax.html")),
+            List<usize>, usize,
+            usize,
+            UniformPrepend<_,_>,
+            ListTreeMax)
       ,
     labdef!(name_of_str("list-tree-sum"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTreeSum.html")),
-                  List<usize>, usize,
-                  usize,
-                  UniformPrepend<_,_>,
-                  ListTreeSum)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListTreeSum.html")),
+            List<usize>, usize,
+            usize,
+            UniformPrepend<_,_>,
+            ListTreeSum)
       ,
-
+    
     labdef!(name_of_str("list-eager-mergesort3"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort3.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  EagerMergesort3)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort3.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            EagerMergesort3)
       ,
     labdef!(name_of_str("list-lazy-mergesort3"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort3.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  LazyMergesort3)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort3.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            LazyMergesort3)
       ,
-
+    
     labdef!(name_of_str("list-eager-mergesort2"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort2.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  EagerMergesort2)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort2.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            EagerMergesort2)
       ,
     labdef!(name_of_str("list-lazy-mergesort2"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort2.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  LazyMergesort2)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort2.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            LazyMergesort2)
       ,
-
+    
     labdef!(name_of_str("list-eager-mergesort1"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort1.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  EagerMergesort1)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort1.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            EagerMergesort1)
       ,
     labdef!(name_of_str("list-lazy-mergesort1"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort1.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  LazyMergesort1)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort1.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            LazyMergesort1)
       ,
-
+    
     labdef!(name_of_str("list-eager-map"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMap.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  EagerMap)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMap.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            EagerMap)
       ,
     labdef!(name_of_str("list-eager-filter"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerFilter.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  EagerFilter)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerFilter.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            EagerFilter)
       ,
     labdef!(name_of_str("list-reverse"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListReverse.html")),
-                  List<usize>, usize,
-                  List<usize>,
-                  UniformPrepend<_,_>,
-                  ListReverse)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ListReverse.html")),
+            List<usize>, usize,
+            List<usize>,
+            UniformPrepend<_,_>,
+            ListReverse)
       ,
     labdef!(name_of_str("raz-max"),
-                  Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.RazMax.html")),
-                  RazTree<usize>, usize,
-                  usize,
-                  UniformInsert<_,_>,
-                  RazMax)
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.RazMax.html")),
+            RazTree<usize>, usize,
+            usize,
+            UniformInsert<_,_>,
+            RazMax)
       ,
     // labdef!(name_of_str("list-quickhull"),
     //               List<Pt2D>, usize,
