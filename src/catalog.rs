@@ -1,6 +1,7 @@
 use labdef::*;
 use adapton::collections::*;
 use adapton::engine::*;
+use adapton::macros::*;
 use rand::{Rng};
 use std::marker::PhantomData;
 use std::rc::Rc;
@@ -10,6 +11,142 @@ use pmfp_collections::tree_cursor::{gen_level};
 
 #[derive(Clone,Debug)]
 pub struct UniformInsert<T,S> { t:PhantomData<T>, s:PhantomData<S> }
+/// Simple example to explain Adapton's dirtying + cleaning algorithms.
+///
+/// This example demonstrates how, when input changes, dirtying
+/// proceeds incrementally through the edges of the DCG, during
+/// cleaning.  We show a particular input change for this DCG where a
+/// subcomputation `h` is never dirtied nor cleaned by change
+/// propagation. We show another change to the same input where this
+/// subcomputation `h` *is* _eventually_ dirtied and cleaned by
+/// Adapton, though not immediately.
+/// 
+/// ```
+///   ref cell
+///   inp
+///   [ 2 ]
+///     ^
+///     | force                                                         
+///     | 2                                                      
+///     |                 cell                                   cell
+///     |    alloc 4       b      force 4           alloc 4       c
+///    (g)-------------->[ 4 ]<--------------(h)--------------->[ 4 ]
+///     ^                                     ^
+///     | force                               | force h,
+///     | returns b                           | returns c
+///     |                                     |
+///    (f)------------------------------------+
+///     ^
+///     | force f,
+///     | returns cell c
+///     |
+///  (root of demand)
+/// ```
+///
+/// In this example DCG, thunk `f` allocates and forces two
+/// sub-computations, thunks `g` and `h`.  The first consumes the
+/// input `inp` and produces an intermediate result (ref cell `b`);
+/// the second consumes this intermediate result and produces a final
+/// result (ref cell `c`), which both thunks `h` and `f` return as
+/// their final result.
+///
+/// When the input cell `inp` changes, e.g., from 2 to -2, thunks `f`
+/// and `g` are dirtied.  Thunk `g` is dirty because it consumes the
+/// changed input.  Thunk `f` is dirty because it demanded (consumed)
+/// the output of thunk `g` in the extent of its own computation.
+/// _Importantly, thunk `h` is *not* immediately dirtied when `inp`
+/// changes._
+///
+/// In some very real sense, `inp` is an indirect ("transitive") input
+/// to thunk `h`.  This fact may suggest that when `inp` is changed
+/// from 2 to -2, we should dirty thunk `h` immediately.  However,
+/// thunk `h` is related to this input only by reading a *different*
+/// ref cell (ref cell b) that dependents, indirectly, on `inp`, via
+/// the behavior of thunk `g`, on which thunk `h` does *not* directly
+/// depend (e.g., thunk `h` does not force thunk `g`).
+///
+/// Rather, when thunk `f` is re-demanded (from the "root of demand",
+/// maybe a larger DCG or a user), it will necessarily perform a
+/// cleaning process (aka, "change propagation"), re-executing `g`,
+/// its immediate dependent, which is dirty.  Since thunk `g` merely
+/// squares its input, and 2 and -2 both square to 4, the output of
+/// thunk `g` will not change in this case.  Consequently, the
+/// consumers of cell `b`, which holds this output, will not be
+/// dirtied or re-executed.  In this case, thunk `h` is this consumer.
+/// In situations like these, Adapton's dirtying + cleaning algorithms
+/// do not dirty nor clean thunk `h`.  (For some other change, e.g.,
+/// from 2 to 3, thunk `h` would _eventually_ be dirtied and cleaned).
+///
+/// In sum, under this change, after `f` is re-demanded, the cleaning
+/// process will first re-execute `g`, the immediate consumer of
+/// `inp`.  Thunk `g` will again allocate cell `b` to hold 4, the same
+/// value as before.  It also yields this same cell pointer (to cell
+/// `b`).  Consequently, thunk `f` is not re-executed, and is cleaned.
+/// Meanwhile, the outgoing (dependency) edges thunk of `h` are never
+/// dirited.
+///
+#[derive(Clone,Debug)]
+pub struct ExampleCleanDirty {}
+impl Generate<Art<i32>> for ExampleCleanDirty {
+  fn generate<R:Rng> (_rng:&mut R, _params:&GenerateParams) -> Art<i32> {
+    cell(name_of_str("a"), 2)
+  }
+}
+/// This editor helps in an example.  It creates an input cell holding
+/// the integer 2, and then edits this cell to hold -2.  Then it edits
+/// the cell to hold 3, then 2 again, and then loops.
+impl Edit<Art<i32>, usize> for ExampleCleanDirty {
+  fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 
+    return 0
+  }
+  fn edit<R:Rng>(_inp:Art<i32>, i:usize,
+                 _rng:&mut R, _params:&GenerateParams) -> (Art<i32>, usize) {
+    if i == 0 {
+      let inp = cell(name_of_str("a"), -2);
+      (inp, 1)
+    } 
+    else if i == 1 {
+      let inp = cell(name_of_str("a"), 3);
+      (inp, 2)
+    }
+    else {
+      let inp = cell(name_of_str("a"), 2);
+      (inp, 0)
+    }
+  }
+}
+impl Compute<Art<i32>, Art<i32>> for ExampleCleanDirty {
+  fn compute(inp:Art<i32>) -> Art<i32> {
+    let c : Art<i32> = force 
+      // thunk 'f' creates and forces thunks `g` and `h`, below:
+      (& thunk![ name_of_str("f") =>> {
+        let inp = inp.clone();
+        
+        let b : Art<i32> = force 
+        // thunk `g` reads the input `inp` and writes its square (x
+        // * x) to a new cell, `b`, returning the cell `b`.
+          (& thunk![ name_of_str("g") =>> {
+            let x = force(&inp);
+            cell(name_of_str("b"), x * x)       
+          }]);        
+        
+        let c : Art<i32> = force 
+        // thunk `h` reads the output of `g`, cell `b`, and writes the
+        // max of this number and 100 to another new cell, `c`,
+        // returning the cell `c`.
+          (& thunk![ name_of_str("h") =>> {
+            let x = force(&b);
+            cell(name_of_str("c"), if x < 100 { x } else { 100 })
+          }]);        
+        
+        c
+      }])
+      ;
+    return c
+  }
+}
+
+
 
 
 /// Example from _Incremental Computation with Names_ (2015), Section 2 (Figs 1 and 2) 
@@ -451,6 +588,14 @@ macro_rules! labdef {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 pub fn all_labs() -> Vec<Box<Lab>> {
   return vec![
+    labdef!(name_of_str("eg-clean-dirty"),
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.ExampleCleanDirty.html")),
+            Art<i32>, usize,
+            Art<i32>,
+            ExampleCleanDirty,
+            ExampleCleanDirty)
+      ,
+
     labdef!(name_of_str("eg-oopsla2015-sec2"),
             Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EditorOopsla2015Sec2.html")),
             List<usize>, usize,
