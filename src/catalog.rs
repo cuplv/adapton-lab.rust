@@ -94,7 +94,7 @@ impl Generate<Art<i32>> for ExampleCleanDirty {
 }
 /// This editor helps in an example.  It creates an input cell holding
 /// the integer 2, and then edits this cell to hold -2.  Then it edits
-/// the cell to hold 3, then 2 again, and then loops.
+/// the cell to hold 3, then 2 again, and then loops (2, -2, 3, 2, ...).
 impl Edit<Art<i32>, usize> for ExampleCleanDirty {
   fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 
     return 0
@@ -132,7 +132,7 @@ impl Compute<Art<i32>, Art<i32>> for ExampleCleanDirty {
         
         let c : Art<i32> = force 
         // thunk `h` reads the output of `g`, cell `b`, and writes the
-        // max of this number and 100 to another new cell, `c`,
+        // min of this number and 100 to another new cell, `c`,
         // returning the cell `c`.
           (& thunk![ name_of_str("h") =>> {
             let x = force(&b);

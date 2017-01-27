@@ -128,6 +128,7 @@ pub fn div_of_value_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, val:&Val) -> 
       Val::Struct(ref n, _) => { format!("val-struct struct-{}", string_of_name(n) ) },
       Val::Const( ref c )     => { format!("val-const  const-{}" , match *c {
         Const::Nat( ref n ) => format!("{}", n),
+        Const::Num( ref n ) => format!("{}", n),
         Const::String( ref s ) => s.clone(),
       })},
       Val::Tuple(ref vs) => { format!("val-tuple tuple-{}", vs.len()) },
@@ -143,6 +144,7 @@ pub fn div_of_value_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, val:&Val) -> 
         Val::Struct(ref n, _) => { Some(string_of_name(n)) },
         Val::Const( ref c )     => Some(match *c {
           Const::Nat( ref n ) => format!("{}", n),
+          Const::Num( ref n ) => format!("{}", n),
           Const::String( ref s ) => format!("{:?}", s),
         }),
         Val::Tuple( _ ) => None,
@@ -259,6 +261,62 @@ pub fn div_of_alloc_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc) -> 
     }
   };
   if no_extent {
+    div.classes.push(String::from("no-extent"))
+  };
+  div
+}
+
+
+pub fn div_of_dcg_alloc (loc:&Loc, nd:&Node) -> Div {
+  let div = Div {
+    tag:String::from("dcg-node"),
+    text:None,
+    classes: vec![ match *nd {
+      Node::Comp(_) => String::from("dcg-node-comp"),
+      Node::Ref(_) => String::from("dcg-node-ref"),
+      Node::Pure(_) => String::from("dcg-node-pure"),
+    }],
+    extent: Box::new(vec![ div_of_loc( loc ) ]),
+  };
+  div
+}
+
+pub fn div_of_dcg_succs (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc, 
+                         succs: &Vec<Succ>,
+                         extent: &mut Vec<Div>) {  
+  for succ in succs {
+    match succ.effect {
+      Effect::Alloc => {
+        let node = dcg.table.get( loc ).unwrap();
+        let succ_div = div_of_dcg_alloc (&succ.loc, &node);
+        extent.push( succ_div )
+      },
+      Effect::Force => {
+        let succ_div = div_of_dcg_loc (dcg, visited, &succ.loc);
+        extent.push( succ_div )
+      }
+    }     
+  }
+}
+
+pub fn div_of_dcg_loc (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc) -> Div {  
+  let mut div = Div {
+    tag:String::from("dcg-node"),
+    text:None,
+    classes: vec![],
+    extent: Box::new(vec![ div_of_loc( loc ) ]),
+  };
+  visited.insert( loc.clone(), () );
+  match dcg.table.get( loc ) {
+    None => panic!("dangling pointer in reflected DCG!"),
+    Some( nd ) => {
+      match succs_of_node( nd ) {
+        None => (), // No succs; E.g., ref cells have no succs
+        Some( succs ) => { div_of_dcg_succs(dcg, visited, loc, succs, &mut div.extent) }
+      }
+    }
+  };
+  if div.extent.len() > 0 {
     div.classes.push(String::from("no-extent"))
   };
   div
@@ -430,6 +488,13 @@ pub fn write_lab_name<W:Write>(writer:&mut W, lab:&Box<Lab>, is_title:bool) {
   ).unwrap();
 }
 
+pub fn write_dcg_tree<W:Write> (writer:&mut W, dcg:&DCG, traces:&Vec<trace::Trace>) {
+  for tr in traces.iter() {
+    div_of_dcg_loc(dcg, &mut HashMap::new(), &tr.edge.succ.loc)
+      .write_html(writer)
+  }
+}
+
 pub fn write_dcg_edge_tree<W:Write> (writer:&mut W, dcg:&DCG, traces:&Vec<trace::Trace>, effect:Effect) {
   for tr in traces.iter() {
     if tr.edge.succ.effect == effect {
@@ -492,6 +557,16 @@ pub fn write_sample_dcg<W:Write>
     Some(ref dcg_post_edit) => {
       match prev_sample {
         Some(ref prev_sample) => {
+          // 0/4: alloc tree for compute, after this edit, but before the update
+          writeln!(writer, "<div class=\"archivist-dcg-tree-post-edit\">").unwrap();
+          writeln!(writer, "<div class=\"label\">{}</div>", "DCG, post-edit:").unwrap();
+          write_dcg_tree
+            (writer, 
+             dcg_post_edit,
+             &prev_sample.dcg_sample.compute_output.reflect_traces,
+            );
+          writeln!(writer, "</div>").unwrap();
+
           // 1/4: alloc tree for compute, after this edit, but before the update
           writeln!(writer, "<div class=\"archivist-alloc-tree-post-edit\">").unwrap();
           writeln!(writer, "<div class=\"label\">{}</div>", "Allocs, post-edit:").unwrap();
@@ -595,13 +670,18 @@ pub fn write_lab_results(_params:&LabParams, lab:&Box<Lab>, results:&LabResults)
              sample.batch_name).unwrap();
 
     writeln!(writer, "<div class=\"editor\">").unwrap();
+    
+    if false {
     writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.process_input.time_ns).unwrap();    
+    }
     writeln!(writer, "</div>").unwrap();
 
     writeln!(writer, "<div class=\"archivist\">").unwrap();
 
+    if false {
     writeln!(writer, "<div class=\"row\">").unwrap();
+    
     writeln!(writer, "<div class=\"time-ns-lab\">Naive time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.naive_sample.compute_output.time_ns).unwrap();    
 
@@ -627,6 +707,8 @@ pub fn write_lab_results(_params:&LabParams, lab:&Box<Lab>, results:&LabResults)
              2, ( (sample.naive_sample.compute_output.time_ns  as f64) / 
                    (sample.dcg_sample.compute_output.time_ns as f64) )).unwrap();
     }    
+    }
+
     writeln!(writer, "</div>").unwrap();
     write_cr(&mut writer);    
     
@@ -856,6 +938,8 @@ hr {
 .traces-box {
   width: 99%;
 }
+.archivist-dcg-tree-post-edit,
+.archivist-dcg-tree-post-update,
 .archivist-alloc-tree-post-edit,
 .archivist-force-tree-post-edit, 
 .archivist-alloc-tree-post-update, 
