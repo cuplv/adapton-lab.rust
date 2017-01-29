@@ -267,56 +267,69 @@ pub fn div_of_alloc_tree (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc) -> 
 }
 
 
-pub fn div_of_dcg_alloc (loc:&Loc, nd:&Node) -> Div {
+pub fn class_of_dcg_node (nd:&Node) -> String {
+  match *nd {
+    Node::Comp(_) => String::from("dcg-node-comp"),
+    Node::Ref(_) => String::from("dcg-node-ref"),
+    Node::Pure(_) => String::from("dcg-node-pure"),
+  }
+}
+
+pub fn div_of_dcg_alloc_edge (src:Option<&Loc>, loc:&Loc, nd:&Node, is_dirty:bool) -> Div {
   let div = Div {
-    tag:String::from("dcg-node"),
+    tag:String::from("dcg-alloc-edge"),
     text:None,
-    classes: vec![ match *nd {
-      Node::Comp(_) => String::from("dcg-node-comp"),
-      Node::Ref(_) => String::from("dcg-node-ref"),
-      Node::Pure(_) => String::from("dcg-node-pure"),
-    }],
+    classes: vec![ if is_dirty { String::from("dirty") } else { String::from("clean") },
+                   if src == None { String::from("editor-edge") } else { String::from("dcg-edge") },
+                   class_of_dcg_node( nd ) ],
     extent: Box::new(vec![ div_of_loc( loc ) ]),
   };
   div
 }
 
-pub fn div_of_dcg_succs (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc, 
+pub fn div_of_dcg_succs (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:Option<&Loc>, 
                          succs: &Vec<Succ>,
                          extent: &mut Vec<Div>) {  
   for succ in succs {
     match succ.effect {
       Effect::Alloc => {
-        let node = dcg.table.get( loc ).unwrap();
-        let succ_div = div_of_dcg_alloc (&succ.loc, &node);
+        let node = dcg.table.get( &succ.loc ).unwrap();
+        let succ_div = div_of_dcg_alloc_edge (loc, &succ.loc, &node, succ.dirty);
         extent.push( succ_div )
       },
       Effect::Force => {
-        let succ_div = div_of_dcg_loc (dcg, visited, &succ.loc);
+        let succ_div = div_of_dcg_force_edge (loc, dcg, visited, &succ.loc, succ.dirty);
         extent.push( succ_div )
       }
     }     
   }
 }
 
-pub fn div_of_dcg_loc (dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc) -> Div {  
+pub fn div_of_dcg_force_edge (src:Option<&Loc>, dcg:&DCG, visited:&mut HashMap<Loc, ()>, loc:&Loc, is_dirty:bool) -> Div {  
   let mut div = Div {
-    tag:String::from("dcg-node"),
+    tag:String::from("dcg-force-edge"),
     text:None,
-    classes: vec![],
+    classes: vec![ 
+      if is_dirty { String::from("dirty") } else { String::from("clean") }, 
+      if src == None { String::from("editor-edge") } else { String::from("dcg-edge") },
+    ],    
     extent: Box::new(vec![ div_of_loc( loc ) ]),
   };
   visited.insert( loc.clone(), () );
-  match dcg.table.get( loc ) {
+  let no_extent = match dcg.table.get( loc ) {
     None => panic!("dangling pointer in reflected DCG!"),
     Some( nd ) => {
+      div.classes.push( class_of_dcg_node(nd) );
       match succs_of_node( nd ) {
-        None => (), // No succs; E.g., ref cells have no succs
-        Some( succs ) => { div_of_dcg_succs(dcg, visited, loc, succs, &mut div.extent) }
+        None => true, // No succs; E.g., ref cells have no succs
+        Some( succs ) => { 
+          div_of_dcg_succs(dcg, visited, Some(loc), succs, &mut div.extent);
+          false
+        }
       }
     }
   };
-  if div.extent.len() > 0 {
+  if no_extent {
     div.classes.push(String::from("no-extent"))
   };
   div
@@ -374,7 +387,14 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
             classes:vec![],
             extent: Box::new(vec![]),
           },
-          div_of_edge(&tr.edge),
+          // This is where the location (path and name) are DIV-ified
+          // If the effect is a CleanEval, then we should use the
+          // location at the *source* of the edge, which is the
+          // location we re-evaluate.
+          match tr.effect {            
+            trace::Effect::CleanEval => div_of_loc(&(tr.edge.loc.clone()).unwrap()),
+            _ => div_of_edge(&tr.edge)
+          }
         ])}
   ;
   match tr.effect {
@@ -489,9 +509,12 @@ pub fn write_lab_name<W:Write>(writer:&mut W, lab:&Box<Lab>, is_title:bool) {
 }
 
 pub fn write_dcg_tree<W:Write> (writer:&mut W, dcg:&DCG, traces:&Vec<trace::Trace>) {
-  for tr in traces.iter() {
-    div_of_dcg_loc(dcg, &mut HashMap::new(), &tr.edge.succ.loc)
-      .write_html(writer)
+  let mut visited = HashMap::new();
+  let mut extent : Vec<_> = Vec::new();
+  let succs : Vec<_> = traces.iter().map(|t| t.edge.succ.clone()).collect();
+  div_of_dcg_succs(dcg, &mut visited, None, &succs, &mut extent);
+  for d in extent.iter() {
+    d.write_html(writer);
   }
 }
 
@@ -557,16 +580,18 @@ pub fn write_sample_dcg<W:Write>
     Some(ref dcg_post_edit) => {
       match prev_sample {
         Some(ref prev_sample) => {
-          // // 0/4: alloc tree for compute, after this edit, but before the update
-          // writeln!(writer, "<div class=\"archivist-dcg-tree-post-edit\">").unwrap();
-          // writeln!(writer, "<div class=\"label\">{}</div>", "DCG, post-edit:").unwrap();
-          // write_dcg_tree
-          //   (writer, 
-          //    dcg_post_edit,
-          //    &prev_sample.dcg_sample.compute_output.reflect_traces,
-          //   );
-          // writeln!(writer, "</div>").unwrap();
-
+        
+          // // 0/4: dcg for compute, after this edit, but before the update
+          writeln!(writer, "<div class=\"archivist-dcg-tree-post-edit\">").unwrap();
+          writeln!(writer, "<div class=\"label\">{}</div>", "DCG, post-edit:").unwrap();
+          write_dcg_tree
+            (writer, 
+             dcg_post_edit,
+             &prev_sample.dcg_sample.compute_output.reflect_traces,
+            );
+          writeln!(writer, "</div>").unwrap();
+          
+          if false {
           // 1/4: alloc tree for compute, after this edit, but before the update
           writeln!(writer, "<div class=\"archivist-alloc-tree-post-edit\">").unwrap();
           writeln!(writer, "<div class=\"label\">{}</div>", "Allocs, post-edit:").unwrap();
@@ -588,10 +613,12 @@ pub fn write_sample_dcg<W:Write>
              Effect::Force,         
             );
           writeln!(writer, "</div>").unwrap();
+          }
+
         },    
         _ => {
-          //writeln!(writer,"<div class=\"archivist-alloc-tree-post-edit\"></div>").unwrap();
-          //writeln!(writer,"<div class=\"archivist-force-tree-post-edit\"></div>").unwrap();
+          writeln!(writer,"<div class=\"archivist-alloc-tree-post-edit\"></div>").unwrap();
+          writeln!(writer,"<div class=\"archivist-force-tree-post-edit\"></div>").unwrap();
         }}
     },    
     _ => {
@@ -604,7 +631,18 @@ pub fn write_sample_dcg<W:Write>
  
   match this_sample.dcg_sample.compute_output.reflect_dcg {
     Some(ref dcg_post_update) => {
+
+      // // 0/4: dcg for compute, after this edit, but before the update
+      writeln!(writer, "<div class=\"archivist-dcg-tree-post-update\">").unwrap();
+      writeln!(writer, "<div class=\"label\">{}</div>", "DCG, post-compute:").unwrap();
+      write_dcg_tree
+        (writer, 
+         dcg_post_update,
+         &this_sample.dcg_sample.compute_output.reflect_traces,
+        );
+      writeln!(writer, "</div>").unwrap();
       
+      if false {
       // 3/4: alloc tree for compute, after the update
       writeln!(writer, "<div class=\"archivist-alloc-tree-post-update\">").unwrap();
       writeln!(writer, "<div class=\"label\">{}</div>", "Allocs, post-update:").unwrap();
@@ -626,6 +664,7 @@ pub fn write_sample_dcg<W:Write>
          Effect::Force,         
         );
       writeln!(writer, "</div>").unwrap();
+      }
       
       write_cr(writer);
     },    
@@ -911,6 +950,8 @@ hr {
 
 .input-value, 
 .output-value,
+.archivist-dcg-tree-post-edit,
+.archivist-dcg-tree-post-update,
 .traces-box,
 .archivist-alloc-tree-post-edit,
 .archivist-force-tree-post-edit, 
@@ -939,22 +980,22 @@ hr {
   width: 99%;
 }
 .archivist-dcg-tree-post-edit,
-.archivist-dcg-tree-post-update,
+.archivist-dcg-tree-post-update {
+  width: 49%;
+}
 .archivist-alloc-tree-post-edit,
 .archivist-force-tree-post-edit, 
 .archivist-alloc-tree-post-update, 
-.archivist-force-tree-post-update  
-{
+.archivist-force-tree-post-update {
   width: 24%;
 }
-
 .tool-label-toggles {
   display: block;
   float: right;
 }
 
 
-.trace, .force-tree, .alloc-tree {
+.trace, .force-tree, .alloc-tree, .dcg-alloc-edge, .dcg-force-edge {
   color: black;
   display: inline-block;
   border-style: solid;
@@ -965,6 +1006,30 @@ hr {
   margin: 1px;
   border-radius: 5px;
 }
+
+.dcg-force-edge {
+  border-color: blue;
+  border-width: 1px;
+}
+.dcg-node-comp {
+  background: #ccccff;
+  padding: 0px;
+}
+.dcg-node-ref {
+  border-radius: 0px;
+}
+.dcg-alloc-edge {
+  border-color: green;
+  background: #ccffcc;
+  border-width: 1px;
+  padding: 3px;
+}
+.dirty {
+  border-width: 2px;
+  border-color: red;
+  background: #ffcccc;
+}
+
 .tr-effect { 
   display: inline;
   display: none;
