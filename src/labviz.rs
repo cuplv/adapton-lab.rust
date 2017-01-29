@@ -557,15 +557,15 @@ pub fn write_sample_dcg<W:Write>
     Some(ref dcg_post_edit) => {
       match prev_sample {
         Some(ref prev_sample) => {
-          // 0/4: alloc tree for compute, after this edit, but before the update
-          writeln!(writer, "<div class=\"archivist-dcg-tree-post-edit\">").unwrap();
-          writeln!(writer, "<div class=\"label\">{}</div>", "DCG, post-edit:").unwrap();
-          write_dcg_tree
-            (writer, 
-             dcg_post_edit,
-             &prev_sample.dcg_sample.compute_output.reflect_traces,
-            );
-          writeln!(writer, "</div>").unwrap();
+          // // 0/4: alloc tree for compute, after this edit, but before the update
+          // writeln!(writer, "<div class=\"archivist-dcg-tree-post-edit\">").unwrap();
+          // writeln!(writer, "<div class=\"label\">{}</div>", "DCG, post-edit:").unwrap();
+          // write_dcg_tree
+          //   (writer, 
+          //    dcg_post_edit,
+          //    &prev_sample.dcg_sample.compute_output.reflect_traces,
+          //   );
+          // writeln!(writer, "</div>").unwrap();
 
           // 1/4: alloc tree for compute, after this edit, but before the update
           writeln!(writer, "<div class=\"archivist-alloc-tree-post-edit\">").unwrap();
@@ -671,7 +671,7 @@ pub fn write_lab_results(_params:&LabParams, lab:&Box<Lab>, results:&LabResults)
 
     writeln!(writer, "<div class=\"editor\">").unwrap();
     
-    if false {
+    if true {
     writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.dcg_sample.process_input.time_ns).unwrap();    
     }
@@ -679,14 +679,14 @@ pub fn write_lab_results(_params:&LabParams, lab:&Box<Lab>, results:&LabResults)
 
     writeln!(writer, "<div class=\"archivist\">").unwrap();
 
-    if false {
+    if true {
     writeln!(writer, "<div class=\"row\">").unwrap();
     
     writeln!(writer, "<div class=\"time-ns-lab\">Naive time (ns): <div class=\"time-ns\">{:?}</div></div>", 
              sample.naive_sample.compute_output.time_ns).unwrap();    
 
     writeln!(writer, "<div class=\"time-ms-lab\">Naive time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
-             2, (sample.naive_sample.compute_output.time_ns as f64) / (1000000 as f64)).unwrap();    
+             2, (sample.naive_sample.compute_output.time_ns as f64) / (1000_000 as f64)).unwrap();
     writeln!(writer, "</div>").unwrap();
              
     writeln!(writer, "<div class=\"row\">").unwrap();
@@ -694,7 +694,7 @@ pub fn write_lab_results(_params:&LabParams, lab:&Box<Lab>, results:&LabResults)
              sample.dcg_sample.compute_output.time_ns).unwrap();    
 
     writeln!(writer, "<div class=\"time-ms-lab\">DCG time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
-             2, (sample.dcg_sample.compute_output.time_ns as f64) / (1000000 as f64)).unwrap();    
+             2, (sample.dcg_sample.compute_output.time_ns as f64) / (1000_000 as f64)).unwrap();
     writeln!(writer, "</div>").unwrap();
     
     if sample.naive_sample.compute_output.time_ns <
