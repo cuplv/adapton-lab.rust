@@ -391,8 +391,9 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
           // If the effect is a CleanEval, then we should use the
           // location at the *source* of the edge, which is the
           // location we re-evaluate.
-          match tr.effect {            
-            trace::Effect::CleanEval => div_of_loc(&(tr.edge.loc.clone()).unwrap()),
+          match (tr.effect.clone(), tr.edge.loc.clone()) {            
+            (trace::Effect::CleanEval, Some(loc)) => div_of_loc(&loc),
+            // TODO: Figure out why/when we get None here; seems like a reflection issue in the Engine
             _ => div_of_edge(&tr.edge)
           }
         ])}
@@ -1028,6 +1029,10 @@ hr {
   border-width: 2px;
   border-color: red;
   background: #ffcccc;
+}
+.editor-edge {
+  border-width: 2px;
+  border-color: black;
 }
 
 .tr-effect { 
