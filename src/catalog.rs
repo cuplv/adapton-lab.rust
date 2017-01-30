@@ -181,6 +181,18 @@ impl Generate<List<usize>> for EditorOopsla2015Sec2 {
     let l = list_art( cell( name_of_str("a"), l) );
     let l = list_name( name_of_str("alpha"), l );
     let l = list_cons(0, l);
+
+    let l = list_art( cell( name_of_str("z"), l) );
+    let l = list_name( name_of_str("zeta"), l );
+    let l = list_cons(99, l);
+
+    let l = list_art( cell( name_of_str("y"), l) );
+    let l = list_name( name_of_str("yellow"), l );
+    let l = list_cons(98, l);
+
+    let l = list_art( cell( name_of_str("x"), l) );
+    let l = list_name( name_of_str("xray"), l );
+    let l = list_cons(97, l);
     l
   }
 }
@@ -191,7 +203,10 @@ impl Edit<List<usize>,usize> for EditorOopsla2015Sec2 {
   fn edit<R:Rng>(list:List<usize>, i:usize,
                  _rng:&mut R, _params:&GenerateParams) -> (List<usize>, usize) {
     if i == 0 {
-      let a = match list      { List::Cons(_, box List::Name(_, box List::Art(ref a))) => a.clone(), _ => unreachable!() };
+      let x = match list      { List::Cons(_, box List::Name(_, box List::Art(ref x))) => x.clone(), _ => unreachable!() };
+      let y = match force(&x) { List::Cons(_, box List::Name(_, box List::Art(ref y))) => y.clone(), _ => unreachable!() };
+      let z = match force(&y) { List::Cons(_, box List::Name(_, box List::Art(ref z))) => z.clone(), _ => unreachable!() };
+      let a = match force(&z) { List::Cons(_, box List::Name(_, box List::Art(ref a))) => a.clone(), _ => unreachable!() };
       let b = match force(&a) { List::Cons(_, box List::Name(_, box List::Art(ref b))) => b.clone(), _ => unreachable!() };
       let l = force(&b);
 
@@ -216,6 +231,19 @@ impl Edit<List<usize>,usize> for EditorOopsla2015Sec2 {
         let l = list_art( cell( name_of_str("a"), l) );
         let l = list_name( name_of_str("alpha"), l );
         let l = list_cons(0, l);
+        
+        let l = list_art( cell( name_of_str("z"), l) );
+        let l = list_name( name_of_str("zeta"), l );
+        let l = list_cons(99, l);
+        
+        let l = list_art( cell( name_of_str("y"), l) );
+        let l = list_name( name_of_str("yellow"), l );
+        let l = list_cons(98, l);
+
+        let l = list_art( cell( name_of_str("x"), l) );
+        let l = list_name( name_of_str("xray"), l );
+        let l = list_cons(97, l);
+
         return (l, 1)
       } else {
         // DCG only: The `set` operation is not supported by Naive
@@ -345,6 +373,8 @@ impl Edit<List<Pt2D>,usize> for UniformPrepend<List<Pt2D>,usize> { // TODO
 pub struct LazyMap { }
 #[derive(Clone,Debug)]
 pub struct EagerMap { }
+#[derive(Clone,Debug)]
+pub struct EagerMap2 { }
 
 #[derive(Clone,Debug)]
 pub struct LazyFilter { }
@@ -385,6 +415,12 @@ pub struct RazMax {}
 impl Compute<List<usize>,List<usize>> for EagerMap {
   fn compute(inp:List<usize>) -> List<usize> {
     list_map_eager(inp,Rc::new(|x| x * x))
+  }
+}
+
+impl Compute<List<usize>,List<usize>> for EagerMap2 {
+  fn compute(inp:List<usize>) -> List<usize> {
+    list_map_eager2(inp,Rc::new(|x| x * x))
   }
 }
 
@@ -602,6 +638,13 @@ pub fn all_labs() -> Vec<Box<Lab>> {
             List<usize>,
             EditorOopsla2015Sec2,
             EagerMap)
+      ,
+    labdef!(name_of_str("eg-oopsla2015-sec2-v2"),
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EditorOopsla2015Sec2.html")),
+            List<usize>, usize,
+            List<usize>,
+            EditorOopsla2015Sec2,
+            EagerMap2)
       ,
 
     labdef!(name_of_str("list-lazy-map"),
