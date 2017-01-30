@@ -149,8 +149,9 @@ impl Compute<Art<i32>, Art<i32>> for ExampleCleanDirty {
 
 
 
-/// Example from _Incremental Computation with Names_ (2015), Section 2 (Figs 1 and 2) 
-/// ==================================================================================
+/// This list editor mimics the editor in the example from
+/// _Incremental Computation with Names_ (2015), Section 2 (Figs 1 and
+/// 2).
 ///
 /// This `generate` function creates the three-element, three-name,
 /// three-ref-cell list in the first parts of Figures 1 and Figure 2.
@@ -257,6 +258,142 @@ impl Edit<List<usize>,usize> for EditorOopsla2015Sec2 {
     else {
       // No more changes.
       (list, i)
+    }
+  }
+}
+
+/// This `list_map` implementation and its `List<_>` datatype follow
+/// the code listing in Section 2 of _Incremental Computation with
+/// Names_ (OOPSLA 2015).
+///
+/// _Aside_: Compared to the version of `List<_>` in the Adapton
+/// collections library, this version is simpler: It assumes only two
+/// constructors, `Nil` and `Cons`, and that every list element has an
+/// associated name and reference cell.
+///
+/// This `generate` function creates the three-element, three-name,
+/// three-ref-cell list in the first parts of Figures 1 and Figure 2.
+///
+/// This `edit` function implements the single insertion of `Cons(2,
+/// ...)` into the generated list, as per the second parts of Figures
+/// 1 and 2.  (It only performs this one edit, and performs no other
+/// actions later).  This code shows two ways of inserting a new
+/// element (and name and ref cell) into the list: The "functional"
+/// way, and the imperative way.  The use of names here bridges the
+/// gap, permitting the functional approach to express the mutation in
+/// the imperative approach.
+/// 
+pub mod oopsla2015_sec2 {
+  use super::*;
+  use std::hash::Hash;
+  use std::fmt::Debug;
+  use std::rc::Rc;
+  use adapton::macros::* ;
+  use adapton::engine::* ;
+  
+  /// `Cons` cells carry an element, name and reference cell for the rest of the list.
+  #[derive(Debug,PartialEq,Eq,Hash,Clone)]
+  pub enum List<X> {
+    Nil,
+    Cons(X, Name, Art<List<X>>)
+  }
+  
+  #[derive(Clone,Debug)]
+  pub struct Editor { } 
+
+  #[derive(Clone,Debug)]
+  pub struct Archivist { } 
+  
+  /// List map, as shown in 'Incremental Computation with Names',
+  /// Section 2:
+  pub fn list_map<X:Eq+Clone+Hash+Debug+'static,
+                  Y:Eq+Clone+Hash+Debug+'static,
+                  F:'static>
+    (inp: List<X>, f:Rc<F>) -> List<Y> 
+    where F:Fn(X) -> Y 
+  {
+    match inp {
+      List::Nil => List::Nil,
+      List::Cons(x, nm, xs) => {
+        memo!(nm.clone() =>> list_map_cons =>> <X,Y,F>, 
+              x:x, nm:nm, xs:xs 
+              ;; 
+              f:f)
+      }
+    }
+  }
+
+  /// This is the code that we memoize each time we see a name in a
+  /// `Cons` cell.  We identify this memo point using the names from
+  /// the list.
+  pub fn list_map_cons<X:Eq+Clone+Hash+Debug+'static,
+                       Y:Eq+Clone+Hash+Debug+'static,
+                       F:'static>
+    (x:X, nm:Name, xs: Art<List<X>>, f:Rc<F>) -> List<Y> 
+    where F:Fn(X) -> Y 
+  {    
+    let (nm1, nm2) = name_fork(nm);
+    let y = f(x);
+    let rest = list_map(force(&xs), f);
+    List::Cons(y, nm1, cell(nm2, rest))
+  }
+
+  impl Compute<List<usize>, List<usize>> for Archivist {
+    fn compute(inp:List<usize>) -> List<usize> { list_map(inp, Rc::new(|x| x * x)) }
+  }
+
+  impl Generate<List<usize>> for Editor {
+    fn generate<R:Rng> (_rng:&mut R, _params:&GenerateParams) -> List<usize> {
+      let l = List::Nil;
+      let l = List::Cons(3, name_of_str("delta"), cell(name_of_str("d"), l));
+      let l = List::Cons(1, name_of_str("beta"), cell(name_of_str("b"), l));
+      let l = List::Cons(0, name_of_str("alpha"), cell(name_of_str("a"), l));
+      l
+    }
+  }
+  impl Edit<List<usize>,usize> for Editor {
+    fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 
+      return 0
+    }
+    fn edit<R:Rng>(list:List<usize>, i:usize,
+                   _rng:&mut R, _params:&GenerateParams) -> (List<usize>, usize) {
+      if i == 0 {
+        let a = match list.clone() { List::Cons(_, _, a) => a.clone(), _ => unreachable!() };
+        let b = match force(&a)    { List::Cons(_, _, b) => b.clone(), _ => unreachable!() };
+        let l = force(&b);
+        
+        // Create the new Cons cell, new name and new ref cell, which
+        // points at the tail of the existing list, `b`, above.
+        let l = List::Cons(2, name_of_str("gamma"), cell(name_of_str("c"), l));
+        
+        // The following ways of mutating cell b are equivalent for the
+        // DCG, though only the first way is defined for the Naive
+        // engine:
+        if true {
+          // Mutate the cell called 'b' to hold this new list:
+          let l = cell(name_of_str("b"), l);
+          
+          // The rest of this is copied from the Generate impl.  We have
+          // to do these steps to keep the Naive version (which does not
+          // have a store) in sync with the DCG's input (which need not do
+          // these steps):        
+          let l = List::Cons(1, name_of_str("beta"), l);
+          let l = List::Cons(0, name_of_str("alpha"), cell(name_of_str("a"), l));
+          
+          return (l, 1)
+        } else {
+          // DCG only: The `set` operation is not supported by Naive
+          // computation, since in the Naive computation, articulations
+          // are just (immutable) reference cells holding values or
+          // suspended computations.
+          set(&b, l);
+          return (list, i);
+        }
+      }
+      else {
+        // No more changes.
+        (list, i)
+      }
     }
   }
 }
@@ -375,6 +512,8 @@ pub struct LazyMap { }
 pub struct EagerMap { }
 #[derive(Clone,Debug)]
 pub struct EagerMap2 { }
+#[derive(Clone,Debug)]
+pub struct SimpEagerMap { }
 
 #[derive(Clone,Debug)]
 pub struct LazyFilter { }
@@ -633,19 +772,28 @@ pub fn all_labs() -> Vec<Box<Lab>> {
       ,
 
     labdef!(name_of_str("eg-oopsla2015-sec2"),
+            Some(String::from("")),
+            oopsla2015_sec2::List<usize>, usize,
+            oopsla2015_sec2::List<usize>,
+            oopsla2015_sec2::Editor,
+            oopsla2015_sec2::Archivist)
+      ,
+
+    labdef!(name_of_str("eg-oopsla2015-sec2-rev1"),
             Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EditorOopsla2015Sec2.html")),
             List<usize>, usize,
             List<usize>,
             EditorOopsla2015Sec2,
             EagerMap)
       ,
-    labdef!(name_of_str("eg-oopsla2015-sec2-v2"),
+    labdef!(name_of_str("eg-oopsla2015-sec2-rev2"),
             Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EditorOopsla2015Sec2.html")),
             List<usize>, usize,
             List<usize>,
             EditorOopsla2015Sec2,
             EagerMap2)
       ,
+
 
     labdef!(name_of_str("list-lazy-map"),
             Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMap.html")),
