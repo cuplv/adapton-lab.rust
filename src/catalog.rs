@@ -258,19 +258,17 @@ impl Edit<RazTree<usize>, usize> for UniformInsert<RazTree<usize>, usize> {
   fn edit<R:Rng>(tree:RazTree<usize>, i:usize,
                  rng:&mut R, _params:&GenerateParams) -> (RazTree<usize>, usize) {
     let t = tree;
-    let mut n = i;
     let pos = rng.gen::<usize>() % ( i + 1 );
     let mut r = t.focus( pos ).unwrap();
     if i % _params.gauge == 0 {
-      r.archive_left( gen_level(rng), Some(name_of_usize(n)) );
-      n += 1;
+      r.archive_left( gen_level(rng), Some(name_of_usize(i)) );
     } else { } ;
     // use random data (numbers 1000-1999 )
     // r.push_left( rng.gen::<usize>() % 1000 + 1000 );
     // use the insertion count, marked by adding a million
     r.push_left( i + 1_000_000 );
     let t = r.unfocus();    
-    (t, n)
+    (t, i+1)
   }
 }
 
