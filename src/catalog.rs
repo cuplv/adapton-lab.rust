@@ -272,7 +272,31 @@ impl Edit<RazTree<usize>, usize> for UniformInsert<RazTree<usize>, usize> {
   }
 }
 
+#[derive(Clone,Debug)]
+pub struct UniformAppend<T,S> { t:PhantomData<T>, s:PhantomData<S> }
 
+impl<S> Generate<Vec<usize>> for UniformAppend<Vec<usize>, S> {
+  fn generate<R:Rng> (_rng:&mut R, params:&GenerateParams) -> Vec<usize> {
+    let mut v = Vec::new();
+    for i in 0..params.size {
+      v.push(i);
+    }
+    v
+  }
+}
+
+impl Edit<Vec<usize>,usize> for UniformAppend<Vec<usize>,usize> {
+  fn edit_init<R:Rng>(_rng:&mut R, params:&GenerateParams) -> usize {
+    params.size
+  }
+  fn edit<R:Rng>(
+    mut vec: Vec<usize>, i: usize,
+    _rng:&mut R, _params:&GenerateParams
+  ) -> (Vec<usize>, usize) {
+    vec.push(i);
+    (vec, i+1)
+  }
+}
 
 #[derive(Clone,Debug)]
 pub struct UniformPrepend<T,S> { t:PhantomData<T>, s:PhantomData<S> }
@@ -383,6 +407,9 @@ pub struct Quickhull { }
 
 #[derive(Clone,Debug)]
 pub struct RazMax {}
+
+#[derive(Clone,Debug)]
+pub struct VecMax {}
 
 impl Compute<List<usize>,List<usize>> for EagerMap {
   fn compute(inp:List<usize>) -> List<usize> {
@@ -543,6 +570,12 @@ impl Compute<RazTree<usize>,usize> for RazMax {
   fn compute(inp:RazTree<usize>) -> usize {
     let max = inp.fold_up(Rc::new(|e:&usize|*e),Rc::new(|e1:usize,e2:usize|::std::cmp::max(e1,e2)));
     max.unwrap_or(0)
+  }
+}
+
+impl Compute<Vec<usize>,usize> for VecMax {
+  fn compute(inp:Vec<usize>) -> usize {
+    *(inp.iter().max().unwrap_or(&0))
   }
 }
 
@@ -716,6 +749,13 @@ pub fn all_labs() -> Vec<Box<Lab>> {
             usize,
             UniformInsert<_,_>,
             RazMax)
+      ,
+    labdef!(name_of_str("vec-max"),
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.VecMax.html")),
+            Vec<usize>, usize,
+            usize,
+            UniformAppend<_,_>,
+            VecMax)
       ,
     // labdef!(name_of_str("list-quickhull"),
     //               List<Pt2D>, usize,
