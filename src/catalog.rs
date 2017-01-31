@@ -262,6 +262,9 @@ impl Edit<List<usize>,usize> for EditorOopsla2015Sec2 {
   }
 }
 
+/// Program `list_map` running on a small, changing input list.
+/// It is simpler than the version from the Adapton collections library.
+///
 /// This `list_map` implementation and its `List<_>` datatype follow
 /// the code listing in Section 2 of _Incremental Computation with
 /// Names_ (OOPSLA 2015).
@@ -297,10 +300,12 @@ pub mod oopsla2015_sec2 {
     Nil,
     Cons(X, Name, Art<List<X>>)
   }
-  
+
+  /// The _Editor_ in this example generates a three-element initial list, then inserts an additional element.
   #[derive(Clone,Debug)]
   pub struct Editor { } 
 
+  /// The _Archivist_ in this example maps the input list to an output list, using the names of the input list.
   #[derive(Clone,Debug)]
   pub struct Archivist { } 
   
