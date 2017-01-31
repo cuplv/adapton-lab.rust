@@ -406,9 +406,11 @@ pub mod oopsla2015_sec2 {
 impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
   fn generate<R:Rng> (rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
     let mut r = Raz::new();
+    let mut n = 0;
     for i in 0..params.size {
       if i % params.gauge == 0 {
-        r.archive_left( gen_level(rng) );
+        r.archive_left( gen_level(rng),  Some(name_of_usize(n)));
+        n += 1;
       } else { } ;
       // use random data (numbers 1000-1999 )
       // r.push_left( rng.gen::<usize>() % 1000 + 1000 );
@@ -429,14 +431,14 @@ impl Edit<RazTree<usize>, usize> for UniformInsert<RazTree<usize>, usize> {
     let pos = rng.gen::<usize>() % ( i + 1 );
     let mut r = t.focus( pos ).unwrap();
     if i % _params.gauge == 0 {
-      r.archive_left( gen_level(rng) );
+      r.archive_left( gen_level(rng), Some(name_of_usize(i)) );
     } else { } ;
     // use random data (numbers 1000-1999 )
     // r.push_left( rng.gen::<usize>() % 1000 + 1000 );
     // use the insertion count, marked by adding a million
     r.push_left( i + 1_000_000 );
     let t = r.unfocus();    
-    (t, i + 1)
+    (t, i+1)
   }
 }
 
@@ -719,7 +721,7 @@ impl Compute<List<Pt2D>,List<Pt2D>> for Quickhull {
 
 impl Compute<RazTree<usize>,usize> for RazMax {
   fn compute(inp:RazTree<usize>) -> usize {
-    let max = inp.fold_up(|e|*e,|e1,e2|::std::cmp::max(e1,e2));
+    let max = inp.fold_up(Rc::new(|e:&usize|*e),Rc::new(|e1:usize,e2:usize|::std::cmp::max(e1,e2)));
     max.unwrap_or(0)
   }
 }
