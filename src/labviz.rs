@@ -677,8 +677,13 @@ pub fn write_sample_dcg<W:Write>
 
 }
 
-pub fn write_lab_results(_params:&LabParams, lab:&Box<Lab>, results:&LabResults) {
+pub fn write_lab_results(params:&LabParams, lab:&Box<Lab>, results:&LabResults) {
   
+  // If we are reflecting the trace, do not bother writing out the
+  // times; the purpose was probably visualization.
+  // TODO: Make this logic better.
+  let write_times = if params.sample_params.reflect_trace { false } else { true };    
+
   let labname = string_of_name( &lab.name() );
   //let laburl  = lab.url();
 
@@ -689,18 +694,15 @@ pub fn write_lab_results(_params:&LabParams, lab:&Box<Lab>, results:&LabResults)
   fs::create_dir_all(format!("lab-results/{}/", labname)).unwrap();
   let f = File::create(format!("lab-results/{}/index.html", labname)).unwrap();
   let mut writer = BufWriter::new(f);
-
-  writeln!(writer, "{}", style_string()).unwrap();
-  
+  writeln!(writer, "{}", style_string()).unwrap();  
   writeln!(writer, "<a href=\"../index.html\">↰ Results summary</a>").unwrap();
   write_cr(&mut writer);
-
   write_lab_name(&mut writer, lab, true);
-
-  writeln!(writer, "<div style=\"font-size:12px\" class=\"batch-name\"> step</div>").unwrap();
-  writeln!(writer, "<div style=\"font-size:20px\" class=\"editor\">Editor</div>").unwrap();
-  writeln!(writer, "<div style=\"font-size:20px\" class=\"archivist\">Archivist</div>").unwrap();
-  
+  writeln!(writer, "<div style=\"font-size:12px\" class=\"batch-name\"> step</div>").unwrap();  
+  if write_times {
+    writeln!(writer, "<div style=\"font-size:20px\" class=\"editor\">Editor</div>").unwrap();
+    writeln!(writer, "<div style=\"font-size:20px\" class=\"archivist\">Archivist</div>").unwrap();
+  }  
   let mut prev_sample = None;
   for sample in results.samples.iter() {
     write_cr(&mut writer);
@@ -708,50 +710,48 @@ pub fn write_lab_results(_params:&LabParams, lab:&Box<Lab>, results:&LabResults)
     // 0. Write batch name (a counter); and write timing information for this edit batch.
     writeln!(writer, "<div class=\"batch-name-lab\">batch name<div class=\"batch-name\">{:?}</div></div>", 
              sample.batch_name).unwrap();
-
-    writeln!(writer, "<div class=\"editor\">").unwrap();
     
-    if true {
-    writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
-             sample.dcg_sample.process_input.time_ns).unwrap();    
+    if write_times {
+      writeln!(writer, "<div class=\"editor\">").unwrap();
+      
+      writeln!(writer, "<div class=\"time-ns-lab\">time (ns): <div class=\"time-ns\">{:?}</div></div>", 
+               sample.dcg_sample.process_input.time_ns).unwrap();    
+      writeln!(writer, "</div>").unwrap();
+      
+      writeln!(writer, "<div class=\"archivist\">").unwrap();
+      
+      writeln!(writer, "<div class=\"row\">").unwrap();
+      
+      writeln!(writer, "<div class=\"time-ns-lab\">Naive time (ns): <div class=\"time-ns\">{:?}</div></div>", 
+               sample.naive_sample.compute_output.time_ns).unwrap();    
+      
+      writeln!(writer, "<div class=\"time-ms-lab\">Naive time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
+               2, (sample.naive_sample.compute_output.time_ns as f64) / (1000_000 as f64)).unwrap();
+      writeln!(writer, "</div>").unwrap();
+      
+      writeln!(writer, "<div class=\"row\">").unwrap();
+      writeln!(writer, "<div class=\"time-ns-lab\">DCG time (ns): <div class=\"time-ns\">{:?}</div></div>", 
+               sample.dcg_sample.compute_output.time_ns).unwrap();    
+      
+      writeln!(writer, "<div class=\"time-ms-lab\">DCG time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
+               2, (sample.dcg_sample.compute_output.time_ns as f64) / (1000_000 as f64)).unwrap();
+      writeln!(writer, "</div>").unwrap();
+      
+      if sample.naive_sample.compute_output.time_ns <
+        sample.dcg_sample.compute_output.time_ns {
+          writeln!(writer, "<div class=\"overhead-lab\">DCG Overhead: <div class=\"overhead\">{:.*}</div></div>", 
+                   2, ( (sample.dcg_sample.compute_output.time_ns  as f64) / 
+                         (sample.naive_sample.compute_output.time_ns as f64) )).unwrap();      
+        } else {      
+          writeln!(writer, "<div class=\"speedup-lab\">DCG Speedup: <div class=\"speedup\">{:.*}</div></div>", 
+                   2, ( (sample.naive_sample.compute_output.time_ns  as f64) / 
+                         (sample.dcg_sample.compute_output.time_ns as f64) )).unwrap();
+        }    
+      
+      writeln!(writer, "</div>").unwrap();
+      write_cr(&mut writer);    
     }
-    writeln!(writer, "</div>").unwrap();
 
-    writeln!(writer, "<div class=\"archivist\">").unwrap();
-
-    if true {
-    writeln!(writer, "<div class=\"row\">").unwrap();
-    
-    writeln!(writer, "<div class=\"time-ns-lab\">Naive time (ns): <div class=\"time-ns\">{:?}</div></div>", 
-             sample.naive_sample.compute_output.time_ns).unwrap();    
-
-    writeln!(writer, "<div class=\"time-ms-lab\">Naive time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
-             2, (sample.naive_sample.compute_output.time_ns as f64) / (1000_000 as f64)).unwrap();
-    writeln!(writer, "</div>").unwrap();
-             
-    writeln!(writer, "<div class=\"row\">").unwrap();
-    writeln!(writer, "<div class=\"time-ns-lab\">DCG time (ns): <div class=\"time-ns\">{:?}</div></div>", 
-             sample.dcg_sample.compute_output.time_ns).unwrap();    
-
-    writeln!(writer, "<div class=\"time-ms-lab\">DCG time (ms): <div class=\"time-ms\">{:.*}</div></div>", 
-             2, (sample.dcg_sample.compute_output.time_ns as f64) / (1000_000 as f64)).unwrap();
-    writeln!(writer, "</div>").unwrap();
-    
-    if sample.naive_sample.compute_output.time_ns <
-      sample.dcg_sample.compute_output.time_ns {
-      writeln!(writer, "<div class=\"overhead-lab\">DCG Overhead: <div class=\"overhead\">{:.*}</div></div>", 
-             2, ( (sample.dcg_sample.compute_output.time_ns  as f64) / 
-                   (sample.naive_sample.compute_output.time_ns as f64) )).unwrap();      
-    } else {      
-      writeln!(writer, "<div class=\"speedup-lab\">DCG Speedup: <div class=\"speedup\">{:.*}</div></div>", 
-             2, ( (sample.naive_sample.compute_output.time_ns  as f64) / 
-                   (sample.dcg_sample.compute_output.time_ns as f64) )).unwrap();
-    }    
-    }
-
-    writeln!(writer, "</div>").unwrap();
-    write_cr(&mut writer);    
-    
     // 1. Write input,
     // 2. Write output,
     // 3. Write last DCG, after edit but before update.
