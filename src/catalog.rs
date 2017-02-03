@@ -559,6 +559,9 @@ pub struct Quickhull { }
 #[derive(Clone,Debug)]
 pub struct RazMax {}
 
+#[derive(Clone,Debug)]
+pub struct RazDouble {}
+
 /// Native Rust lab that finds the maximum random integer in an array.
 #[derive(Clone,Debug)]
 pub struct VecMax { }
@@ -751,6 +754,12 @@ impl Compute<RazTree<usize>,usize> for RazMax {
   fn compute(inp:RazTree<usize>) -> usize {
     let max = inp.fold_up(Rc::new(|e:&usize|*e),Rc::new(|e1:usize,e2:usize|::std::cmp::max(e1,e2)));
     max.unwrap_or(0)
+  }
+}
+
+impl Compute<RazTree<usize>,RazTree<usize>> for RazDouble {
+  fn compute(inp:RazTree<usize>) -> RazTree<usize> {
+    inp.map(Rc::new(|e:&usize|*e*2))
   }
 }
 
@@ -947,6 +956,13 @@ pub fn all_labs() -> Vec<Box<Lab>> {
             usize,
             VecMax,
             VecMax)
+      ,
+    labdef!(name_of_str("raz-double"),
+            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.RazDouble.html")),
+            RazTree<usize>, usize,
+            RazTree<usize>,
+            UniformInsert<_,_>,
+            RazDouble)
       ,
     // labdef!(name_of_str("list-quickhull"),
     //               List<Pt2D>, usize,
