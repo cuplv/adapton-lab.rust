@@ -403,6 +403,143 @@ pub mod oopsla2015_sec2 {
   }
 }
 
+
+/// Hammer - CSCI 7000, Spring 2017
+/// ==============================
+///
+/// First homework assignment: #HW0
+/// -------------------------------
+/// 
+/// There are three functions below whose bodies consist of
+/// `panic!("TODO")`.  Using the types listed in their declarations,
+/// implement these functions.  You will find the `list_map` example
+/// from the `oopsla2015_sec2` module helpful, as a guide.
+///
+/// Test the behavior of your filter function, for instance:
+/// 
+/// ```
+/// cargo run -- -L hammer-s17-hw0-filter
+/// ```
+/// 
+/// 
+pub mod hammer_s17_hw0 {
+  use super::*;
+  use std::hash::Hash;
+  use std::fmt::Debug;
+  use std::rc::Rc;
+
+  /// `Cons` cells carry an element, name and reference cell for the rest of the list.
+  #[derive(Debug,PartialEq,Eq,Hash,Clone)]
+  pub enum List<X> {
+    Nil,
+    Cons(X, Name, Art<List<X>>)
+  }
+
+  /// List filter:
+  pub fn list_filter<X:Eq+Clone+Hash+Debug+'static,
+                     F:'static>
+    (inp: List<X>, f:Rc<F>) -> List<X> 
+    where F:Fn(X) -> bool
+  {
+    panic!("TODO")
+  }
+
+  /// List split:
+  pub fn list_split<X:Eq+Clone+Hash+Debug+'static,
+                    F:'static>
+    (inp: List<X>, f:Rc<F>) -> (List<X>, List<X>)
+    where F:Fn(X) -> bool
+  {
+    panic!("TODO")
+  }
+
+  /// List reverse:
+  pub fn list_reverse<X:Eq+Clone+Hash+Debug+'static>
+    (inp: List<X>) -> List<X>
+  {
+    panic!("TODO")
+  }
+
+
+  #[derive(Clone,Debug)]
+  pub struct RunFilter { } 
+  impl Compute<List<usize>, List<usize>> for RunFilter {
+    fn compute(inp:List<usize>) -> List<usize> { list_filter(inp, Rc::new(|x| x % 2 == 0)) }
+  }
+
+  #[derive(Clone,Debug)]
+  pub struct RunSplit { } 
+  impl Compute<List<usize>, (List<usize>, List<usize>)> for RunSplit {
+    fn compute(inp:List<usize>) -> (List<usize>,List<usize>) { list_split(inp, Rc::new(|x| x % 2 == 0)) }
+  }
+
+  #[derive(Clone,Debug)]
+  pub struct RunReverse { } 
+  impl Compute<List<usize>, List<usize>> for RunReverse {
+    fn compute(inp:List<usize>) -> List<usize> { list_reverse(inp) }
+  }  
+
+  /// The _Editor_ in this example generates a three-element initial list, then inserts an additional element.
+  /// It's the same as `oopsla2015_sec2::Editor`.
+  #[derive(Clone,Debug)]
+  pub struct Editor { } 
+
+  impl Generate<List<usize>> for Editor {
+    fn generate<R:Rng> (_rng:&mut R, _params:&GenerateParams) -> List<usize> {
+      let l = List::Nil;
+      let l = List::Cons(3, name_of_str("delta"), cell(name_of_str("d"), l));
+      let l = List::Cons(1, name_of_str("beta"), cell(name_of_str("b"), l));
+      let l = List::Cons(0, name_of_str("alpha"), cell(name_of_str("a"), l));
+      l
+    }
+  }
+  impl Edit<List<usize>,usize> for Editor {
+    fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 
+      return 0
+    }
+    fn edit<R:Rng>(list:List<usize>, i:usize,
+                   _rng:&mut R, _params:&GenerateParams) -> (List<usize>, usize) {
+      if i == 0 {
+        let a = match list.clone() { List::Cons(_, _, a) => a.clone(), _ => unreachable!() };
+        let b = match force(&a)    { List::Cons(_, _, b) => b.clone(), _ => unreachable!() };
+        let l = force(&b);
+        
+        // Create the new Cons cell, new name and new ref cell, which
+        // points at the tail of the existing list, `b`, above.
+        let l = List::Cons(2, name_of_str("gamma"), cell(name_of_str("c"), l));
+        
+        // The following ways of mutating cell b are equivalent for the
+        // DCG, though only the first way is defined for the Naive
+        // engine:
+        if true {
+          // Mutate the cell called 'b' to hold this new list:
+          let l = cell(name_of_str("b"), l);
+          
+          // The rest of this is copied from the Generate impl.  We have
+          // to do these steps to keep the Naive version (which does not
+          // have a store) in sync with the DCG's input (which need not do
+          // these steps):        
+          let l = List::Cons(1, name_of_str("beta"), l);
+          let l = List::Cons(0, name_of_str("alpha"), cell(name_of_str("a"), l));
+          
+          return (l, 1)
+        } else {
+          // DCG only: The `set` operation is not supported by Naive
+          // computation, since in the Naive computation, articulations
+          // are just (immutable) reference cells holding values or
+          // suspended computations.
+          set(&b, l);
+          return (list, i);
+        }
+      }
+      else {
+        // No more changes.
+        (list, i)
+      }
+    }
+  }
+}
+
 impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
   fn generate<R:Rng> (rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
     let mut r = Raz::new();
@@ -970,5 +1107,30 @@ pub fn all_labs() -> Vec<Box<Lab>> {
     //               UniformPrepend<_,_>,
     //               Quickhull)
     // ,
+
+    labdef!(name_of_str("hammer-s17-hw0-filter"),
+            Some(String::from("")),
+            hammer_s17_hw0::List<usize>, usize,
+            hammer_s17_hw0::List<usize>,
+            hammer_s17_hw0::Editor,
+            hammer_s17_hw0::RunFilter)
+      ,
+
+    labdef!(name_of_str("hammer-s17-hw0-split"),
+            Some(String::from("")),
+            hammer_s17_hw0::List<usize>, usize,
+            hammer_s17_hw0::List<usize>,
+            hammer_s17_hw0::Editor,
+            hammer_s17_hw0::RunFilter)
+      ,
+
+    labdef!(name_of_str("hammer-s17-hw0-reverse"),
+            Some(String::from("")),
+            hammer_s17_hw0::List<usize>, usize,
+            hammer_s17_hw0::List<usize>,
+            hammer_s17_hw0::Editor,
+            hammer_s17_hw0::RunFilter)
+      ,
+
   ]
 }
