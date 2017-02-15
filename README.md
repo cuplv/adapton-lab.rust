@@ -244,7 +244,7 @@ To visualize this behavior, try this command:
 
 ```
 cargo run -- --run-viz
-``
+```
 
 (Also: When no options are given to Adapton Lab, it defaults to this behavior.)
 
