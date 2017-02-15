@@ -212,6 +212,8 @@ impl<Input:Clone+Debug,EditSt,Output:Eq+Debug,
         //println!("{:?}", self.name());
         let sample = (&mut st).sample();
         //println!("{:?}", sample);        
+
+        // TODO: Dump to CSV/Tab-separated file; e.g., for GNUPLOT
         match sample {
           Some(s) => {st.samples.push(s); continue},
           None => break,
