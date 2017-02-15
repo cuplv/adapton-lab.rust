@@ -266,7 +266,7 @@ To run timing measurements on larger input sizes, try this command:
 
 ```
 cargo run -- --run-bench
-``
+```
 
 After it completes, inspect this directory of generated HTML:
 
