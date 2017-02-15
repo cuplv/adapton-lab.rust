@@ -241,6 +241,7 @@ the behavior of nominal memoization.
 
 
 To visualize this behavior, try this command:
+
 ```
 cargo run -- --run-viz
 ``
@@ -248,6 +249,7 @@ cargo run -- --run-viz
 (Also: When no options are given to Adapton Lab, it defaults to this behavior.)
 
 After the command completes, inspect this directory of generated HTML:
+
 ```
 open lab-results/index.html
 ```
@@ -261,11 +263,13 @@ measure the performance differences between running `Compute` naively
 and using nominal memoization.
 
 To run timing measurements on larger input sizes, try this command:
+
 ```
 cargo run -- --run-bench
 ``
 
 After it completes, inspect this directory of generated HTML:
+
 ```
 open lab-results/index.html
 ```
