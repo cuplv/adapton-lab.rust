@@ -540,6 +540,148 @@ pub mod hammer_s17_hw0 {
   }
 }
 
+
+/// Hammer - CSCI 7000, Spring 2017
+/// ==============================
+///
+/// First homework assignment: #HW1
+/// -------------------------------
+/// 
+/// There are five functions below whose bodies consist of
+/// `panic!("TODO")`.  Using the types listed in their declarations,
+/// implement these functions.
+///
+/// Test the behavior of your filter function, for instance:
+/// 
+/// ```
+/// cargo run -- -L hammer-s17-hw1-filter
+/// ```
+/// 
+/// 
+pub mod hammer_s17_hw1 {
+  use super::*;
+  use std::hash::Hash;
+  use std::fmt::Debug;
+  use std::rc::Rc;
+
+  /// Compared with `hw0`, `Cons` cells *only* carry an element;
+  /// `Name` and reference cell (`Art`) cases are separate from
+  /// `Cons`.
+  #[derive(Debug,PartialEq,Eq,Hash,Clone)]
+  pub enum List<X> {
+    Nil,
+    Cons(X, Box<List<X>>),
+    Name(Name, Box<List<X>>),
+    Art(Art<List<X>>),
+  }
+
+  /// List filter:
+  pub fn list_filter<X:Eq+Clone+Hash+Debug+'static,
+                     F:'static>
+    (inp: List<X>, f:Rc<F>) -> List<X> 
+    where F:Fn(X) -> bool
+  {
+    panic!("TODO")
+  }
+
+  /// List split:
+  pub fn list_split<X:Eq+Clone+Hash+Debug+'static,
+                    F:'static>
+    (inp: List<X>, f:Rc<F>) -> (List<X>, List<X>)
+    where F:Fn(X) -> bool
+  {
+    panic!("TODO")
+  }
+
+  /// List reverse:
+  pub fn list_reverse<X:Eq+Clone+Hash+Debug+'static>
+    (inp: List<X>) -> List<X>
+  {
+    panic!("TODO")
+  }
+
+  /// List join:
+  pub fn list_join<X:Eq+Clone+Hash+Debug+'static>
+    (inp: List<List<X>>) -> List<X>
+  {
+    panic!("TODO")
+  }
+
+  /// List singletons:
+  pub fn list_singletons<X:Eq+Clone+Hash+Debug+'static>
+    (inp: List<X>) -> List<List<X>>
+  {
+    panic!("TODO")
+  }
+
+
+  #[derive(Clone,Debug)]
+  pub struct RunFilter { } 
+  impl Compute<List<usize>, List<usize>> for RunFilter {
+    fn compute(inp:List<usize>) -> List<usize> { list_filter(inp, Rc::new(|x| x % 2 == 0)) }
+  }
+
+  #[derive(Clone,Debug)]
+  pub struct RunSplit { } 
+  impl Compute<List<usize>, (List<usize>, List<usize>)> for RunSplit {
+    fn compute(inp:List<usize>) -> (List<usize>,List<usize>) { list_split(inp, Rc::new(|x| x % 2 == 0)) }
+  }
+
+  #[derive(Clone,Debug)]
+  pub struct RunReverse { } 
+  impl Compute<List<usize>, List<usize>> for RunReverse {
+    fn compute(inp:List<usize>) -> List<usize> { list_reverse(inp) }
+  }  
+
+  #[derive(Clone,Debug)]
+  pub struct RunSingletons { } 
+  impl Compute<List<usize>, List<List<usize>>> for RunSingletons {
+    fn compute(inp:List<usize>) -> List<List<usize>> { list_singletons(inp) }
+  }  
+
+  #[derive(Clone,Debug)]
+  pub struct RunJoin { } 
+  impl Compute<List<List<usize>>, List<usize>> for RunJoin {
+    fn compute(inp:List<List<usize>>) -> List<usize> { list_join(inp) }
+  }  
+
+  #[derive(Clone,Debug)]
+  pub struct LLEditor { } 
+
+  #[derive(Clone,Debug)]
+  pub struct Editor { } 
+
+  impl Generate<List<usize>> for Editor {
+    fn generate<R:Rng> (_rng:&mut R, _params:&GenerateParams) -> List<usize> {
+      panic!("TODO: Hammer (2017-03-01)")
+    }
+  }
+  impl Edit<List<usize>,usize> for Editor {
+    fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 
+      return 0
+    }
+    fn edit<R:Rng>(list:List<usize>, i:usize,
+                   _rng:&mut R, _params:&GenerateParams) -> (List<usize>, usize) {
+      panic!("TODO: Hammer (2017-03-01)")
+    }
+  }
+
+  impl Generate<List<List<usize>>> for LLEditor {
+    fn generate<R:Rng> (_rng:&mut R, _params:&GenerateParams) -> List<List<usize>> {
+      panic!("TODO: Hammer (2017-03-01)")
+    }
+  }
+  impl Edit<List<List<usize>>,usize> for Editor {
+    fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 
+      return 0
+    }
+    fn edit<R:Rng>(list:List<List<usize>>, i:usize,
+                   _rng:&mut R, _params:&GenerateParams) -> (List<List<usize>>, usize) {
+      panic!("TODO: Hammer (2017-03-01)")
+    }
+  }
+}
+
 impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
   fn generate<R:Rng> (rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
     let mut r = Raz::new();
@@ -1108,6 +1250,9 @@ pub fn all_labs() -> Vec<Box<Lab>> {
     //               Quickhull)
     // ,
 
+    /* - - - - - - - - - - - - - - - - - - - - - - - - */   
+    /* Homework #0 */
+
     labdef!(name_of_str("hammer-s17-hw0-filter"),
             Some(String::from("")),
             hammer_s17_hw0::List<usize>, usize,
@@ -1131,6 +1276,49 @@ pub fn all_labs() -> Vec<Box<Lab>> {
             hammer_s17_hw0::Editor,
             hammer_s17_hw0::RunReverse)
       ,
+    
+    /* - - - - - - - - - - - - - - - - - - - - - - - - */   
+    /* Homework #1 */
+
+    labdef!(name_of_str("hammer-s17-hw1-filter"),
+            Some(String::from("")),
+            hammer_s17_hw1::List<usize>, usize,
+            hammer_s17_hw1::List<usize>,
+            hammer_s17_hw1::Editor,
+            hammer_s17_hw1::RunFilter)
+      ,
+
+    labdef!(name_of_str("hammer-s17-hw1-split"),
+            Some(String::from("")),
+            hammer_s17_hw1::List<usize>, usize,
+            (hammer_s17_hw1::List<usize>, hammer_s17_hw1::List<usize>),
+            hammer_s17_hw1::Editor,
+            hammer_s17_hw1::RunSplit)
+      ,
+
+    labdef!(name_of_str("hammer-s17-hw1-reverse"),
+            Some(String::from("")),
+            hammer_s17_hw1::List<usize>, usize,
+            hammer_s17_hw1::List<usize>,
+            hammer_s17_hw1::Editor,
+            hammer_s17_hw1::RunReverse)
+      ,
+
+    labdef!(name_of_str("hammer-s17-hw1-singletons"),
+            Some(String::from("")),
+            hammer_s17_hw1::List<usize>, usize,
+            hammer_s17_hw1::List<hammer_s17_hw1::List<usize>>,
+            hammer_s17_hw1::Editor,
+            hammer_s17_hw1::RunSingletons)
+      ,
+
+    // labdef!(name_of_str("hammer-s17-hw1-join"),
+    //         Some(String::from("")),
+    //         hammer_s17_hw1::List<hammer_s17_hw1::List<usize>>, usize,
+    //         hammer_s17_hw1::List<usize>,
+    //         hammer_s17_hw1::LLEditor,
+    //         hammer_s17_hw1::RunJoin)
+    //   ,
 
   ]
 }
