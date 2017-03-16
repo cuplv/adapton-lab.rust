@@ -5,8 +5,8 @@ use adapton::macros::*;
 use rand::{Rng};
 use std::marker::PhantomData;
 use std::rc::Rc;
-use pmfp_collections::inc_gauged_raz::{Raz,RazTree};
-use pmfp_collections::inc_tree_cursor::{gen_level};
+//use pmfp_collections::inc_gauged_raz::{Raz,RazTree};
+//use pmfp_collections::inc_tree_cursor::{gen_level};
 
 
 #[derive(Clone,Debug)]
@@ -682,44 +682,44 @@ pub mod hammer_s17_hw1 {
   }
 }
 
-impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
-  fn generate<R:Rng> (rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
-    let mut r = Raz::new();
-    let mut n = 0;
-    for i in 0..params.size {
-      if i % params.gauge == 0 {
-        r.archive_left( gen_level(rng),  Some(name_of_usize(n)));
-        n += 1;
-      } else { } ;
-      // use random data (numbers 1000-1999 )
-      // r.push_left( rng.gen::<usize>() % 1000 + 1000 );
-      // use the insertion count, marked by adding a million
-      r.push_left(i + 1_000_000);
-    }
-    r.unfocus()
-  }
-}
+// impl<S> Generate<RazTree<usize>> for UniformInsert<RazTree<usize>, S> {
+//   fn generate<R:Rng> (rng:&mut R, params:&GenerateParams) -> RazTree<usize> {
+//     let mut r = Raz::new();
+//     let mut n = 0;
+//     for i in 0..params.size {
+//       if i % params.gauge == 0 {
+//         r.archive_left( gen_level(rng),  Some(name_of_usize(n)));
+//         n += 1;
+//       } else { } ;
+//       // use random data (numbers 1000-1999 )
+//       // r.push_left( rng.gen::<usize>() % 1000 + 1000 );
+//       // use the insertion count, marked by adding a million
+//       r.push_left(i + 1_000_000);
+//     }
+//     r.unfocus()
+//   }
+// }
 
-impl Edit<RazTree<usize>, usize> for UniformInsert<RazTree<usize>, usize> {
-  fn edit_init<R:Rng>(_rng:&mut R, params:&GenerateParams) -> usize { 
-    return params.size // Initial editing state = The size of the generated input
-  }
-  fn edit<R:Rng>(tree:RazTree<usize>, i:usize,
-                 rng:&mut R, _params:&GenerateParams) -> (RazTree<usize>, usize) {
-    let t = tree;
-    let pos = rng.gen::<usize>() % ( i + 1 );
-    let mut r = t.focus( pos ).unwrap();
-    if i % _params.gauge == 0 {
-      r.archive_left( gen_level(rng), Some(name_of_usize(i)) );
-    } else { } ;
-    // use random data (numbers 1000-1999 )
-    // r.push_left( rng.gen::<usize>() % 1000 + 1000 );
-    // use the insertion count, marked by adding a million
-    r.push_left( i + 1_000_000 );
-    let t = r.unfocus();    
-    (t, i+1)
-  }
-}
+// impl Edit<RazTree<usize>, usize> for UniformInsert<RazTree<usize>, usize> {
+//   fn edit_init<R:Rng>(_rng:&mut R, params:&GenerateParams) -> usize { 
+//     return params.size // Initial editing state = The size of the generated input
+//   }
+//   fn edit<R:Rng>(tree:RazTree<usize>, i:usize,
+//                  rng:&mut R, _params:&GenerateParams) -> (RazTree<usize>, usize) {
+//     let t = tree;
+//     let pos = rng.gen::<usize>() % ( i + 1 );
+//     let mut r = t.focus( pos ).unwrap();
+//     if i % _params.gauge == 0 {
+//       r.archive_left( gen_level(rng), Some(name_of_usize(i)) );
+//     } else { } ;
+//     // use random data (numbers 1000-1999 )
+//     // r.push_left( rng.gen::<usize>() % 1000 + 1000 );
+//     // use the insertion count, marked by adding a million
+//     r.push_left( i + 1_000_000 );
+//     let t = r.unfocus();    
+//     (t, i+1)
+//   }
+// }
 
 
 
@@ -1029,18 +1029,18 @@ impl Compute<List<Pt2D>,List<Pt2D>> for Quickhull {
   }
 }
 
-impl Compute<RazTree<usize>,usize> for RazMax {
-  fn compute(inp:RazTree<usize>) -> usize {
-    let max = inp.fold_up(Rc::new(|e:&usize|*e),Rc::new(|e1:usize,e2:usize|::std::cmp::max(e1,e2)));
-    max.unwrap_or(0)
-  }
-}
+// impl Compute<RazTree<usize>,usize> for RazMax {
+//   fn compute(inp:RazTree<usize>) -> usize {
+//     let max = inp.fold_up(Rc::new(|e:&usize|*e),Rc::new(|e1:usize,e2:usize|::std::cmp::max(e1,e2)));
+//     max.unwrap_or(0)
+//   }
+// }
 
-impl Compute<RazTree<usize>,RazTree<usize>> for RazDouble {
-  fn compute(inp:RazTree<usize>) -> RazTree<usize> {
-    inp.map(Rc::new(|e:&usize|*e*2))
-  }
-}
+// impl Compute<RazTree<usize>,RazTree<usize>> for RazDouble {
+//   fn compute(inp:RazTree<usize>) -> RazTree<usize> {
+//     inp.map(Rc::new(|e:&usize|*e*2))
+//   }
+// }
 
 #[macro_export]
 macro_rules! labdef {
@@ -1221,28 +1221,28 @@ pub fn all_labs() -> Vec<Box<Lab>> {
             List<usize>,
             UniformPrepend<_,_>,
             ListReverse)
-      ,
-    labdef!(name_of_str("raz-max"),
-            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.RazMax.html")),
-            RazTree<usize>, usize,
-            usize,
-            UniformInsert<_,_>,
-            RazMax)
-      ,
-    labdef!(name_of_str("vec-max"),
-            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.VecMax.html")),
-            Vec<usize>, usize,
-            usize,
-            VecMax,
-            VecMax)
-      ,
-    labdef!(name_of_str("raz-double"),
-            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.RazDouble.html")),
-            RazTree<usize>, usize,
-            RazTree<usize>,
-            UniformInsert<_,_>,
-            RazDouble)
-      ,
+    ,
+    // labdef!(name_of_str("raz-max"),
+    //         Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.RazMax.html")),
+    //         RazTree<usize>, usize,
+    //         usize,
+    //         UniformInsert<_,_>,
+    //         RazMax)
+    //   ,
+    // labdef!(name_of_str("vec-max"),
+    //         Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.VecMax.html")),
+    //         Vec<usize>, usize,
+    //         usize,
+    //         VecMax,
+    //         VecMax)
+    //   ,
+    // labdef!(name_of_str("raz-double"),
+    //         Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.RazDouble.html")),
+    //         RazTree<usize>, usize,
+    //         RazTree<usize>,
+    //         UniformInsert<_,_>,
+    //         RazDouble)
+    //   ,
     // labdef!(name_of_str("list-quickhull"),
     //               List<Pt2D>, usize,
     //               List<Pt2D>,

@@ -18,7 +18,7 @@ git = "https://github.com/cuplv/adapton.rust.git"
 branch = "dev"
 # path = "/Users/hammer/adapton"
 
-[dependencies.pmfp-collections]
-git = "https://github.com/cuplv/pmfp-collections.rust.git"
-branch = "master"
-# path = "/Users/hammer/repo/pmfp-collections.rust"
+# [dependencies.pmfp-collections]
+# git = "https://github.com/cuplv/pmfp-collections.rust.git"
+# branch = "master"
+# # path = "/Users/hammer/repo/pmfp-collections.rust"

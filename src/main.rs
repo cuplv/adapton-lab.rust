@@ -15,7 +15,7 @@ extern crate clap;
 #[macro_use]
 extern crate adapton;
 
-extern crate pmfp_collections;
+//extern crate pmfp_collections;
 
 /// Defines lab parameters `LabParams` and `LabDef`, the parameters
 /// for running the test diagram from the [Adapton Lab
