@@ -351,7 +351,9 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
           trace::Effect::Dirty     => "tr-dirty",
           trace::Effect::Remove    => "tr-remove",
           trace::Effect::Alloc(trace::AllocCase::LocFresh,_)     => "tr-alloc-loc-fresh",
-          trace::Effect::Alloc(trace::AllocCase::LocExists,_)    => "tr-alloc-loc-exists",
+          //trace::Effect::Alloc(trace::AllocCase::LocExists,_)    => "tr-alloc-loc-exists",
+          trace::Effect::Alloc(trace::AllocCase::LocExists(trace::ChangeFlag::ContentSame),_) => "tr-alloc-loc-exists-same",
+          trace::Effect::Alloc(trace::AllocCase::LocExists(trace::ChangeFlag::ContentDiff),_) => "tr-alloc-loc-exists-diff",
           trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "tr-force-compcache-miss",
           trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "tr-force-compcache-hit",
           trace::Effect::Force(trace::ForceCase::RefGet)         => "tr-force-refget",
@@ -369,7 +371,9 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
                 trace::Effect::Dirty     => "Dirty",
                 trace::Effect::Remove    => "Remove",
                 trace::Effect::Alloc(trace::AllocCase::LocFresh,_)     => "Alloc(LocFresh)",
-                trace::Effect::Alloc(trace::AllocCase::LocExists,_)    => "Alloc(LocExists)",
+                //trace::Effect::Alloc(trace::AllocCase::LocExists,_)    => "Alloc(LocExists)",
+                trace::Effect::Alloc(trace::AllocCase::LocExists(trace::ChangeFlag::ContentSame),_) => "tr-alloc-loc-exists-same",
+                trace::Effect::Alloc(trace::AllocCase::LocExists(trace::ChangeFlag::ContentDiff),_) => "tr-alloc-loc-exists-diff",
                 trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "Force(CompCacheMiss)",
                 trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "Force(CompCacheHit)",
                 trace::Effect::Force(trace::ForceCase::RefGet)         => "Force(RefGet)",
@@ -1104,11 +1108,17 @@ hr {
   padding: 3px;
   background: #ccffcc;
 }
-.tr-alloc-loc-exists {  
+.tr-alloc-loc-exists-same {  
   padding: 3px;
   background: #ccffcc;
   border-width: 4px;
   border-color: green;
+}
+.tr-alloc-loc-exists-diff {  
+  padding: 3px;
+  background: #ffcccc;
+  border-width: 4px;
+  border-color: red;
 }
 .tr-dirty {  
   background: #550000;
