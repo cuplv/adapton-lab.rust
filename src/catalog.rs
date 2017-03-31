@@ -1253,64 +1253,64 @@ pub fn all_labs() -> Vec<Box<Lab>> {
     /* - - - - - - - - - - - - - - - - - - - - - - - - */   
     /* Homework #0 */
 
-    labdef!(name_of_str("hammer-s17-hw0-filter"),
-            Some(String::from("")),
-            hammer_s17_hw0::List<usize>, usize,
-            hammer_s17_hw0::List<usize>,
-            hammer_s17_hw0::Editor,
-            hammer_s17_hw0::RunFilter)
-      ,
+    // labdef!(name_of_str("hammer-s17-hw0-filter"),
+    //         Some(String::from("")),
+    //         hammer_s17_hw0::List<usize>, usize,
+    //         hammer_s17_hw0::List<usize>,
+    //         hammer_s17_hw0::Editor,
+    //         hammer_s17_hw0::RunFilter)
+    //   ,
 
-    labdef!(name_of_str("hammer-s17-hw0-split"),
-            Some(String::from("")),
-            hammer_s17_hw0::List<usize>, usize,
-            (hammer_s17_hw0::List<usize>, hammer_s17_hw0::List<usize>),
-            hammer_s17_hw0::Editor,
-            hammer_s17_hw0::RunSplit)
-      ,
+    // labdef!(name_of_str("hammer-s17-hw0-split"),
+    //         Some(String::from("")),
+    //         hammer_s17_hw0::List<usize>, usize,
+    //         (hammer_s17_hw0::List<usize>, hammer_s17_hw0::List<usize>),
+    //         hammer_s17_hw0::Editor,
+    //         hammer_s17_hw0::RunSplit)
+    //   ,
 
-    labdef!(name_of_str("hammer-s17-hw0-reverse"),
-            Some(String::from("")),
-            hammer_s17_hw0::List<usize>, usize,
-            hammer_s17_hw0::List<usize>,
-            hammer_s17_hw0::Editor,
-            hammer_s17_hw0::RunReverse)
-      ,
+    // labdef!(name_of_str("hammer-s17-hw0-reverse"),
+    //         Some(String::from("")),
+    //         hammer_s17_hw0::List<usize>, usize,
+    //         hammer_s17_hw0::List<usize>,
+    //         hammer_s17_hw0::Editor,
+    //         hammer_s17_hw0::RunReverse)
+    //   ,
     
-    /* - - - - - - - - - - - - - - - - - - - - - - - - */   
-    /* Homework #1 */
+    // /* - - - - - - - - - - - - - - - - - - - - - - - - */   
+    // /* Homework #1 */
 
-    labdef!(name_of_str("hammer-s17-hw1-filter"),
-            Some(String::from("")),
-            hammer_s17_hw1::List<usize>, usize,
-            hammer_s17_hw1::List<usize>,
-            hammer_s17_hw1::Editor,
-            hammer_s17_hw1::RunFilter)
-      ,
+    // labdef!(name_of_str("hammer-s17-hw1-filter"),
+    //         Some(String::from("")),
+    //         hammer_s17_hw1::List<usize>, usize,
+    //         hammer_s17_hw1::List<usize>,
+    //         hammer_s17_hw1::Editor,
+    //         hammer_s17_hw1::RunFilter)
+    //   ,
 
-    labdef!(name_of_str("hammer-s17-hw1-split"),
-            Some(String::from("")),
-            hammer_s17_hw1::List<usize>, usize,
-            (hammer_s17_hw1::List<usize>, hammer_s17_hw1::List<usize>),
-            hammer_s17_hw1::Editor,
-            hammer_s17_hw1::RunSplit)
-      ,
+    // labdef!(name_of_str("hammer-s17-hw1-split"),
+    //         Some(String::from("")),
+    //         hammer_s17_hw1::List<usize>, usize,
+    //         (hammer_s17_hw1::List<usize>, hammer_s17_hw1::List<usize>),
+    //         hammer_s17_hw1::Editor,
+    //         hammer_s17_hw1::RunSplit)
+    //   ,
 
-    labdef!(name_of_str("hammer-s17-hw1-reverse"),
-            Some(String::from("")),
-            hammer_s17_hw1::List<usize>, usize,
-            hammer_s17_hw1::List<usize>,
-            hammer_s17_hw1::Editor,
-            hammer_s17_hw1::RunReverse)
-      ,
+    // labdef!(name_of_str("hammer-s17-hw1-reverse"),
+    //         Some(String::from("")),
+    //         hammer_s17_hw1::List<usize>, usize,
+    //         hammer_s17_hw1::List<usize>,
+    //         hammer_s17_hw1::Editor,
+    //         hammer_s17_hw1::RunReverse)
+    //   ,
 
-    labdef!(name_of_str("hammer-s17-hw1-singletons"),
-            Some(String::from("")),
-            hammer_s17_hw1::List<usize>, usize,
-            hammer_s17_hw1::List<hammer_s17_hw1::List<usize>>,
-            hammer_s17_hw1::Editor,
-            hammer_s17_hw1::RunSingletons)
-      ,
+    // labdef!(name_of_str("hammer-s17-hw1-singletons"),
+    //         Some(String::from("")),
+    //         hammer_s17_hw1::List<usize>, usize,
+    //         hammer_s17_hw1::List<hammer_s17_hw1::List<usize>>,
+    //         hammer_s17_hw1::Editor,
+    //         hammer_s17_hw1::RunSingletons)
+    //   ,
 
     // labdef!(name_of_str("hammer-s17-hw1-join"),
     //         Some(String::from("")),
