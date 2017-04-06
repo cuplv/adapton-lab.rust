@@ -1092,9 +1092,10 @@ hr {
   border-color: blue;
 }
 .tr-force-dup {  
-  border-color: blue;
-  border-width: 2px;
-  padding: 1px;
+  border-width: 0px;
+  padding: 0px;
+  background: #666666;
+  display: none;
 }
 .tr-clean-rec {  
   background: #222244;
@@ -1246,6 +1247,15 @@ function toggleEffects() {
    $('.tr-effect').css('display', 'none')
  }
 }
+
+function toggleDupForces() {
+ var selection = document.getElementById(\"checkbox-4\");
+ if (selection.checked) {
+   $('.tr-force-dup').css('display', 'inline')
+ } else {
+   $('.tr-force-dup').css('display', 'none')
+ }
+}
 </script>
 </head>
 
@@ -1259,6 +1269,8 @@ function toggleEffects() {
  <input type=\"checkbox\" name=\"show-names-checkbox\" id=\"checkbox-2\" onchange=\"toggleNames()\">
  <label for=\"show-effects-checkbox\">effects</label>
  <input type=\"checkbox\" name=\"show-effects-checkbox\" id=\"checkbox-3\" onchange=\"toggleEffects()\">
+ <label for=\"show-effects-checkbox\">duplicate forces</label>
+ <input type=\"checkbox\" name=\"show-effects-checkbox\" id=\"checkbox-4\" onchange=\"toggleDupForces()\">
 </fieldset>
 "
 }
