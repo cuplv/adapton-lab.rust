@@ -31,7 +31,3 @@ pub mod labviz;
 /// **Generically implements** the test diagram in the [Adapton Lab
 /// README](https://github.com/cuplv/adapton-lab.rust).
 pub mod labrun;
-
-/// Provides **concrete instances** of the test diagram from the
-/// [Adapton Lab README](https://github.com/cuplv/adapton-lab.rust).
-pub mod catalog;

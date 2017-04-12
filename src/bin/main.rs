@@ -15,28 +15,35 @@ extern crate clap;
 #[macro_use]
 extern crate adapton;
 
+extern crate adapton_lab;
+
 //extern crate pmfp_collections;
 
 /// Defines lab parameters `LabParams` and `LabDef`, the parameters
 /// for running the test diagram from the [Adapton Lab
 /// README](https://github.com/cuplv/adapton-lab.rust).
-pub mod labdef;
+//pub mod labdef;
 
 /// This module of Adapton Lab extends Adapton's existing reflection
 /// (see `adapton::engine::reflect`) with further reflections.  In
 /// particular, we produce HTML output structure, for human user
 /// interaction and consumption.
-pub mod labviz;
+//pub mod labviz;
 
 /// **Generically implements** the test diagram in the [Adapton Lab
 /// README](https://github.com/cuplv/adapton-lab.rust).
-pub mod labrun;
+//pub mod labrun;
+
+/// Provides **concrete instances** of the test diagram from the
+/// [Adapton Lab README](https://github.com/cuplv/adapton-lab.rust).
+//pub mod catalog;
 
 /// Provides **concrete instances** of the test diagram from the
 /// [Adapton Lab README](https://github.com/cuplv/adapton-lab.rust).
 pub mod catalog;
 
 use labdef::*;
+use adapton_lab::{labdef,labviz};
 use adapton::engine::reflect::string_of_name;
 use adapton::engine::name_of_string;
 
