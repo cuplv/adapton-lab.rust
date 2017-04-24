@@ -1156,13 +1156,13 @@ pub fn all_labs() -> Vec<Box<Lab>> {
             ListTreeSum)
       ,
     
-    labdef!(name_of_str("list-eager-mergesort3"),
-            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort3.html")),
-            List<usize>, usize,
-            List<usize>,
-            UniformPrepend<_,_>,
-            EagerMergesort3)
-      ,
+    // labdef!(name_of_str("list-eager-mergesort3"),
+    //         Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort3.html")),
+    //         List<usize>, usize,
+    //         List<usize>,
+    //         UniformPrepend<_,_>,
+    //         EagerMergesort3)
+    //   ,
     labdef!(name_of_str("list-lazy-mergesort3"),
             Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort3.html")),
             List<usize>, usize,
@@ -1171,13 +1171,13 @@ pub fn all_labs() -> Vec<Box<Lab>> {
             LazyMergesort3)
       ,
     
-    labdef!(name_of_str("list-eager-mergesort2"),
-            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort2.html")),
-            List<usize>, usize,
-            List<usize>,
-            UniformPrepend<_,_>,
-            EagerMergesort2)
-      ,
+    // labdef!(name_of_str("list-eager-mergesort2"),
+    //         Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort2.html")),
+    //         List<usize>, usize,
+    //         List<usize>,
+    //         UniformPrepend<_,_>,
+    //         EagerMergesort2)
+    //   ,
     labdef!(name_of_str("list-lazy-mergesort2"),
             Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort2.html")),
             List<usize>, usize,
@@ -1186,13 +1186,13 @@ pub fn all_labs() -> Vec<Box<Lab>> {
             LazyMergesort2)
       ,
     
-    labdef!(name_of_str("list-eager-mergesort1"),
-            Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort1.html")),
-            List<usize>, usize,
-            List<usize>,
-            UniformPrepend<_,_>,
-            EagerMergesort1)
-      ,
+    // labdef!(name_of_str("list-eager-mergesort1"),
+    //         Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.EagerMergesort1.html")),
+    //         List<usize>, usize,
+    //         List<usize>,
+    //         UniformPrepend<_,_>,
+    //         EagerMergesort1)
+    //   ,
     labdef!(name_of_str("list-lazy-mergesort1"),
             Some(String::from("http://adapton.org/rustdoc/adapton_lab/catalog/struct.LazyMergesort1.html")),
             List<usize>, usize,
