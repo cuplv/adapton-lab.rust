@@ -5,8 +5,8 @@ use adapton::macros::*;
 use rand::{Rng};
 use std::marker::PhantomData;
 use std::rc::Rc;
-//use pmfp_collections::inc_gauged_raz::{Raz,RazTree};
-//use pmfp_collections::inc_tree_cursor::{gen_level};
+//use iodyn::inc_gauged_raz::{Raz,RazTree};
+//use iodyn::inc_tree_cursor::{gen_level};
 
 
 #[derive(Clone,Debug)]

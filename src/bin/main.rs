@@ -17,7 +17,7 @@ extern crate adapton;
 
 extern crate adapton_lab;
 
-//extern crate pmfp_collections;
+//extern crate iodyn;
 
 /// Defines lab parameters `LabParams` and `LabDef`, the parameters
 /// for running the test diagram from the [Adapton Lab
@@ -109,7 +109,7 @@ fn run_all_labs(params:LabParams) {
 }
 
 #[test]
-fn test_all() { run_all_tests() }
+fn test_all() { run_all_labs(lab_params_defaults()) }
 
 fn main2() { 
   let args = clap::App::new("adapton-lab")
