@@ -41,13 +41,13 @@ fn get_engine_metrics<X,F:FnOnce() -> X> (params:&SampleParams, thunk:F) -> (X,E
 {
   if params.reflect_trace { reflect::dcg_reflect_begin(); };
   let time_start = time::precise_time_ns();
-  let (x,cnt) = cnt(thunk);
+  let x = (thunk)();
   let time_end = time::precise_time_ns();
   let traces = if params.reflect_trace { reflect::dcg_reflect_end() } else { vec![ ] };
   let dcg    = if params.reflect_dcg   { reflect::dcg_reflect_now() } else { None };
   return (x, EngineMetrics{
     time_ns:time_end - time_start,
-    engine_cnt:cnt,
+    //engine_cnt:cnt,
     reflect_traces:traces,
     reflect_dcg:dcg,
   })

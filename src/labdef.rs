@@ -1,4 +1,4 @@
-use adapton::engine::Cnt; // Counters for engine costs
+//use adapton::engine::Cnt; // Counters for engine costs
 use adapton::engine::Name; // Names, for naming things uniquely
 use adapton::engine::reflect::DCG;
 use adapton::engine::reflect::Val;
@@ -160,7 +160,7 @@ pub struct EngineMetrics {
   pub time_ns:    u64,
   /// Counts of engine (engine trace-level) operations (See
   /// `engine::reflect::trace::Trace`) during the sample.
-  pub engine_cnt: Cnt,
+//  pub engine_cnt: Cnt,
   /// The reflected traces of the DCG during the sample; empty if this
   /// option is disabled.
   pub reflect_traces: Vec<Trace>,
