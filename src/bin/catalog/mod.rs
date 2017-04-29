@@ -1,5 +1,5 @@
 use labdef::*;
-use adapton::collections::*;
+use adapton::catalog::collections::*;
 use adapton::engine::*;
 use adapton::macros::*;
 use rand::{Rng};
@@ -438,7 +438,7 @@ pub mod hammer_s17_hw0 {
   /// List filter:
   pub fn list_filter<X:Eq+Clone+Hash+Debug+'static,
                      F:'static>
-    (inp: List<X>, f:Rc<F>) -> List<X> 
+    (_inp: List<X>, _f:Rc<F>) -> List<X> 
     where F:Fn(X) -> bool
   {
     panic!("TODO")
@@ -447,7 +447,7 @@ pub mod hammer_s17_hw0 {
   /// List split:
   pub fn list_split<X:Eq+Clone+Hash+Debug+'static,
                     F:'static>
-    (inp: List<X>, f:Rc<F>) -> (List<X>, List<X>)
+    (_inp: List<X>, _f:Rc<F>) -> (List<X>, List<X>)
     where F:Fn(X) -> bool
   {
     panic!("TODO")
@@ -455,7 +455,7 @@ pub mod hammer_s17_hw0 {
 
   /// List reverse:
   pub fn list_reverse<X:Eq+Clone+Hash+Debug+'static>
-    (inp: List<X>) -> List<X>
+    (_inp: List<X>) -> List<X>
   {
     panic!("TODO")
   }
@@ -578,7 +578,7 @@ pub mod hammer_s17_hw1 {
   /// List filter:
   pub fn list_filter<X:Eq+Clone+Hash+Debug+'static,
                      F:'static>
-    (inp: List<X>, f:Rc<F>) -> List<X> 
+    (_inp: List<X>, _f:Rc<F>) -> List<X> 
     where F:Fn(X) -> bool
   {
     panic!("TODO")
@@ -587,7 +587,7 @@ pub mod hammer_s17_hw1 {
   /// List split:
   pub fn list_split<X:Eq+Clone+Hash+Debug+'static,
                     F:'static>
-    (inp: List<X>, f:Rc<F>) -> (List<X>, List<X>)
+    (_inp: List<X>, _f:Rc<F>) -> (List<X>, List<X>)
     where F:Fn(X) -> bool
   {
     panic!("TODO")
@@ -595,21 +595,21 @@ pub mod hammer_s17_hw1 {
 
   /// List reverse:
   pub fn list_reverse<X:Eq+Clone+Hash+Debug+'static>
-    (inp: List<X>) -> List<X>
+    (_inp: List<X>) -> List<X>
   {
     panic!("TODO")
   }
 
   /// List join:
   pub fn list_join<X:Eq+Clone+Hash+Debug+'static>
-    (inp: List<List<X>>) -> List<X>
+    (_inp: List<List<X>>) -> List<X>
   {
     panic!("TODO")
   }
 
   /// List singletons:
   pub fn list_singletons<X:Eq+Clone+Hash+Debug+'static>
-    (inp: List<X>) -> List<List<X>>
+    (_inp: List<X>) -> List<List<X>>
   {
     panic!("TODO")
   }
@@ -660,7 +660,7 @@ pub mod hammer_s17_hw1 {
     fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 
       return 0
     }
-    fn edit<R:Rng>(list:List<usize>, i:usize,
+    fn edit<R:Rng>(_list:List<usize>, _i:usize,
                    _rng:&mut R, _params:&GenerateParams) -> (List<usize>, usize) {
       panic!("TODO: Hammer (2017-03-01)")
     }
@@ -675,7 +675,7 @@ pub mod hammer_s17_hw1 {
     fn edit_init<R:Rng>(_rng:&mut R, _params:&GenerateParams) -> usize { 
       return 0
     }
-    fn edit<R:Rng>(list:List<List<usize>>, i:usize,
+    fn edit<R:Rng>(_list:List<List<usize>>, _i:usize,
                    _rng:&mut R, _params:&GenerateParams) -> (List<List<usize>>, usize) {
       panic!("TODO: Hammer (2017-03-01)")
     }

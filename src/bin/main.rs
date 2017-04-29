@@ -1,7 +1,7 @@
 //! For more information and instructions, see the [Adapton Lab
 //! README](https://github.com/cuplv/adapton-lab.rust).
 #![feature(box_patterns)]
-#![feature(field_init_shorthand)]
+//#![feature(field_init_shorthand)]
 //#![feature(rustc_private)]
 //#![feature(custom_derive)]
 
