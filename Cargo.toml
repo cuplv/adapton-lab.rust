@@ -16,7 +16,7 @@ clap = "1"
 [dependencies.adapton]
 git = "https://github.com/cuplv/adapton.rust.git"
 branch = "dev"
-# path = "/Users/hammer/adapton"
+# path = "/Users/hammer/repo/adapton.rust"
 
 # [dependencies.iodyn]
 # git = "https://github.com/cuplv/iodyn.rust.git"

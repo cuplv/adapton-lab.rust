@@ -12,7 +12,7 @@ extern crate rand;
 //#[macro_use]
 extern crate clap;
 
-#[macro_use]
+//#[macro_use]
 extern crate adapton;
 
 //extern crate iodyn;
