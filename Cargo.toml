@@ -14,8 +14,7 @@ clap = "1"
 # pistoncore-glutin_window = "0.17.1"
 
 [dependencies.adapton]
-git = "https://github.com/cuplv/adapton.rust.git"
-branch = "dev"
+version = "0.2"
 # path = "/Users/hammer/repo/adapton.rust"
 
 # [dependencies.iodyn]
