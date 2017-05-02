@@ -44,7 +44,7 @@ pub mod catalog;
 
 use labdef::*;
 use adapton_lab::{labdef,labviz};
-use adapton::engine::reflect::string_of_name;
+use adapton::reflect::string_of_name;
 use adapton::engine::name_of_string;
 
 // fn csv_of_runtimes(path:&str, samples: Vec<Sample>) {

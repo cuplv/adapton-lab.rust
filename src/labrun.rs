@@ -6,6 +6,7 @@ use labdef::*;
 use std::marker::PhantomData;
 
 use adapton::engine::*;
+use adapton::reflect;
 use adapton::engine::manage::*;
 use rand::{Rng, SeedableRng};
 use std::mem::swap;

@@ -6,8 +6,8 @@ use std::fs::File;
 use std::collections::HashMap;
 
 use adapton::engine::Name;
-use adapton::engine::reflect::*;
-use adapton::engine::reflect::{trace, string_of_name, string_of_loc};
+use adapton::reflect::*;
+//use adapton::engine::reflect::{trace, string_of_name, string_of_loc};
 use labdef::{LabParams,Lab,LabResults, Sample};
 
 /// The `Div` struct represents a restricted form of a `<div>` element

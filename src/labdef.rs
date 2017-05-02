@@ -1,8 +1,8 @@
 //use adapton::engine::Cnt; // Counters for engine costs
 use adapton::engine::Name; // Names, for naming things uniquely
-use adapton::engine::reflect::DCG;
-use adapton::engine::reflect::Val;
-use adapton::engine::reflect::trace::Trace;
+use adapton::reflect::DCG;
+use adapton::reflect::Val;
+use adapton::reflect::trace::Trace;
 use rand::Rng;
 use std::marker::PhantomData;
 
