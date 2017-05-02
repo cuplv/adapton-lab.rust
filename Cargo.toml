@@ -1,7 +1,14 @@
 [package]
 name = "adapton-lab"
 version = "0.1.0"
-authors = ["Matthew Hammer <matthew.hammer@colorado.edu>"]
+authors = ["Matthew A. Hammer <matthew.hammer@colorado.edu>"]
+description = "Testing and performance evaluation suite for Adapton"
+homepage = "http://adapton.org"
+repository = "https://github.com/cuplv/adapton-lab.rust/"
+readme = "README.md"
+keywords = ["Incremental", "Memoization", "Dependency-Graph", "Demand-driven", "Self-Adjusting",]
+license = "MPL-2.0"
+
 
 [dependencies]
 time = "0.1"
