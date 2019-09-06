@@ -342,6 +342,52 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
   // For linking to rustdoc documentation from the output HTML
   let tr_eff_url = "http://adapton.org/rustdoc/adapton/engine/reflect/trace/enum.Effect.html";
 
+  let mut extent = vec![
+    Div{ 
+      tag: String::from("tr-effect"),
+      text: Some(              
+        format!("<a href={:?}>{}</a>", tr_eff_url, match tr.effect {
+          trace::Effect::CleanRec  => "CleanRec",
+          trace::Effect::CleanEval => "CleanEval",
+          trace::Effect::CleanEdge => "CleanEdge",
+          trace::Effect::Dirty     => "Dirty",
+          trace::Effect::Remove    => "Remove",
+          trace::Effect::Alloc(trace::AllocCase::LocFresh,_)     => "Alloc(LocFresh)",
+          trace::Effect::Alloc(trace::AllocCase::LocExists(trace::ChangeFlag::ContentSame),_) => "Alloc(LocExists(SameContent))",
+          trace::Effect::Alloc(trace::AllocCase::LocExists(trace::ChangeFlag::ContentDiff),_) => "Alloc(LocExists(DiffContent))",
+          trace::Effect::Force(_) if trace_edge(&tr).map_or(false, |e| e.succ.is_dup)         => "ForceDup",
+          trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "Force(CompCacheMiss)",
+          trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "Force(CompCacheHit)",
+          trace::Effect::Force(trace::ForceCase::RefGet)         => "Force(RefGet)",
+          trace::Effect::Debug(_, _) => "Debug"
+        })),
+      classes: vec![],
+      extent: Box::new(vec![]),
+    },
+    Div{
+      tag: String::from("tr-symbols"),
+      text: match tr.effect {
+        trace::Effect::Alloc(_,trace::AllocKind::RefCell) => Some(String::from("▣")),
+        trace::Effect::Alloc(_,trace::AllocKind::Thunk)   => Some(String::from("◯")),
+        _ => None,              
+      },
+      classes:vec![],
+      extent: Box::new(vec![]),
+    }
+  ];
+  // This is where the location (path and name) are DIV-ified
+  // If the effect is a CleanEval, then we should use the
+  // location at the *source* of the edge, which is the
+  // location we re-evaluate.
+  let edge = trace_edge(&tr);
+  match (tr.effect.clone(), edge.map_or(None, |e| e.loc.clone())) {
+    (trace::Effect::CleanEval, Some(loc)) => extent.push(div_of_loc(&loc)),
+    // TODO: Figure out why/when we get None here; seems like a reflection issue in the Engine
+    _ => match edge {
+      Some(e) => extent.push(div_of_edge(&e)),
+      None => ()
+    }
+  }
   let mut div = 
     Div{ 
       tag: String::from("trace"),
@@ -356,54 +402,14 @@ pub fn div_of_trace (tr:&trace::Trace) -> Div {
           trace::Effect::Alloc(trace::AllocCase::LocFresh,_)     => "tr-alloc-loc-fresh",
           trace::Effect::Alloc(trace::AllocCase::LocExists(trace::ChangeFlag::ContentSame),_) => "tr-alloc-loc-exists-same",
           trace::Effect::Alloc(trace::AllocCase::LocExists(trace::ChangeFlag::ContentDiff),_) => "tr-alloc-loc-exists-diff",
-          trace::Effect::Force(_) if tr.edge.succ.is_dup         => "tr-force-dup",
+          trace::Effect::Force(_) if trace_edge(&tr).map_or(false, |e| e.succ.is_dup)         => "tr-force-dup",
           trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "tr-force-compcache-miss",
           trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "tr-force-compcache-hit",
           trace::Effect::Force(trace::ForceCase::RefGet)         => "tr-force-refget",
+          trace::Effect::Debug(_, _)                             => "tr-debug"
         })
       ],
-      extent: Box::new(
-        vec![
-          Div{ 
-            tag: String::from("tr-effect"),
-            text: Some(              
-              format!("<a href={:?}>{}</a>", tr_eff_url, match tr.effect {
-                trace::Effect::CleanRec  => "CleanRec",
-                trace::Effect::CleanEval => "CleanEval",
-                trace::Effect::CleanEdge => "CleanEdge",
-                trace::Effect::Dirty     => "Dirty",
-                trace::Effect::Remove    => "Remove",
-                trace::Effect::Alloc(trace::AllocCase::LocFresh,_)     => "Alloc(LocFresh)",
-                trace::Effect::Alloc(trace::AllocCase::LocExists(trace::ChangeFlag::ContentSame),_) => "Alloc(LocExists(SameContent))",
-                trace::Effect::Alloc(trace::AllocCase::LocExists(trace::ChangeFlag::ContentDiff),_) => "Alloc(LocExists(DiffContent))",
-                trace::Effect::Force(_) if tr.edge.succ.is_dup         => "ForceDup",
-                trace::Effect::Force(trace::ForceCase::CompCacheMiss)  => "Force(CompCacheMiss)",
-                trace::Effect::Force(trace::ForceCase::CompCacheHit)   => "Force(CompCacheHit)",
-                trace::Effect::Force(trace::ForceCase::RefGet)         => "Force(RefGet)",
-              })),
-            classes: vec![],
-            extent: Box::new(vec![]),
-          },
-          Div{
-            tag: String::from("tr-symbols"),
-            text: match tr.effect {
-              trace::Effect::Alloc(_,trace::AllocKind::RefCell) => Some(String::from("▣")),
-              trace::Effect::Alloc(_,trace::AllocKind::Thunk)   => Some(String::from("◯")),
-              _ => None,              
-            },
-            classes:vec![],
-            extent: Box::new(vec![]),
-          },
-          // This is where the location (path and name) are DIV-ified
-          // If the effect is a CleanEval, then we should use the
-          // location at the *source* of the edge, which is the
-          // location we re-evaluate.
-          match (tr.effect.clone(), tr.edge.loc.clone()) {            
-            (trace::Effect::CleanEval, Some(loc)) => div_of_loc(&loc),
-            // TODO: Figure out why/when we get None here; seems like a reflection issue in the Engine
-            _ => div_of_edge(&tr.edge)
-          }
-        ])}
+      extent: Box::new(extent)}
   ;
   match tr.effect {
     trace::Effect::Alloc(_,trace::AllocKind::RefCell) => div.classes.push(String::from("alloc-kind-refcell")),
@@ -519,24 +525,36 @@ pub fn write_lab_name<W:Write>(writer:&mut W, lab:&Box<Lab>, is_title:bool) {
 pub fn write_dcg_tree<W:Write> (writer:&mut W, dcg:&DCG, traces:&Vec<trace::Trace>) {
   let mut visited = HashMap::new();
   let mut extent : Vec<_> = Vec::new();
-  let succs : Vec<_> = traces.iter().map(|t| t.edge.succ.clone()).collect();
+  let succs : Vec<_> = traces.iter().filter_map(|t| trace_edge(&t).map(|e| e.succ.clone())).collect();
   div_of_dcg_succs(dcg, &mut visited, None, &succs, &mut extent);
   for d in extent.iter() {
     d.write_html(writer);
   }
 }
 
+fn trace_edge (tr: &trace::Trace) -> Option<&trace::Edge> {
+  match &tr.edge {
+    trace::EffectEdge::Fwd(edge) => Some(&edge),
+    trace::EffectEdge::Bwd(edge) => Some(&edge),
+    trace::EffectEdge::None => None
+  }
+}
+
 pub fn write_dcg_edge_tree<W:Write> (writer:&mut W, dcg:&DCG, traces:&Vec<trace::Trace>, effect:Effect) {
   for tr in traces.iter() {
-    if tr.edge.succ.effect == effect {
-      match effect {
-        Effect::Alloc =>
-          div_of_alloc_tree(dcg, &mut HashMap::new(), &tr.edge.succ.loc)
-          .write_html(writer),
-        Effect::Force =>
-          div_of_force_tree(dcg,&mut HashMap::new(),  &tr.edge.succ.loc)
-          .write_html(writer),
-      }
+    match trace_edge(&tr) {
+      Some(edge) =>
+        if edge.succ.effect == effect {
+          match effect {
+            Effect::Alloc =>
+              div_of_alloc_tree(dcg, &mut HashMap::new(), &edge.succ.loc)
+              .write_html(writer),
+            Effect::Force =>
+              div_of_force_tree(dcg,&mut HashMap::new(),  &edge.succ.loc)
+              .write_html(writer),
+          }
+        },
+      None => ()
     }
   }
 }

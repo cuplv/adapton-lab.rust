@@ -119,28 +119,28 @@ impl Compute<Art<i32>, Art<i32>> for ExampleCleanDirty {
   fn compute(inp:Art<i32>) -> Art<i32> {
     let c : Art<i32> = force 
       // thunk 'f' creates and forces thunks `g` and `h`, below:
-      (& thunk![ name_of_str("f") =>> {
+      (& thunk![ name_of_str("f") =>> |_dummy| {
         let inp = inp.clone();
         
         let b : Art<i32> = force 
         // thunk `g` reads the input `inp` and writes its square (x
         // * x) to a new cell, `b`, returning the cell `b`.
-          (& thunk![ name_of_str("g") =>> {
+          (& thunk![ name_of_str("g") =>> |_dummy| {
             let x = force(&inp);
             cell(name_of_str("b"), x * x)       
-          }]);        
+          }, dummy: 0]);        
         
         let c : Art<i32> = force 
         // thunk `h` reads the output of `g`, cell `b`, and writes the
         // min of this number and 100 to another new cell, `c`,
         // returning the cell `c`.
-          (& thunk![ name_of_str("h") =>> {
+          (& thunk![ name_of_str("h") =>> |_dummy| {
             let x = force(&b);
             cell(name_of_str("c"), if x < 100 { x } else { 100 })
-          }]);        
+          }, dummy: 0]);        
         
         c
-      }])
+      }, dummy: 0])
       ;
     return c
   }
@@ -320,7 +320,7 @@ pub mod oopsla2015_sec2 {
     match inp {
       List::Nil => List::Nil,
       List::Cons(x, nm, xs) => {
-        memo!(nm.clone() =>> list_map_cons =>> <X,Y,F>, 
+        memo!(nm.clone() =>> list_map_cons::<X,Y,F>, 
               x:x, nm:nm, xs:xs 
               ;; 
               f:f)
