@@ -1,6 +1,6 @@
 [package]
 name = "adapton-lab"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Matthew A. Hammer <matthew.hammer@colorado.edu>"]
 description = "Testing and performance evaluation suite for Adapton"
 homepage = "http://adapton.org"
